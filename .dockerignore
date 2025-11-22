@@ -1,0 +1,20 @@
+cat > .dockerignore << 'EOF'
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.env
+.git
+.mypy_cache
+.pytest_cache
+.history
+.DS_Store
+*.log
+Dockerfile
+docker-compose.yml
+README.md
+EOF

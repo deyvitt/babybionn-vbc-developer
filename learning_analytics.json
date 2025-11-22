@@ -1,0 +1,176 @@
+{
+  "sessions": {
+    "default": {
+      "start_time": "2025-11-16T04:38:49.356591",
+      "interactions": [
+        {
+          "timestamp": "2025-11-16T04:38:49.356595",
+          "vni_type": "medical",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T04:38:49.356860",
+          "vni_type": "medical",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T04:38:49.357059",
+          "vni_type": "legal",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T05:12:56.993353",
+          "vni_type": "medical",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T05:12:56.994227",
+          "vni_type": "medical",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T05:12:57.011567",
+          "vni_type": "legal",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T05:13:20.229773",
+          "vni_type": "medical",
+          "confidence": 0.8,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T05:13:20.230186",
+          "vni_type": "medical",
+          "confidence": 0.8,
+          "feedback": null
+        }
+      ],
+      "vni_usage": {}
+    },
+    "test": {
+      "start_time": "2025-11-16T14:59:31.022169",
+      "interactions": [
+        {
+          "timestamp": "2025-11-16T14:59:31.022171",
+          "vni_type": "medical",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T14:59:31.022595",
+          "vni_type": "medical",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T14:59:31.032514",
+          "vni_type": "legal",
+          "confidence": 0.3,
+          "feedback": null
+        }
+      ],
+      "vni_usage": {}
+    },
+    "user_1763305601967": {
+      "start_time": "2025-11-16T15:06:52.880714",
+      "interactions": [
+        {
+          "timestamp": "2025-11-16T15:06:52.880720",
+          "vni_type": "medical",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T15:06:52.881517",
+          "vni_type": "medical",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T15:06:52.881982",
+          "vni_type": "legal",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T15:07:01.853932",
+          "vni_type": "medical",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T15:07:01.854508",
+          "vni_type": "medical",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T15:07:01.864144",
+          "vni_type": "legal",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T15:07:23.768032",
+          "vni_type": "medical",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T15:07:23.768546",
+          "vni_type": "medical",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T15:07:23.778872",
+          "vni_type": "legal",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T15:07:42.549505",
+          "vni_type": "medical",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T15:07:42.550093",
+          "vni_type": "medical",
+          "confidence": 0.3,
+          "feedback": null
+        },
+        {
+          "timestamp": "2025-11-16T15:07:42.560244",
+          "vni_type": "legal",
+          "confidence": 0.3,
+          "feedback": null
+        }
+      ],
+      "vni_usage": {}
+    }
+  },
+  "vni_performance": {
+    "medical": {
+      "total_interactions": 16,
+      "total_confidence": 5.799999999999998,
+      "positive_feedback": 0,
+      "negative_feedback": 0
+    },
+    "legal": {
+      "total_interactions": 7,
+      "total_confidence": 2.1,
+      "positive_feedback": 0,
+      "negative_feedback": 0
+    }
+  },
+  "learning_progress": {},
+  "feedback_history": []
+}

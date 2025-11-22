@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BabyBIONN Chat Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 800px;
+            height: 80vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header-content h1 {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .header-content p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .status-badge {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .status-badge.connected {
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .status-badge.disconnected {
+            background: rgba(244, 67, 54, 0.3);
+        }
+
+        .tab-navigation {
+            display: flex;
+            background: rgba(255, 255, 255, 0.1);
+            margin-top: 15px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-btn.active {
+            background: rgba(255, 255, 255, 0.2);
+            font-weight: bold;
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: white;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 0.8em;
+            flex-shrink: 0;
+        }
+
+        .user .message-avatar {
+            background: #4facfe;
+        }
+
+        .bot .message-avatar {
+            background: #764ba2;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.4;
+        }
+
+        .user .message-content {
+            background: #4facfe;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bot .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e1e5e9;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-meta {
+            font-size: 0.7em;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 18px;
+            border: 1px solid #e1e5e9;
+            margin-bottom: 15px;
+            align-items: center;
+            gap: 8px;
+            max-width: 150px;
+        }
+
+        .typing-indicator.show {
+            display: flex;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: #999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-10px); opacity: 1; }
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e1e5e9;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #e1e5e9;
+            border-radius: 25px;
+            outline: none;
+            resize: none;
+            font-family: inherit;
+            font-size: 14px;
+            max-height: 120px;
+        }
+
+        #messageInput:focus {
+            border-color: #4facfe;
+        }
+
+        #sendButton {
+            background: #4facfe;
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #sendButton:hover {
+            background: #3a9df5;
+        }
+
+        .suggestions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .suggestion-chip {
+            background: #f1f3f4;
+            border: 1px solid #e1e5e9;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .suggestion-chip:hover {
+            background: #4facfe;
+            color: white;
+        }
+
+        .teaching-dashboard {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .dashboard-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .training-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4facfe;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .section h3 {
+            color: #4facfe;
+            margin-bottom: 15px;
+        }
+
+        .vni-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            font-style: italic;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .training-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="header-content">
+                <h1>🧠 BabyBIONN Assistant</h1>
+                <p>Your AI companion for learning and assistance</p>
+                <div class="status-badge disconnected" id="statusBadge">
+                    ⚠️ Backend Offline - Demo Mode
+                </div>
+                <button class="reconnect-btn" id="reconnectBtn" onclick="testConnection()" style="display: none;">
+                    🔄 Reconnect to Backend
+                </button>
+            </div>
+            
+            <div class="tab-navigation">
+                <button class="tab-btn active" onclick="switchTab('chat')">💬 Chat</button>
+                <button class="tab-btn" onclick="switchTab('teaching')">📊 Dashboard</button>
+                <button class="tab-btn" onclick="switchTab('admin')">🔧 Admin</button>
+            </div>
+        </div>
+
+        <!-- Chat Tab -->
+        <div class="tab-content active" id="chatTab">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    <div class="message-avatar">B</div>
+                    <div class="message-content">
+                        Hello! I'm BabyBIONN, your AI assistant. How can I help you today?
+                        <div class="message-meta">Just now</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="messageInput" 
+                        placeholder="Type your message here..." 
+                        rows="1"
+                    ></textarea>
+                    <input type="file" id="image-upload" accept="image/*" style="display: none;">
+                    <button type="button" onclick="document.getElementById('image-upload').click()" 
+                            style="background: #764ba2; color: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer;">
+        📷
+                    </button>      
+                    <button id="sendButton" onclick="sendMessage()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="suggestions">
+                    <div class="suggestion-chip" onclick="useSuggestion('Tell me about BabyBIONN')">What is BabyBIONN?</div>
+                    <div class="suggestion-chip" onclick="useSuggestion('How does the VNI system work?')">VNI System</div>
+                    <div class="suggestion-chip" onclick="useSuggestion('Show me medical capabilities')">Medical AI</div>
+                    <div class="suggestion-chip" onclick="useSuggestion('Explain technical features')">Technical AI</div>
+                </div>
+            </div>
+        </div>
+
+<!-- Admin Panel Tab -->
+<div class="tab-content" id="adminTab">
+    <div class="teaching-dashboard">
+        <div class="dashboard-title">
+            <h2>🔧 BabyBIONN Admin Panel</h2>
+            <p>Initialize and manage AI knowledge bases</p>
+        </div>
+
+        <!-- Admin Login Section -->
+        <div class="section" id="adminLoginSection">
+            <h3>Admin Authentication</h3>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="password" id="adminPassword" placeholder="Enter Admin Password" 
+                       style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;" />
+                <button onclick="adminLogin()" style="padding: 10px 20px; background: #4facfe; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    Login
+                </button>
+            </div>
+        </div>
+
+        <!-- Pretraining Interface (shown after login) -->
+        <div id="pretrainingInterface" style="display: none;">
+            <!-- Upload Section -->
+            <div class="section">
+                <h3>📤 Upload Pretraining Data</h3>
+                <div style="margin-bottom: 15px;">
+                    <label><strong>Select Domain:</strong></label>
+                    <select id="domainSelect" style="margin-left: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                        <option value="medical">Medical Knowledge</option>
+                        <option value="legal">Legal Knowledge</option>
+                        <option value="general">General Knowledge</option>
+                        <option value="technical">Technical Knowledge</option>
+                    </select>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <input type="file" id="pretrainFile" accept=".json" />
+                    <button onclick="uploadPretrainingData()" 
+                            style="margin-left: 10px; padding: 8px 16px; background: #764ba2; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Upload & Initialize
+                    </button>
+                </div>
+
+                <!-- Progress Display -->
+                <div style="margin-top: 20px;">
+                    <div style="width: 100%; height: 20px; background: #f0f0f0; border-radius: 10px; overflow: hidden;">
+                        <div id="progressBar" style="width: 0%; height: 100%; background: #4CAF50; transition: width 0.3s;"></div>
+                    </div>
+                    <div id="progressText" style="margin-top: 5px; font-size: 0.9em; color: #666;">Ready for pretraining...</div>
+                </div>
+            </div>
+
+            <!-- Knowledge Base Status -->
+            <div class="section">
+                <h3>📊 Knowledge Base Status</h3>
+                <div id="knowledgeStatus">
+                    <div id="kbList" style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                        Loading knowledge bases...
+                    </div>
+                </div>
+                <button onclick="loadKnowledgeStatus()" style="margin-top: 10px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    Refresh Status
+                </button>
+            </div>
+
+            <!-- Pretraining Analytics -->
+            <div class="section">
+                <h3>📈 Pretraining Analytics</h3>
+                <pre id="analyticsData" style="background: #f8f9fa; padding: 15px; border-radius: 8px; overflow: auto; max-height: 300px; font-size: 0.8em;">
+No analytics data yet. Upload pretraining data to see analytics.
+                </pre>
+            </div>
+        </div>
+    </div>
+</div>
+    <script>
+        // Configuration
+        const BACKEND_URL = 'http://localhost:8001';
+        const API_BASE = 'http://localhost:8001/api';
+        const sessionId = 'user_' + Date.now();
+        let isProcessing = false;
+        let backendAvailable = false;
+
+        // Tab Switching
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        // Test backend connection
+        async function testConnection() {
+            try {
+                console.log('Testing connection to:', BACKEND_URL);
+                const response = await fetch(`${BACKEND_URL}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    mode: 'cors'
+                });
+            
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('statusBadge').className = 'status-badge connected';
+                    document.getElementById('statusBadge').textContent = '✅ Connected to BabyBIONN Backend';
+                    document.getElementById('reconnectBtn').style.display = 'none';
+                    backendAvailable = true;
+                    console.log('✅ Backend connection successful');
+                    return true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.error('❌ Backend connection failed:', error);
+                document.getElementById('statusBadge').className = 'status-badge disconnected';
+                document.getElementById('statusBadge').textContent = '⚠️ Backend Offline - Demo Mode';
+                document.getElementById('reconnectBtn').style.display = 'inline-block';
+                backendAvailable = false;
+                return false;
+            }
+        }
+
+        // Add message to chat
+        function addMessage(content, sender) {
+            const container = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+    
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${sender === 'user' ? 'U' : 'B'}</div>
+                <div class="message-content">
+                    ${content}
+                    <div class="message-meta">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+    
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Show/hide typing indicator
+        function showTyping() {
+            document.getElementById('typingIndicator').classList.add('show');
+        }
+
+        function hideTyping() {
+            document.getElementById('typingIndicator').classList.remove('show');
+        }
+
+        // Use suggestion
+        function useSuggestion(text) {
+            document.getElementById('messageInput').value = text;
+            sendMessage();
+        }
+
+        // Update VNI display
+        function updateVNIDisplay(vnis) {
+            const display = document.getElementById('vniDisplay');
+            if (vnis && vnis.length > 0) {
+                display.innerHTML = `
+                    <strong>🔥 Currently Active VNIs:</strong><br>
+                    ${vnis.map(v => `<span style="background: #e3f2fd; padding: 4px 8px; border-radius: 12px; margin: 4px; display: inline-block;">${v}</span>`).join('')}
+                `;
+            } else {
+                display.innerHTML = 'No active VNIs yet. Start chatting to see real-time activation patterns.';
+            }
+        }
+
+        // Send message function - UPDATED WITH IMAGE SUPPORT
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            const imageInput = document.getElementById('image-upload');
+            const hasImage = imageInput.files.length > 0;
+
+            if ((!message && !hasImage) || isProcessing) return;
+
+            // Clear input but keep image for now
+            input.value = '';
+            input.style.height = 'auto';
+
+            // Add user message (show image preview if exists)
+            let userContent = message;
+            if (hasImage) {
+                const imageUrl = URL.createObjectURL(imageInput.files[0]);
+                userContent += `<br><img src="${imageUrl}" style="max-width: 200px; border-radius: 8px; margin-top: 8px;">`;
+            }
+    
+            addMessage(userContent, 'user');
+            isProcessing = true;
+            showTyping();
+
+            try {
+                if (backendAvailable) {
+                    if (hasImage) {
+                        await sendImageAndMessage(message, imageInput.files[0]);
+                    } else {
+                        await sendTextMessage(message);
+                    }
+                } else {
+                    // Demo mode fallback
+                    setTimeout(() => {
+                        hideTyping();
+                        const demoResponse = generateDemoResponse(message, hasImage);
+                        addMessage(demoResponse, 'bot');
+                        const demoVNIs = simulateVNIactivation(message);
+                        updateVNIDisplay(demoVNIs);
+                
+                        // Clear image after sending in demo mode
+                        if (hasImage) {
+                            clearImageUpload();
+                        }
+                    }, 1000);
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                hideTyping();
+                // Fallback to demo mode
+                setTimeout(() => {
+                    const demoResponse = generateDemoResponse(message, hasImage);
+                    addMessage(demoResponse, 'bot');
+                    const demoVNIs = simulateVNIactivation(message);
+                    updateVNIDisplay(demoVNIs);
+            
+                    if (hasImage) {
+                        clearImageUpload();
+                    }
+            
+                    backendAvailable = false;
+                    document.getElementById('statusBadge').className = 'status-badge disconnected';
+                    document.getElementById('statusBadge').textContent = '⚠️ Backend Offline - Demo Mode';
+                }, 1000);
+            }
+
+            isProcessing = false;
+        }
+
+// Add these 3 functions AFTER your existing sendMessage() function
+
+// Send text message to backend
+async function sendTextMessage(message) {
+    try {
+        const response = await fetch(`${API_BASE}/chat`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: message,
+                session_id: sessionId
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        hideTyping();
+        addMessage(data.response, 'bot');
+        updateVNIDisplay(data.activated_vnis);
+    } catch (error) {
+        console.error('Error sending message:', error);
+        throw error;
+    }
+}
+
+// Send image and message to backend
+async function sendImageAndMessage(message, imageFile) {
+    try {
+        const formData = new FormData();
+        formData.append('message', message);
+        formData.append('image', imageFile);
+        formData.append('session_id', sessionId);
+
+        const response = await fetch(`${API_BASE}/chat-with-image`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        hideTyping();
+        
+        let botResponse = data.response;
+        if (data.image_analysis) {
+            botResponse += `<br><br><small>📷 Image Analysis: ${JSON.stringify(data.image_analysis)}</small>`;
+        }
+        
+        addMessage(botResponse, 'bot');
+        updateVNIDisplay(data.activated_vnis);
+    } catch (error) {
+        console.error('Error sending image message:', error);
+        throw error;
+    }
+}
+
+// Clear image upload
+function clearImageUpload() {
+    const imageInput = document.getElementById('image-upload');
+    if (imageInput) {
+        imageInput.value = '';
+    }
+}
+        
+        // Simulate VNI activation for demo
+        function simulateVNIactivation(message) {
+            const lower = message.toLowerCase();
+            const vnis = [];
+        
+            if (lower.includes('medical') || lower.includes('health') || lower.includes('symptom')) {
+                vnis.push('Medical-VNI');
+            }
+            if (lower.includes('technical') || lower.includes('code') || lower.includes('program')) {
+                vnis.push('Technical-VNI');
+            }
+            if (lower.includes('legal') || lower.includes('law') || lower.includes('contract')) {
+                vnis.push('Legal-VNI');
+            }
+            if (lower.includes('vni') || lower.includes('neural') || lower.includes('babybionn')) {
+                vnis.push('Core-VNI');
+            }
+        
+            return vnis.length > 0 ? vnis : ['General-VNI'];
+        }
+
+        // Demo response generator
+        function generateDemoResponse(message) {
+            const lower = message.toLowerCase();
+    
+            if (lower.includes('hello') || lower.includes('hi')) {
+                return "Hello! I'm BabyBIONN running in demo mode. To connect to the full backend:\n\n1. Make sure your FastAPI server is running\n2. Check that it's on port 8001\n3. The interface will automatically detect the connection!";
+            } else if (lower.includes('babybionn') || lower.includes('what is')) {
+                return "BabyBIONN is an advanced AI system using Virtual Neural Instances (VNIs) - specialized AI modules for different domains like medical, legal, and technical tasks. Each VNI is trained for specific expertise areas.";
+            } else if (lower.includes('vni') || lower.includes('virtual neural')) {
+                return "VNI (Virtual Neural Instance) system works by activating specialized AI modules based on the context. For example:\n• Medical queries → Medical VNI\n• Technical questions → Technical VNI\n• Legal inquiries → Legal VNI\n\nStart the backend to see real VNI activation!";
+            } else if (lower.includes('medical') || lower.includes('health')) {
+                return "In full mode, medical VNIs can help with:\n• Symptom analysis\n• Medical information\n• Healthcare guidance\n• Drug interactions\n\nCurrently running in demo mode - connect backend for medical AI capabilities.";
+            } else if (lower.includes('backend') || lower.includes('connect')) {
+                return "To connect the BabyBIONN backend:\n\n1. Start your FastAPI server:\n   <code>uvicorn main:app --reload --port 8001</code>\n\n2. Ensure CORS is enabled for this interface\n3. The status badge will turn green when connected\n4. You'll get access to real VNI processing!";
+            } else {
+                return "I'm currently in demo mode. For full BabyBIONN capabilities with real VNI processing, please start the FastAPI backend server! The demo shows how the interface works, but real AI processing requires the backend connection.";
+            }
+        }
+
+        // Enter key handler
+        document.getElementById('messageInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Auto-resize textarea
+        document.getElementById('messageInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // Test connection on load and every 10 seconds
+        testConnection();
+        setInterval(testConnection, 10000);
+        // ===== ADMIN PRETRAINING FUNCTIONS =====
+
+        // Admin Authentication
+        function adminLogin() {
+            const password = document.getElementById('adminPassword').value;
+            // In production, use proper oAuth - this is for demo
+            if (password === 'babybionn_admin_2024') {
+                document.getElementById('adminLoginSection').style.display = 'none';
+                document.getElementById('pretrainingInterface').style.display = 'block';
+                loadKnowledgeStatus();
+            } else {
+                alert('Invalid admin password');
+            }
+        }
+
+        // Upload pretraining data
+        function uploadPretrainingData() {
+            const fileInput = document.getElementById('pretrainFile');
+            const domain = document.getElementById('domainSelect').value;
+    
+            if (!fileInput.files[0]) {
+                alert('Please select a JSON file');
+                return;
+            }
+    
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+    
+            reader.onload = function(e) {
+                try {
+                    const pretrainData = JSON.parse(e.target.result);
+                    initializePretraining(domain, pretrainData);
+                } catch (error) {
+                    alert('Invalid JSON file: ' + error.message);
+                }
+            };
+    
+            reader.readAsText(file);
+        }
+
+        // Initialize pretraining process
+        function initializePretraining(domain, data) {
+            updateProgress('Starting pretraining process...', 10);
+    
+            if (!backendAvailable) {
+                updateProgress('Error: Backend not connected. Please start the BabyBIONN server.', 0);
+                return;
+            }
+    
+            // Send to backend for processing
+            fetch(`${API_BASE}/admin/pretrain`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({domain: domain, data: data})
+            })
+            .then(response => response.json())
+            .then(result => {
+                updateProgress('Processing synaptic patterns...', 40);
+        
+                if (result.success) {
+                    updateProgress('Pretraining completed successfully!', 100);
+                    showAnalytics(result.analytics);
+                    loadKnowledgeStatus();
+                } else {
+                    updateProgress('Pretraining failed: ' + result.error, 0);
+                }
+            })
+            .catch(error => {
+                updateProgress('Error: ' + error.message, 0);
+            });
+        }
+
+        function updateProgress(message, percent) {
+            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('progressText').innerText = message;
+        }
+
+        function showAnalytics(analytics) {
+            document.getElementById('analyticsData').innerText = JSON.stringify(analytics, null, 2);
+        }
+
+        function loadKnowledgeStatus() {
+            if (!backendAvailable) {
+                document.getElementById('kbList').innerHTML = 
+                    '<div style="color: #f44336;">Backend not connected. Please start the BabyBIONN server.</div>';
+                return;
+            }
+    
+            fetch(`${API_BASE}/admin/knowledge-status`)
+                .then(response => response.json())
+                .then(status => {
+                    if (status.success) {
+                        let html = '<ul style="list-style: none; padding: 0;">';
+                        for (const [domain, info] of Object.entries(status.knowledge_bases)) {
+                            html += `
+                                <li style="padding: 8px; margin: 5px 0; background: white; border-radius: 5px; border-left: 4px solid #4facfe;">
+                                    <strong>${domain.toUpperCase()}</strong><br>
+                                    <small>Concepts: ${info.concepts} | Patterns: ${info.patterns}</small><br>
+                                    <small style="color: #666;">Last updated: ${new Date(info.last_updated * 1000).toLocaleString()}</small>
+                                </li>`;
+                        }
+                        html += '</ul>';
+                        document.getElementById('kbList').innerHTML = html;
+                    } else {
+                        document.getElementById('kbList').innerHTML = 
+                            `<div style="color: #f44336;">Error: ${status.error}</div>`;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('kbList').innerHTML = 
+                `       <div style="color: #f44336;">Failed to load knowledge status: ${error.message}</div>`;
+                });
+        }
+
+        // Load knowledge status when admin tab is opened
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + 'Tab').classList.add('active');
+
+            // If switching to admin tab, load knowledge status
+            if (tabName === 'admin' && backendAvailable) {
+                loadKnowledgeStatus();
+            }
+        }
+    </script>
+</body>
+</html> 

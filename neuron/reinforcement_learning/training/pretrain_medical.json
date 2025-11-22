@@ -1,0 +1,24 @@
+{
+  "concepts": {
+    "headache": {
+      "response": "For headaches, rest in a quiet room, stay hydrated, and consider over-the-counter pain relief. If severe, sudden, or with vision changes, seek immediate medical attention.",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "fever": {
+      "response": "For fever, rest and drink plenty of fluids. Monitor temperature. If over 103°F or lasting more than 3 days, consult a doctor.",
+      "confidence": 0.85,
+      "usage_count": 1
+    }
+  },
+  "response_templates": {
+    "general_query": "For medical questions, I recommend consulting with a healthcare professional for personalized advice. Generally, {concepts} require proper medical evaluation.",
+    "symptom_inquiry": "Regarding {concepts}, these symptoms could have various causes. Monitoring and professional medical consultation are recommended."
+  },
+  "reasoning_patterns": {
+    "symptom_emergency": {
+      "response": "These symptoms sound serious. Please seek immediate medical attention or call emergency services.",
+      "confidence": 0.9
+    }
+  }
+}

@@ -1,0 +1,40 @@
+services:
+  babybionn:
+    image: babybionn:latest   
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: babybionn-app  # Optional
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./knowledge_bases:/app/knowledge_bases
+      - ./models:/app/models
+      - ./ultralytics_cache:/app/ultralytics_cache
+      - ./pretraining_data:/app/pretraining_data       
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app
+      - ULTRAALYTICS_CACHE_DIR=/app/ultralytics_cache
+      - KNOWLEDGE_BASE_DIR=/app/knowledge_bases
+      - MODEL_CACHE_DIR=/app/models
+    restart: unless-stopped  # Optional
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s    
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+        # OPTIONAL: if want to use GPU
+        # devices:
+        #   - driver: nvidia
+        #     count: 1
+        #     capabilities: [gpu]         
