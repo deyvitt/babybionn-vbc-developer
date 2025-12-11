@@ -1,0 +1,96 @@
+{
+  "training_completed": true,
+  "final_episode": 499,
+  "training_stats": {
+    "total_episodes": 500,
+    "successful_episodes": 0,
+    "average_reward": -0.9622956521739131,
+    "domain_performance": {
+      "legal": {
+        "total_episodes": 158,
+        "successful_episodes": 0,
+        "total_reward": -145.99999999999983
+      },
+      "medical": {
+        "total_episodes": 171,
+        "successful_episodes": 0,
+        "total_reward": -164.1478260869567
+      },
+      "technical": {
+        "total_episodes": 171,
+        "successful_episodes": 0,
+        "total_reward": -171.0
+      }
+    },
+    "start_time": 1764670866.5542567
+  },
+  "q_table": {
+    "legal_short": {
+      "VNI_legal_001": -0.4801399264082339,
+      "VNI_technical_001": -0.4764182506920764,
+      "VNI_general_001": -0.483551419302862
+    },
+    "medical_medium": {
+      "VNI_medical_001": -0.5386475648779002,
+      "VNI_general_001": -0.540250365983628,
+      "VNI_technical_001": -0.5364316769043669
+    },
+    "technical_medium": {
+      "VNI_technical_001": -0.841437474168285,
+      "VNI_general_001": -0.8323866968858141
+    }
+  },
+  "evaluation_results": {
+    "timestamp": 1764670870.3217468,
+    "domains_tested": [
+      "medical",
+      "legal",
+      "technical"
+    ],
+    "performance_metrics": {
+      "medical": {
+        "accuracy": 0.0,
+        "average_confidence": 0.8240440105747053,
+        "samples_tested": 2,
+        "correct_responses": 0
+      },
+      "legal": {
+        "accuracy": 1.0,
+        "average_confidence": 0.798436533270675,
+        "samples_tested": 1,
+        "correct_responses": 1
+      },
+      "technical": {
+        "accuracy": 0.0,
+        "average_confidence": 0.8420997032070239,
+        "samples_tested": 1,
+        "correct_responses": 0
+      }
+    },
+    "training_summary": {
+      "total_episodes": 500,
+      "successful_episodes": 0,
+      "average_reward": -0.9622956521739131,
+      "domain_performance": {
+        "legal": {
+          "total_episodes": 158,
+          "successful_episodes": 0,
+          "total_reward": -145.99999999999983
+        },
+        "medical": {
+          "total_episodes": 171,
+          "successful_episodes": 0,
+          "total_reward": -164.1478260869567
+        },
+        "technical": {
+          "total_episodes": 171,
+          "successful_episodes": 0,
+          "total_reward": -171.0
+        }
+      },
+      "start_time": 1764670866.5542567
+    },
+    "analytics_report": "\ud83d\udcca BabyBIONN Learning Analytics Report\n==================================================\n\n\ud83e\udde0 MEDICAL VNI:\n   \u2022 Average Confidence: 69.5%\n   \u2022 Positive Feedback Rate: 0.5%\n   \u2022 Total Interactions: 188\n\n\ud83e\udde0 LEGAL VNI:\n   \u2022 Average Confidence: 72.9%\n   \u2022 Positive Feedback Rate: 0.6%\n   \u2022 Total Interactions: 166\n\n\ud83e\udde0 TECHNICAL VNI:\n   \u2022 Average Confidence: 73.8%\n   \u2022 Positive Feedback Rate: 0.6%\n   \u2022 Total Interactions: 172\n\n\ud83d\udcc8 Overall Statistics:\n   \u2022 Total Sessions: 506\n   \u2022 Total Interactions: 526\n"
+  },
+  "completion_time": 1764670870.3219616
+}

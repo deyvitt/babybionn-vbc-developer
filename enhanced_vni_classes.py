@@ -1,13 +1,35 @@
-# enhanced_vni_classes.py - Complete Implementation
+# enhanced_vni_classes_with_generation.py - COMPLETE Implementation
+import os
 import re
 import json
+import random
+import asyncio
 import hashlib
 import logging
-import random
+from enum import Enum
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional, Tuple
 from collections import defaultdict, deque
+from typing import Set, Dict, List, Any, Optional, Tuple
 
+# ==================== AUTONOMOUS CAPABILITIES IMPORTS ====================
+# Sentence Transformers for topic embeddings
+try:
+    from sentence_transformers import SentenceTransformer
+    SENTENCE_TRANSFORMER_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMER_AVAILABLE = False
+    logging.warning("Sentence Transformers not available - topic embeddings disabled")
+
+# GPT-2 for NLP processing
+try:
+    from transformers import GPT2Tokenizer, GPT2Model
+    GPT2_AVAILABLE = True
+except ImportError:
+    GPT2_AVAILABLE = False
+    logging.warning("GPT-2 not available - NLP processing disabled")
+
+# ========================================================================
 # Optional PyTorch support for attention mechanisms
 try:
     import torch
@@ -17,6 +39,15 @@ try:
 except ImportError:
     TORCH_AVAILABLE = False
     logging.warning("PyTorch not available - attention mechanisms disabled")
+
+# Text Generation Support
+try:
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    GENERATION_AVAILABLE = True
+    logging.info("✅ Transformers available for text generation")
+except ImportError:
+    GENERATION_AVAILABLE = False
+    logging.warning("Transformers not available - text generation disabled")
 
 # Predictive modules with fallback
 try:
@@ -37,6 +68,98 @@ except ImportError:
 
 logger = logging.getLogger("enhanced_vni_classes")
 
+# Add new VNI Types
+class VNIType(str, Enum):
+    MEDICAL = "medical"
+    LEGAL = "legal"
+    TECHNICAL = "technical"
+    ANALYTICAL = "analytical"
+    CREATIVE = "creative"
+    GENERAL = "general"
+    CROSS_DOMAIN = "cross_domain"
+
+# Add new classes at the top or integrate into existing ones
+@dataclass
+class VNICapabilities:
+    """Capabilities required/available for a VNI"""
+    domain_knowledge: List[str] = field(default_factory=list)
+    abstraction_levels: List[str] = field(default_factory=lambda: ["semantic", "structural"])
+    processing_speed: float = 1.0  # 0.0 to 1.0
+    collaboration_score: float = 0.5  # How well this VNI collaborates
+    specializations: Set[str] = field(default_factory=set)
+
+@dataclass
+class CollaborationRequest:
+    """Protocol for VNI-to-VNI collaboration"""
+    request_id: str
+    source_vni_id: str
+    target_vni_ids: List[str]
+    task_description: str
+    data_payload: Dict[str, Any]
+    required_capabilities: VNICapabilities
+    priority: str = "normal"  # low, normal, high, critical
+    timeout_seconds: int = 30
+    response_format: str = "abstraction"  # abstraction, raw, summary
+    created_at: datetime = field(default_factory=datetime.now)
+
+# ==================== SHARED NLP COMPONENTS ====================
+class SharedNLPComponents:
+    """
+    Singleton class to share NLP components across all VNIs
+    Avoids loading multiple copies of large models
+    """
+    _instance = None
+    
+    def __init__(self):
+        if SENTENCE_TRANSFORMER_AVAILABLE:
+            self.sentence_transformer = SentenceTransformer('all-MiniLM-L6-v2')
+            logging.info("✅ Sentence Transformer loaded for topic embeddings")
+        else:
+            self.sentence_transformer = None
+            
+        if GPT2_AVAILABLE:
+            self.gpt2_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+            self.gpt2_model = GPT2Model.from_pretrained('gpt2')
+            logging.info("✅ GPT-2 loaded for NLP processing")
+        else:
+            self.gpt2_tokenizer = None
+            self.gpt2_model = None
+    
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = SharedNLPComponents()
+        return cls._instance
+    
+    def is_available(self) -> bool:
+        """Check if NLP components are available"""
+        return (self.sentence_transformer is not None and 
+                self.gpt2_tokenizer is not None and 
+                self.gpt2_model is not None)
+
+# ==================== SSP CONVERTER ====================
+class SSPConverter:
+    """Convert between Synthetic Synaptic Patterns and tensors"""
+    
+    def __init__(self, embedding_dim: int = 768):
+        self.embedding_dim = embedding_dim
+    
+    def ssp_to_tensors(self, ssp_pattern: Dict) -> Dict[str, Any]:
+        """Convert SSP pattern to Q, K, V tensors"""
+        # For now, return placeholder - will integrate with smart_activation_router
+        return {
+            'Q': None,
+            'K': None,
+            'V': None,
+            'metadata': {'converted': True, 'timestamp': datetime.now().isoformat()}
+        }
+    
+    def tensors_to_ssp(self, tensors: Dict, original_pattern: Dict) -> Dict:
+        """Convert Q,K,V tensors back to SSP pattern"""
+        # For now, return original
+        return original_pattern
+
+# ==================== END OF PRELIMINARY CLASSES ====================
 
 class NeuralPathway:
     """Represents a dynamic synaptic connection between VNIs"""
@@ -93,7 +216,7 @@ class NeuralPathway:
 
 
 class EnhancedBaseVNI:
-    """Base VNI with self-learning, attention mechanisms, and predictive capabilities"""
+    """Base VNI with self-learning, attention mechanisms, predictive capabilities, AND TEXT GENERATION"""
     
     def __init__(self, vni_type: str, instance_id: str):
         self.vni_type = vni_type
@@ -113,7 +236,7 @@ class EnhancedBaseVNI:
         self.confidence_threshold = 0.7
         self.adaptive_learning_rate = 0.1
 
-        # Attention mechanism (from File 1)
+        # Attention mechanism
         self.attention_weights = None
         self.attention_enabled = TORCH_AVAILABLE
 
@@ -122,18 +245,437 @@ class EnhancedBaseVNI:
         self.search_cache = {}
         self.max_search_cache_size = 100
 
+        # ==================== NEW: TEXT GENERATION ====================
+        self.generation_enabled = GENERATION_AVAILABLE
+        self.generator = None
+        self.tokenizer = None
+        self.bridge_layer = None
+        self.generation_config = {
+            'max_new_tokens': 512,
+            'temperature': 0.7,
+            'top_p': 0.9,
+            'top_k': 50,
+            'do_sample': True,
+            'num_return_sequences': 1
+        }
+        self._init_generation_capability()
+
+        # ==================== NEW: DOMAIN CLASSIFIER ====================
+        self.classifier = None
+        self._init_domain_classifier()
+        # ===============================================================
+
         # Predictive systems
         if PREDICTIVE_AVAILABLE:
             self.predictive_vocab = PredictiveVocabulary()
-            self.response_generator = PredictiveResponseGenerator()
+            self.response_generator = PredictiveResponseGenerator(self.predictive_vocab)
         else:
             self.predictive_vocab = self._create_fallback_predictive_vocab()
             self.response_generator = self._create_fallback_response_generator()
             
         self.conversation_context = []
         self.neural_pathways = {}
-        
+
+        # ==================== COLLABORATION ATTRIBUTES ====================
+        # Add collaboration attributes
+        self.collaboration_queue = asyncio.Queue(maxsize=100)
+        self.active_collaborations: Dict[str, CollaborationRequest] = {}
+        self.collaboration_partners: Dict[str, float] = {}  # partner_id -> success_score
+        self.available_capabilities = VNICapabilities()
+        self._init_capabilities()
+        # =================================================================
+
         self._initialize_default_knowledge()
+
+    def _init_capabilities(self):
+        """Initialize VNI capabilities based on domain"""
+        # Set default capabilities
+        self.available_capabilities.domain_knowledge = [self.vni_type]
+        self.available_capabilities.abstraction_levels = ["semantic", "structural"]
+        self.available_capabilities.processing_speed = 1.0
+        self.available_capabilities.collaboration_score = 0.5
+        self.available_capabilities.specializations = {self.vni_type}
+
+        # Domain-specific specializations
+        if self.vni_type == 'medical':
+            self.available_capabilities.specializations.update({'diagnosis', 'treatment', 'symptom_analysis'})
+        elif self.vni_type == 'legal':
+            self.available_capabilities.specializations.update({'contract_review', 'legal_analysis', 'rights_advice'})
+        elif self.vni_type == 'general':
+            self.available_capabilities.specializations.update({'multi_domain', 'analysis', 'problem_solving'})
+
+    # ==================== TEXT GENERATION INITIALIZATION ====================
+    
+    def _init_generation_capability(self):
+        """Initialize text generation using transformers"""
+        if not self.generation_enabled:
+            logger.warning(f"⚠️  Generation not available for {self.instance_id}")
+            return
+        
+        try:
+            # Use DialoGPT for conversational generation
+            model_name = "microsoft/DialoGPT-medium"
+            logger.info(f"🔄 Loading generation model: {model_name}")
+        
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            self.generator = AutoModelForCausalLM.from_pretrained(model_name)
+        
+            # DEBUG: Check model configuration
+            logger.info(f"DEBUG: Model hidden size: {self.generator.config.hidden_size}")
+            logger.info(f"DEBUG: Model vocab size: {self.generator.config.vocab_size}")
+            logger.info(f"DEBUG: Model device: {self.generator.device}")
+        
+            # Add padding token if not present
+            if self.tokenizer.pad_token is None:
+                self.tokenizer.pad_token = self.tokenizer.eos_token
+        
+            # Bridge layer to connect knowledge abstractions to generator
+            if TORCH_AVAILABLE:
+                self.bridge_layer = nn.Sequential(
+                    nn.Linear(512, 1024),  # Abstraction dimension to intermediate
+                    nn.ReLU(),
+                    nn.Dropout(0.1),
+                    nn.Linear(1024, self.generator.config.hidden_size)  # To model dimension
+                )
+                # Move bridge layer to the same device as the generator
+                self.bridge_layer.to(self.generator.device)
+                logger.info(f"✅ Bridge layer initialized: 512 -> {self.generator.config.hidden_size} on device {self.generator.device}")
+        
+            logger.info(f"✅ Generation capability initialized for {self.instance_id}")
+        
+        except Exception as e:
+            logger.error(f"❌ Generation initialization failed: {e}")
+            self.generation_enabled = False
+            self.generator = None
+            self.tokenizer = None
+            self.bridge_layer = None
+
+    def configure_generation(self, **kwargs):
+        """Configure generation parameters"""
+        self.generation_config.update(kwargs)
+        logger.info(f"Generation config updated: {self.generation_config}")
+
+    # ==================== TEXT GENERATION METHODS ====================
+
+    def generate_with_transformer(self, query: str, context: Dict = None, 
+                                  use_bridge: bool = True) -> str:
+        """Generate response using transformer model with domain knowledge"""
+        if not self.generation_enabled or self.generator is None:
+            logger.warning(f"Generation not available, using fallback")
+            return self._generate_fallback_response(query, context)
+        
+        try:
+            # Strategy 1: Use bridge layer with knowledge abstractions
+            if use_bridge and TORCH_AVAILABLE and self.bridge_layer is not None:
+                return self._generate_with_knowledge_bridge(query, context)
+            
+            # Strategy 2: Direct generation with domain-specific prompt
+            else:
+                return self._generate_with_domain_prompt(query, context)
+                
+        except Exception as e:
+            logger.error(f"❌ Generation failed: {e}")
+            return self._generate_fallback_response(query, context)
+
+    def _generate_with_knowledge_bridge(self, query: str, context: Dict) -> str:
+        """Generate using bridge layer connecting knowledge to transformer"""
+        # Create knowledge abstraction
+        abstraction = self._create_knowledge_abstraction(query, context)
+        abstraction_tensor = self._extract_abstraction_tensor(abstraction)
+
+        # DEBUG: Check tensor device
+        logger.info(f"DEBUG: Abstraction tensor shape: {abstraction_tensor.shape}")
+    
+        # Move abstraction tensor to the same device as the generator
+        if self.generator is not None:
+            device = self.generator.device
+            abstraction_tensor = abstraction_tensor.to(device)
+
+        # Convert abstraction to generator input via bridge
+        with torch.no_grad():
+            bridge_output = self.bridge_layer(abstraction_tensor)
+
+            # DEBUG: Check shapes
+            logger.info(f"DEBUG: Bridge output shape: {bridge_output.shape}")
+        
+            # The bridge output should be (hidden_size), we need to add batch dimension
+            # and sequence dimension: (batch_size=1, seq_len=1, hidden_size)
+            if len(bridge_output.shape) == 1:
+                bridge_output = bridge_output.unsqueeze(0).unsqueeze(0)  # (1, 1, hidden_size)
+            elif len(bridge_output.shape) == 2:
+                bridge_output = bridge_output.unsqueeze(0)  # (batch, seq, hidden) -> (1, batch, hidden)?
+        
+            logger.info(f"DEBUG: Bridge output after reshape: {bridge_output.shape}")            
+
+            # Generate text using transformer
+            generated = self.generator.generate(
+                inputs_embeds=bridge_output,
+                max_new_tokens=self.generation_config['max_new_tokens'],
+                temperature=self.generation_config['temperature'],
+                top_p=self.generation_config['top_p'],
+                top_k=self.generation_config['top_k'],
+                do_sample=self.generation_config['do_sample'],
+                pad_token_id=self.tokenizer.eos_token_id,
+                eos_token_id=self.tokenizer.eos_token_id
+            )
+            
+            response = self.tokenizer.decode(generated[0], skip_special_tokens=True)
+            
+            # Post-process response
+            response = self._post_process_generated_response(response, query, context)
+            
+            return response if response else self._generate_fallback_response(query, context)
+
+    def _generate_with_domain_prompt(self, query: str, context: Dict) -> str:
+        """Generate with domain-specific prompting"""
+        # Build domain-aware prompt
+        domain_prompt = self._build_domain_prompt(query, context)
+        
+        # Encode and generate - FIXED VERSION
+        inputs = self.tokenizer(
+            domain_prompt, 
+            return_tensors="pt"
+        )
+        # Check for empty input
+        if inputs.input_ids.shape[1] == 0:
+            logger.error("Empty input from tokenizer!")
+            return self._generate_fallback_response(query, context)
+        
+        with torch.no_grad():
+            generated = self.generator.generate(
+                inputs,
+                max_new_tokens=self.generation_config['max_new_tokens'],
+                temperature=self.generation_config['temperature'],
+                top_p=self.generation_config['top_p'],
+                top_k=self.generation_config['top_k'],
+                do_sample=self.generation_config['do_sample'],
+                pad_token_id=self.tokenizer.eos_token_id
+            )
+        
+        response = self.tokenizer.decode(generated[0], skip_special_tokens=True)
+        
+        # Remove the prompt from response
+        if domain_prompt in response:
+            response = response.replace(domain_prompt, "").strip()
+        
+        return self._post_process_generated_response(response, query, context)
+
+    def _build_domain_prompt(self, query: str, context: Dict) -> str:
+        """Build domain-specific prompt for generation"""
+        # Get domain knowledge
+        concepts, patterns = self.extract_concepts_and_patterns(query)
+        
+        # Build context-aware prompt
+        prompt_parts = []
+        
+        # Add domain context
+        if self.vni_type == 'medical':
+            prompt_parts.append("As a medical AI assistant:")
+        elif self.vni_type == 'legal':
+            prompt_parts.append("As a legal AI assistant:")
+        else:
+            prompt_parts.append("As a helpful AI assistant:")
+        
+        # Add relevant knowledge
+        if concepts:
+            prompt_parts.append(f"Regarding {', '.join(concepts[:3])}:")
+        
+        # Add query
+        prompt_parts.append(query)
+        
+        return " ".join(prompt_parts)
+
+    def _create_knowledge_abstraction(self, query: str, context: Dict) -> Dict[str, Any]:
+        """Create knowledge abstraction for bridge layer"""
+        concepts, patterns = self.extract_concepts_and_patterns(query)
+        current_context = self.get_current_context(context.get('session_id', 'default') if context else 'default')
+        
+        return {
+            'modality': 'text',
+            'abstraction_levels': {
+                'semantic': {
+                    'tensor': self._create_semantic_tensor(query, concepts),
+                    'concepts': concepts,
+                    'intent': self._predict_user_intent(query, []),
+                    'domain': self.vni_type,
+                    'sentiment': self.detect_emotional_tone(query)
+                },
+                'structural': {
+                    'tensor': self._create_structural_tensor(query, patterns),
+                    'patterns': patterns,
+                    'complexity': self.assess_complexity(query),
+                    'query_type': self._classify_query_type(query)
+                }
+            },
+            'context': current_context,
+            'confidence': self.calculate_confidence(concepts, patterns)
+        }
+
+    def _create_semantic_tensor(self, query: str, concepts: List[str]) -> torch.Tensor:
+        """Create semantic representation tensor"""
+        if not TORCH_AVAILABLE:
+            return torch.randn(256)
+        
+        # Simple embedding: word count, concept presence, domain relevance
+        features = []
+        
+        # Basic features
+        features.append(len(query.split()) / 100.0)  # Normalized word count
+        features.append(len(concepts) / 10.0)  # Normalized concept count
+        
+        # Domain-specific features
+        domain_keywords = self.get_default_concepts().keys()
+        domain_match = sum(1 for kw in domain_keywords if kw in query.lower()) / max(len(domain_keywords), 1)
+        features.append(domain_match)
+        
+        # Pad to 256 dimensions
+        while len(features) < 256:
+            features.append(0.0)
+        
+        return torch.tensor(features[:256], dtype=torch.float32)
+
+    def _create_structural_tensor(self, query: str, patterns: List[str]) -> torch.Tensor:
+        """Create structural representation tensor"""
+        if not TORCH_AVAILABLE:
+            return torch.randn(256)
+        
+        features = []
+        
+        # Structural features
+        features.append(1.0 if '?' in query else 0.0)  # Is question
+        features.append(len(patterns) / 5.0)  # Normalized pattern count
+        features.append(self.assess_complexity(query))  # Complexity score
+        
+        # Sentiment features
+        features.append(1.0 if self.detect_urgency(query) == 'high' else 0.0)
+        
+        # Pad to 256 dimensions
+        while len(features) < 256:
+            features.append(0.0)
+        
+        return torch.tensor(features[:256], dtype=torch.float32)
+
+    def _extract_abstraction_tensor(self, abstraction: Dict) -> torch.Tensor:
+        """Extract and combine abstraction tensors"""
+        if not TORCH_AVAILABLE:
+            return torch.randn(512)
+        
+        semantic = abstraction['abstraction_levels']['semantic']['tensor']
+        structural = abstraction['abstraction_levels']['structural']['tensor']
+        
+        # Combine semantic and structural representations
+        return torch.cat([semantic, structural], dim=0)
+
+    def _classify_query_type(self, query: str) -> str:
+        """Classify the type of query"""
+        q = query.lower()
+        
+        if any(w in q for w in ['what', 'which', 'who']):
+            return 'factual'
+        elif any(w in q for w in ['how', 'can', 'could']):
+            return 'procedural'
+        elif any(w in q for w in ['why', 'explain']):
+            return 'explanatory'
+        elif any(w in q for w in ['should', 'recommend', 'advice']):
+            return 'advisory'
+        else:
+            return 'general'
+
+    def _post_process_generated_response(self, response: str, query: str, context: Dict) -> str:
+        """Post-process generated response"""
+        if not response or not response.strip():
+            return self._generate_fallback_response(query, context)
+        
+        # Remove query repetition
+        if query.lower() in response.lower():
+            response = response.replace(query, "").strip()
+        
+        # Clean up artifacts
+        response = response.strip()
+        response = re.sub(r'\s+', ' ', response)  # Normalize whitespace
+        
+        # Add domain-specific disclaimers if needed
+        if self.vni_type == 'medical' and len(response) > 50:
+            if 'consult' not in response.lower() and random.random() > 0.7:
+                response += " Please consult a healthcare professional for personalized advice."
+        elif self.vni_type == 'legal' and len(response) > 50:
+            if 'attorney' not in response.lower() and random.random() > 0.7:
+                response += " Consider consulting with a qualified attorney for your specific situation."
+        
+        return response
+
+    # ==================== PRETRAINING METHODS ====================
+    
+    def update_knowledge_base(self, data: dict):
+        """Update knowledge base with pretraining data"""
+        logger.info(f"📄 Updating knowledge base for {self.instance_id} with {len(data)} items")
+        
+        # Handle different data structures
+        if isinstance(data, dict):
+            # Update concepts
+            if 'concepts' in data:
+                for concept, concept_data in data['concepts'].items():
+                    if concept not in self.knowledge_base['concepts']:
+                        self.knowledge_base['concepts'][concept] = {
+                            'strength': 0.8,
+                            'usage_count': 0,
+                            'pretrained': True,
+                            'first_seen': datetime.now().isoformat(),
+                            'last_used': datetime.now().isoformat()
+                        }
+                    else:
+                        self.knowledge_base['concepts'][concept]['strength'] = min(
+                            1.0, self.knowledge_base['concepts'][concept]['strength'] + 0.1
+                        )
+                        self.knowledge_base['concepts'][concept]['pretrained'] = True
+            
+            # Update patterns
+            if 'patterns' in data:
+                for pattern_id, pattern_data in data['patterns'].items():
+                    if pattern_id not in self.knowledge_base['patterns']:
+                        self.knowledge_base['patterns'][pattern_id] = pattern_data
+                        self.knowledge_base['patterns'][pattern_id]['pretrained'] = True
+                    else:
+                        existing = self.knowledge_base['patterns'][pattern_id]
+                        existing['strength'] = min(1.0, existing['strength'] + 0.1)
+                        existing['pretrained'] = True
+            
+            # Update response templates
+            if 'response_templates' in data:
+                for template_type, templates in data['response_templates'].items():
+                    if template_type not in self.knowledge_base['response_templates']:
+                        self.knowledge_base['response_templates'][template_type] = templates
+                    else:
+                        self.knowledge_base['response_templates'][template_type].extend(templates)
+        
+        # Mark as updated and save
+        self.knowledge_base['metadata']['last_updated'] = datetime.now().isoformat()
+        self.knowledge_base['metadata']['pretrained'] = True
+        self.save_knowledge_base()
+        
+        logger.info(f"✅ Knowledge base updated for {self.instance_id}")
+
+    def get_knowledge_stats(self):
+        """Get knowledge base statistics"""
+        stats = {
+            "concepts_count": len(self.knowledge_base.get("concepts", {})),
+            "patterns_count": len(self.knowledge_base.get("patterns", {})),
+            "response_templates_count": sum(len(templates) for templates in self.knowledge_base.get("response_templates", {}).values()),
+            "learned_responses_count": len(self.learned_responses),
+            "last_updated": self.knowledge_base.get('metadata', {}).get('last_updated', 'unknown'),
+            "pretrained": self.knowledge_base.get('metadata', {}).get('pretrained', False),
+            "instance_id": self.instance_id,
+            "vni_type": self.vni_type,
+            "generation_enabled": self.generation_enabled
+        }
+        
+        # Count pretrained vs learned concepts
+        concepts = self.knowledge_base.get("concepts", {})
+        pretrained_count = sum(1 for c in concepts.values() if c.get('pretrained', False))
+        stats["pretrained_concepts_count"] = pretrained_count
+        stats["learned_concepts_count"] = stats["concepts_count"] - pretrained_count
+        
+        return stats
 
     # ==================== FALLBACK IMPLEMENTATIONS ====================
 
@@ -196,14 +738,55 @@ class EnhancedBaseVNI:
         
         return FallbackResponseGenerator()
 
-    # ==================== ATTENTION MECHANISM (from File 1) ====================
+    # ==================== ATTENTION MECHANISM ====================
 
     def integrate_attention_weights(self, attention_weights):
         """Integrate attention weights for improved response generation"""
         if TORCH_AVAILABLE and attention_weights is not None:
             self.attention_weights = attention_weights
             logger.debug(f"{self.instance_id} integrated attention weights")
+
+    # ==================== DOMAIN CLASSIFIER METHODS ====================
+
+    def _init_domain_classifier(self):
+        """Initialize domain classifier - override in subclasses"""
+        # Default empty classifier
+        class DefaultClassifier:
+            def __init__(self):
+                self.keywords = []
+            
+            def predict(self, texts):
+                """Return 0 for all texts (not this domain)"""
+                return [0] * len(texts)
+            
+            def predict_proba(self, texts):
+                """Return [1.0, 0.0] for all texts (100% not this domain)"""
+                return [[1.0, 0.0]] * len(texts)
         
+        self.classifier = DefaultClassifier()
+        logger.info(f"Default classifier initialized for {self.instance_id}")
+    
+    def should_handle(self, query: str) -> bool:
+        """Determine if this VNI should handle the query"""
+        if self.classifier is not None:
+            try:
+                prediction = self.classifier.predict([query])
+                return prediction[0] == 1 if len(prediction) > 0 else False
+            except Exception as e:
+                logger.error(f"Classifier error in {self.instance_id}: {e}")
+        
+        # Fallback: check if query contains domain-specific keywords
+        return self._fallback_domain_check(query)
+    
+    def _fallback_domain_check(self, query: str) -> bool:
+        """Fallback domain check - override in subclasses"""
+        return False
+    
+    def is_initialized(self) -> bool:
+        """Check if VNI is fully initialized"""
+        return hasattr(self, 'generation_enabled') and self.generation_enabled
+
+
     def process_query_with_attention(self, query: str, context: Dict, attention_scores: Dict) -> Dict[str, Any]:
         """Process query with attention-guided context"""
         self_attention_score = attention_scores.get(self.instance_id, 0.5)
@@ -226,144 +809,212 @@ class EnhancedBaseVNI:
         
         return base_response
 
-    # ==================== KNOWLEDGE BASE MANAGEMENT ====================
-
-    def _load_knowledge_base(self) -> Dict[str, Any]:
-        """Load knowledge base from file"""
-        import os
-        
-        knowledge_file = f"knowledge_{self.vni_type}_{self.instance_id}.json"
-        default_knowledge = {
-            "concepts": {},
-            "patterns": {},
-            "corrections": {},
-            "response_templates": self.get_default_response_templates(),
-            "learned_responses": {},
-            "metadata": {
-                "created": datetime.now().isoformat(),
-                "last_updated": datetime.now().isoformat(),
-                "version": "2.0"
-            }
-        }
-        
-        try:
-            if os.path.exists(knowledge_file):
-                with open(knowledge_file, 'r', encoding='utf-8') as f:
-                    loaded = json.load(f)
-                    for key, value in default_knowledge.items():
-                        if key not in loaded:
-                            loaded[key] = value
-                    self.learned_responses = loaded.get('learned_responses', {})
-                    return loaded
-            else:
-                with open(knowledge_file, 'w', encoding='utf-8') as f:
-                    json.dump(default_knowledge, f, indent=2, ensure_ascii=False)
-                logger.info(f"Created knowledge base: {knowledge_file}")
-                return default_knowledge
-        except Exception as e:
-            logger.warning(f"Failed to load knowledge base: {e}")
-            return default_knowledge
-
-    def _initialize_default_knowledge(self):
-        """Initialize with domain-specific defaults"""
-        if not self.knowledge_base["concepts"]:
-            self.knowledge_base["concepts"].update(self.get_default_concepts())
-        if not self.knowledge_base["patterns"]:
-            self.knowledge_base["patterns"].update(self.get_default_patterns())
-        self.save_knowledge_base()
-
-    def save_knowledge_base(self):
-        """Save knowledge base to file"""
-        filename = f"knowledge_{self.vni_type}_{self.instance_id}.json"
-        self.knowledge_base['learned_responses'] = self.learned_responses
-        self.knowledge_base['metadata']['last_updated'] = datetime.now().isoformat()
-        
-        try:
-            with open(filename, 'w', encoding='utf-8') as f:
-                json.dump(self.knowledge_base, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            logger.error(f"Failed to save knowledge base: {e}")
-
-    def get_default_concepts(self) -> Dict[str, Any]:
-        return {"help": {"strength": 0.8, "usage_count": 0}, "information": {"strength": 0.7, "usage_count": 0}}
-
-    def get_default_patterns(self) -> Dict[str, Any]:
-        return {"general_help": {"triggers": ["help", "assist"], "responses": ["I'm here to help."], "strength": 0.7, "usage_count": 0}}
-
-    def get_default_response_templates(self) -> Dict[str, List[str]]:
-        return {"general": ["I understand this is a {vni_type} question. Could you provide more details?"]}
-
     # ==================== CORE QUERY PROCESSING ====================
 
-    def process_query(self, query: str, context: Dict = None, session_id: str = "default") -> Dict[str, Any]:
-        """Main query processing with all features integrated"""
+    def process_query(self, query: str, context: Dict = None, session_id: str = "default",
+                     use_generation: bool = None, generation_strategy: str = "auto") -> Dict[str, Any]:
+        """
+        Main query processing with generation support
+        
+        Args:
+            query: User query
+            context: Additional context
+            session_id: Session identifier
+            use_generation: Force generation on/off (None = auto-decide)
+            generation_strategy: "bridge", "prompt", or "auto"
+        """
         
         # Update systems
         self.update_context_memory(session_id, query, context)
-        self.predictive_vocab.update_vocabulary(query, self.vni_type)
+        
+        # Update vocabulary
+        if hasattr(self.predictive_vocab, 'update_vocabulary'):
+            self.predictive_vocab.update_vocabulary(query, self.vni_type)
+        else:
+            words = query.lower().split()
+            for word in words:
+                if len(word) > 2 and hasattr(self.predictive_vocab, 'learn_word'):
+                    self.predictive_vocab.learn_word(word, {'domain': self.vni_type}, self.vni_type)
         
         # Get context and predictions
         current_context = self.get_current_context(session_id)
-        predictive_suggestions = self.predictive_vocab.get_predictive_suggestions(query)
+        predictive_suggestions = []
+        if hasattr(self.predictive_vocab, 'get_predictive_suggestions'):
+            predictive_suggestions = self.predictive_vocab.get_predictive_suggestions(query)
         
-        # Try learned responses first
-        learned = self.get_learned_response(query, current_context)
-        if learned and learned['usage_count'] >= self.usage_threshold:
-            response_text = learned['response']
-            confidence = 0.8
-            concepts, patterns = [], ["learned_response"]
-        else:
-            # Generate new response using predictive system
-            concepts, patterns = self.extract_concepts_and_patterns(query)
-            response_text = self.generate_truly_predictive_response(query, current_context, predictive_suggestions)
-            confidence = self.calculate_confidence(concepts, patterns)
-            self.learn_from_conversation(query, response_text, current_context, session_id)
+        # Extract concepts and patterns
+        concepts, patterns = self.extract_concepts_and_patterns(query)
+        confidence = self.calculate_confidence(concepts, patterns)
+        
+        # ==================== DECISION: USE GENERATION OR NOT ====================
+        should_generate = self._should_use_generation(
+            query, concepts, patterns, confidence, use_generation, current_context
+        )
+        
+        response_text = ""
+        generation_used = False
+        
+        if should_generate:
+            # Try generation
+            try:
+                if generation_strategy == "auto":
+                    # Use bridge if we have good knowledge, otherwise use prompt
+                    use_bridge = confidence > 0.5 and len(concepts) > 0
+                else:
+                    use_bridge = generation_strategy == "bridge"
+                
+                response_text = self.generate_with_transformer(query, current_context, use_bridge)
+                if response_text and response_text.strip():                
+                    generation_used = True
+                    logger.info(f"✅ Used generation ({'bridge' if use_bridge else 'prompt'}) for query")
+                
+                else:
+                    # Generation returned empty string
+                    response_text = ""
+                    logger.warning("Generation returned empty string, falling back")            
+                
+            except Exception as e:
+                logger.warning(f"Generation failed, falling back: {e}")
+                response_text = ""
+        
+        # Fallback to template/pattern-based response
+        if not response_text or not response_text.strip():
+            # Try learned responses first
+            learned = self.get_learned_response(query, current_context)
+            if learned and learned['usage_count'] >= self.usage_threshold:
+                response_text = learned['response']
+                patterns_with_learned = patterns + ["learned_response"]
+                patterns = patterns_with_learned
+            else:
+                # Generate using templates and patterns
+                response_text = self.generate_truly_predictive_response(
+                    query, current_context, predictive_suggestions
+                )
+                self.learn_from_conversation(query, response_text, current_context, session_id)
+        
+        # Ensure we have a response
+        if not response_text or response_text.strip() == "":
+            response_text = self._generate_fallback_response(query, current_context)
+            if confidence < 0.5:
+                confidence = 0.5
 
         # Web search enhancement
+        web_search_used = False
         if self.web_search_enabled and self.needs_web_search(query, confidence, concepts):
             response_text = self.enhance_with_web_search(query, response_text, concepts, confidence)
+            web_search_used = True
 
+        # Remember conversation
         self.remember_conversation(session_id, query, response_text, current_context)
         
+        # Build response data
         response_data = {
             'response': response_text,
             'confidence': confidence,
             'vni_instance': self.instance_id,
             'concepts_used': concepts,
             'patterns_matched': patterns,
-            'response_type': f'{self.vni_type}_response',
+            'response_type': f'{self.vni_type}_{"generated" if generation_used else "templated"}',
             'context_used': bool(current_context),
-            'web_search_used': self.web_search_enabled and self.needs_web_search(query, confidence, concepts),
+            'web_search_used': web_search_used,
+            'generation_used': generation_used,
+            'generation_available': self.generation_enabled,
             'timestamp': datetime.now().isoformat()
         }
 
+        # Update learning history
         self.learning_history.append({
-            'query': query, 'response': response_data,
+            'query': query, 
+            'response': response_data,
             'timestamp': datetime.now().isoformat(),
-            'context': current_context, 'session_id': session_id
+            'context': current_context, 
+            'session_id': session_id,
+            'generation_used': generation_used
         })
 
+        # Periodic save
         if len(self.learning_history) % 10 == 0:
             self.save_knowledge_base()
 
         return response_data
 
-    # ==================== PREDICTIVE RESPONSE GENERATION (from File 1) ====================
+    def _should_use_generation(self, query: str, concepts: List[str], patterns: List[str],
+                               confidence: float, force_generation: Optional[bool],
+                               context: Dict) -> bool:
+        """Decide whether to use generation or template-based response"""
+        
+        # Forced decision
+        if force_generation is not None:
+            return force_generation and self.generation_enabled
+        
+        # Generation not available
+        if not self.generation_enabled:
+            return False
+        
+        # Use generation for:
+        # 1. Novel queries (low confidence, few patterns)
+        # 2. Complex queries
+        # 3. Queries requiring creative responses
+        
+        novelty_score = 1.0 - confidence
+        complexity = self.assess_complexity(query)
+        
+        # Check if we have good template matches
+        has_good_templates = len(patterns) >= 2 or confidence > 0.7
+        
+        # Generation decision criteria
+        use_generation = (
+            novelty_score > 0.6 or  # Novel query
+            complexity > 0.7 or      # Complex query
+            (novelty_score > 0.4 and not has_good_templates)  # Moderate novelty, no templates
+        )
+        
+        return use_generation
+
+    # ==================== PREDICTIVE RESPONSE GENERATION ====================
 
     def generate_truly_predictive_response(self, query: str, context: Dict, predictive_suggestions: List[str] = None) -> str:
         """Generate response using learned patterns and predictions"""
         
         # Get completions and analyze trend
-        completions = self.predictive_vocab.get_predictive_completions(query)
+        completions = []
+        if hasattr(self.predictive_vocab, 'get_predictive_completions'):
+            completions = self.predictive_vocab.get_predictive_completions(query)
+        
         conversation_trend = self._analyze_conversation_trend(context)
         
         # Predict intent and generate
+        response = ""
         if completions:
             predicted_intent = self._predict_user_intent(query, completions)
-            return self._generate_from_predicted_intent(predicted_intent, context)
+            response = self._generate_from_predicted_intent(predicted_intent, context)
         else:
             concepts, patterns = self.extract_concepts_and_patterns(query)
-            return self.generate_adaptive_response(query, concepts, patterns, context)
+            response = self.generate_adaptive_response(query, concepts, patterns, context)
+
+        # Ensure we always return a response
+        if not response or response.strip() == "":
+            response = self._generate_fallback_response(query, context)
+        return response
+    
+    def _generate_fallback_response(self, query: str, context: Dict) -> str:
+        """Generate a fallback response when no other response is generated"""
+        input_lower = query.lower()
+    
+        if any(greet in input_lower for greet in ["hello", "hi", "hey", "greetings"]):
+            return f"Hello! I'm {self.instance_id}, a specialized {self.vni_type} VNI. How can I help you today?"
+    
+        if "your name" in input_lower or "who are you" in input_lower:
+            return f"My name is {self.instance_id}. I'm a specialized VNI for {self.vni_type} domain."
+    
+        # Domain-specific fallbacks
+        fallbacks = {
+            "medical": "From a medical perspective, I'd be happy to help. Could you provide more details about your health concern?",
+            "legal": "From a legal standpoint, I can help analyze your situation. Please share more context.",
+            "general": "I'd be happy to help analyze this. Could you provide more specific details?"
+        }
+    
+        return fallbacks.get(self.vni_type, "I'm here to help. Could you provide more information?")
 
     def _analyze_conversation_trend(self, context: Dict) -> Dict[str, Any]:
         """Analyze conversation patterns"""
@@ -481,7 +1132,7 @@ class EnhancedBaseVNI:
             return best['response']
         return "I'd be happy to help. Could you provide a bit more context?"
 
-    # ==================== EXPLANATION HELPERS (from File 1) ====================
+    # ==================== EXPLANATION HELPERS ====================
 
     def _get_detailed_explanation(self, topic: str, expansions: List[str]) -> str:
         if expansions:
@@ -505,27 +1156,25 @@ class EnhancedBaseVNI:
     def _get_balanced_explanation(self) -> str:
         return "This involves understanding core concepts, implementation, and scenario-specific adjustments."
 
-    def _get_topic_details(self, topic: str) -> str:
-        if topic in self.knowledge_base.get('concepts', {}):
-            strength = self.knowledge_base['concepts'][topic].get('strength', 0.5)
-            if strength > 0.7:
-                return "This is well-established with clear principles and best practices."
-            return "I'm developing understanding but can share what I've learned."
-        return "This involves multiple considerations worth exploring."
-
     # ==================== ADAPTIVE RESPONSE GENERATION ====================
 
     def generate_adaptive_response(self, query: str, concepts: List[str], patterns: List[str], context: Dict) -> str:
         """Generate responses that adapt based on context"""
-        
+        response = ""
         if patterns and random.random() > 0.3:
             pattern_id = patterns[0]
             if pattern_id in self.knowledge_base.get("patterns", {}):
                 pattern_data = self.knowledge_base["patterns"][pattern_id]
-                base = random.choice(pattern_data.get("responses", []))
-                return self.personalize_response(base, query, context)
-        
-        return self.create_contextual_response(query, concepts, context)
+                base_responses = pattern_data.get("responses", [])
+                if base_responses:
+                    base = random.choice(base_responses)
+                    response = self.personalize_response(base, query, context)
+    
+        # If no pattern response was generated, try contextual response
+        if not response or response.strip() == "":
+            response = self.create_contextual_response(query, concepts, context)
+    
+        return response
 
     def personalize_response(self, base: str, query: str, context: Dict) -> str:
         """Personalize response based on context"""
@@ -576,6 +1225,78 @@ class EnhancedBaseVNI:
         if conv_length > 5:
             return f"As we continue discussing {self.vni_type} topics, could you provide more specific details?"
         return f"As a {self.vni_type} AI, I'm here to help. Could you provide more details?"
+
+    # ==================== KNOWLEDGE BASE MANAGEMENT ====================
+
+    def _load_knowledge_base(self) -> Dict[str, Any]:
+        """Load knowledge base from file"""
+        import os
+        
+        knowledge_file = f"knowledge_{self.vni_type}_{self.instance_id}.json"
+        default_knowledge = {
+            "concepts": {},
+            "patterns": {},
+            "corrections": {},
+            "response_templates": self.get_default_response_templates(),
+            "learned_responses": {},
+            "metadata": {
+                "created": datetime.now().isoformat(),
+                "last_updated": datetime.now().isoformat(),
+                "version": "3.0",
+                "generation_enabled": GENERATION_AVAILABLE
+            }
+        }
+        
+        try:
+            if os.path.exists(knowledge_file):
+                with open(knowledge_file, 'r', encoding='utf-8') as f:
+                    loaded = json.load(f)
+                    for key, value in default_knowledge.items():
+                        if key not in loaded:
+                            loaded[key] = value
+                    self.learned_responses = loaded.get('learned_responses', {})
+                    return loaded
+            else:
+                with open(knowledge_file, 'w', encoding='utf-8') as f:
+                    json.dump(default_knowledge, f, indent=2, ensure_ascii=False)
+                logger.info(f"Created knowledge base: {knowledge_file}")
+                return default_knowledge
+        except Exception as e:
+            logger.warning(f"Failed to load knowledge base: {e}")
+            return default_knowledge
+
+    def _initialize_default_knowledge(self):
+        """Initialize with domain-specific defaults"""
+        if not self.knowledge_base["concepts"]:
+            self.knowledge_base["concepts"].update(self.get_default_concepts())
+        if not self.knowledge_base["patterns"]:
+            self.knowledge_base["patterns"].update(self.get_default_patterns())
+        self.save_knowledge_base()
+
+    def save_knowledge_base(self):
+        """Save knowledge base to file"""
+        filename = f"knowledge_{self.vni_type}_{self.instance_id}.json"
+        self.knowledge_base['learned_responses'] = self.learned_responses
+        self.knowledge_base['metadata']['last_updated'] = datetime.now().isoformat()
+        self.knowledge_base['metadata']['generation_enabled'] = self.generation_enabled
+        
+        try:
+            with open(filename, 'w', encoding='utf-8') as f:
+                json.dump(self.knowledge_base, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"Failed to save knowledge base: {e}")
+
+    def get_default_concepts(self) -> Dict[str, Any]:
+        """Override in subclasses"""
+        return {"help": {"strength": 0.8, "usage_count": 0}, "information": {"strength": 0.7, "usage_count": 0}}
+
+    def get_default_patterns(self) -> Dict[str, Any]:
+        """Override in subclasses"""
+        return {"general_help": {"triggers": ["help", "assist"], "responses": ["I'm here to help."], "strength": 0.7, "usage_count": 0}}
+
+    def get_default_response_templates(self) -> Dict[str, List[str]]:
+        """Override in subclasses"""
+        return {"general": ["I understand this is a {vni_type} question. Could you provide more details?"]}
 
     # ==================== CONTEXT MEMORY SYSTEM ====================
 
@@ -712,7 +1433,6 @@ class EnhancedBaseVNI:
                     'first_seen': datetime.now().isoformat(),
                     'last_used': datetime.now().isoformat()
                 }
-                logger.debug(f"Learned concept: {word}")
 
     def remember_conversation(self, session_id: str, query: str, response: str, context: Dict):
         self.conversation_memory.append({
@@ -809,9 +1529,9 @@ class EnhancedBaseVNI:
             'detail_level': 'high' if avg_len > 80 else 'medium' if avg_len > 30 else 'low'
         }
 
-    def assess_complexity(self, query: str) -> str:
+    def assess_complexity(self, query: str) -> float:
         wc = len(query.split())
-        return 'high' if wc > 15 else 'medium' if wc > 8 else 'low'
+        return min(1.0, wc / 50)
 
     def detect_emotional_tone(self, query: str) -> str:
         q = query.lower()
@@ -844,33 +1564,6 @@ class EnhancedBaseVNI:
             return response + " Would you like more specific details?"
         return response
 
-    def learn_from_feedback(self, feedback_data: Dict[str, Any]):
-        try:
-            msg_id = feedback_data.get('message_id')
-            fb_type = feedback_data.get('feedback_type')
-            correction = feedback_data.get('correction')
-            
-            original = self.find_original_message(msg_id)
-            if original:
-                pattern = self.extract_query_pattern(original.get('query', ''))
-                if pattern in self.learned_responses:
-                    if fb_type == 'positive':
-                        self.learned_responses[pattern]['success_rate'] = min(1.0, 
-                            self.learned_responses[pattern]['success_rate'] + 0.2)
-                    elif fb_type == 'negative':
-                        self.learned_responses[pattern]['success_rate'] = max(0.0,
-                            self.learned_responses[pattern]['success_rate'] - 0.3)
-                    if correction:
-                        self.learned_responses[pattern]['response'] = correction
-        except Exception as e:
-            logger.error(f"Feedback learning failed: {e}")
-
-    def find_original_message(self, message_id: str) -> Optional[Dict[str, Any]]:
-        for msg in self.conversation_memory:
-            if str(hash(msg.get('query', '')))[:8] == message_id:
-                return msg
-        return None
-
     def get_capabilities(self) -> Dict[str, Any]:
         return {
             'vni_type': self.vni_type,
@@ -881,18 +1574,124 @@ class EnhancedBaseVNI:
             'learning_enabled': True,
             'context_memory': True,
             'knowledge_base_size': len(self.knowledge_base.get('concepts', {})),
-            'learned_responses_count': len(self.learned_responses)
+            'learned_responses_count': len(self.learned_responses),
+            'generation_enabled': self.generation_enabled,
+            'generation_model': 'DialoGPT-medium' if self.generation_enabled else 'none',
+            'bridge_layer_available': self.bridge_layer is not None
         }
 
+    def test_generation_simple(self) -> bool:
+        """Simple test to verify generation works"""
+        if not self.generation_enabled:
+            logger.error("Generation not enabled")
+            return False
+    
+        try:
+            # Simple test prompt
+            test_prompt = "Hello, how are you?"
+        
+            # Tokenize properly
+            inputs = self.tokenizer(test_prompt, return_tensors="pt")
+        
+            logger.info(f"Test: Input shape: {inputs.input_ids.shape}")
+            logger.info(f"Test: Tokenizer vocab size: {self.tokenizer.vocab_size}")
+        
+            # Generate
+            generated = self.generator.generate(
+                input_ids=inputs.input_ids,
+                attention_mask=inputs.attention_mask,
+                max_new_tokens=50,
+                temperature=0.7,
+                pad_token_id=self.tokenizer.eos_token_id,
+                eos_token_id=self.tokenizer.eos_token_id
+            )
+        
+            response = self.tokenizer.decode(generated[0], skip_special_tokens=True)
+            logger.info(f"Test: Generated response: {response}")
+
+            return len(response) > 0
+        
+        except Exception as e:
+            logger.error(f"Test generation failed: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
 
 # ==================== SPECIALIZED VNI CLASSES ====================
 
 class EnhancedMedicalVNI(EnhancedBaseVNI):
-    """Medical VNI with specialized knowledge"""
+    """Medical VNI with specialized knowledge and generation"""
     
     def __init__(self, instance_id: str):
         super().__init__("medical", instance_id)
+        # Override classifier with medical-specific one
+        self._init_medical_classifier()
+        
+        # Tune generation for medical domain
+        if self.generation_enabled:
+            self.configure_generation(temperature=0.6, top_p=0.85)  # More conservative
 
+    def _init_domain_classifier(self):
+        """Override to initialize medical classifier"""
+        self._init_medical_classifier()
+    
+    def _init_medical_classifier(self):
+        """Initialize medical-specific classifier"""
+        try:
+            class MedicalClassifier:
+                def __init__(self):
+                    self.keywords = [
+                        'medical', 'health', 'doctor', 'hospital', 'pain', 'fever',
+                        'headache', 'medicine', 'treatment', 'sick', 'illness',
+                        'disease', 'symptom', 'patient', 'clinic', 'advise', 'advice',
+                        'emergency', 'medication', 'diagnosis', 'therapy', 'clinic',
+                        'pharmacy', 'prescription', 'vaccine', 'covid', 'coronavirus',
+                        'infection', 'virus', 'bacteria', 'allergy', 'asthma', 'cancer',
+                        'diabetes', 'heart', 'lung', 'kidney', 'liver', 'brain',
+                        'mental health', 'psychology', 'therapy', 'counseling',
+                        'help on medical', 'health advise', 'medical help',
+                        'what medicine', 'should i take', 'symptoms of',
+                        'treatment for', 'diagnosed with'
+                    ]
+                    self.domain = "medical"
+                
+                def predict(self, texts):
+                    """Return 1 if medical, 0 otherwise"""
+                    results = []
+                    for text in texts:
+                        text_lower = text.lower()
+                        is_medical = any(keyword in text_lower for keyword in self.keywords)
+                        results.append(1 if is_medical else 0)
+                    return results
+                
+                def predict_proba(self, texts):
+                    """Return probability scores [not_medical, medical]"""
+                    results = []
+                    for text in texts:
+                        text_lower = text.lower()
+                        matches = sum(1 for keyword in self.keywords if keyword in text_lower)
+                        prob = min(0.95, matches * 0.2)  # Scale probability
+                        results.append([1 - prob, prob])
+                    return results
+                
+                def __str__(self):
+                    return f"MedicalClassifier with {len(self.keywords)} keywords"
+            
+            self.classifier = MedicalClassifier()
+            logger.info(f"✅ Medical classifier initialized for {self.instance_id}")
+            logger.info(f"   Contains keyword: 'help on medical' = {'help on medical' in self.classifier.keywords}")
+            logger.info(f"   Contains keyword: 'health advise' = {'health advise' in self.classifier.keywords}")
+            
+        except Exception as e:
+            logger.error(f"❌ Error initializing medical classifier: {e}")
+            self.classifier = None
+    
+    def _fallback_domain_check(self, query: str) -> bool:
+        """Fallback method for medical domain detection"""
+        query_lower = query.lower()
+        essential_keywords = ['medical', 'health', 'doctor', 'hospital', 'pain', 'fever']
+        return any(keyword in query_lower for keyword in essential_keywords)
+    
     def get_default_concepts(self) -> Dict[str, Any]:
         return {
             'fever': {'strength': 0.8, 'usage_count': 0},
@@ -919,8 +1718,7 @@ class EnhancedMedicalVNI(EnhancedBaseVNI):
                 "triggers": ["fever", "temperature", "hot", "burning up"],
                 "responses": [
                     "Fever often indicates infection. Rest, hydration, and monitoring are important. Consult a doctor if it persists.",
-                    "For fever, ensure proper hydration and rest. Seek medical advice for proper diagnosis.",
-                    "Fever can indicate various conditions. Monitor symptoms and seek attention for breathing difficulty."
+                    "For fever, ensure proper hydration and rest. Seek medical advice for proper diagnosis."
                 ],
                 "strength": 0.8, "usage_count": 0
             },
@@ -935,8 +1733,7 @@ class EnhancedMedicalVNI(EnhancedBaseVNI):
             "pain_assessment": {
                 "triggers": ["pain", "hurts", "ache", "sore"],
                 "responses": [
-                    "Pain assessment requires understanding location, intensity, and duration. Professional evaluation is recommended.",
-                    "Pain can have many causes. Note when it started, what makes it worse/better, and consult healthcare provider."
+                    "Pain assessment requires understanding location, intensity, and duration. Professional evaluation is recommended."
                 ],
                 "strength": 0.8, "usage_count": 0
             }
@@ -946,21 +1743,21 @@ class EnhancedMedicalVNI(EnhancedBaseVNI):
         return {
             "general": [
                 "From a medical perspective, {concept} should be evaluated by a healthcare professional.",
-                "Regarding {concept}, consider individual health factors and consult a doctor.",
-                "Medical advice for {concept} depends on specific symptoms and history."
+                "Regarding {concept}, consider individual health factors and consult a doctor."
             ],
             "emergency": [
-                "If this is a medical emergency, please seek immediate professional help.",
-                "For urgent medical concerns, contact emergency services or visit a hospital."
+                "If this is a medical emergency, please seek immediate professional help."
             ]
         }
 
-
 class EnhancedLegalVNI(EnhancedBaseVNI):
-    """Legal VNI with specialized knowledge"""
+    """Legal VNI with specialized knowledge and generation"""
     
     def __init__(self, instance_id: str):
         super().__init__("legal", instance_id)
+        # Tune generation for legal domain
+        if self.generation_enabled:
+            self.configure_generation(temperature=0.5, top_p=0.8)  # Very conservative
 
     def get_default_concepts(self) -> Dict[str, Any]:
         return {
@@ -992,8 +1789,7 @@ class EnhancedLegalVNI(EnhancedBaseVNI):
             "rights_inquiry": {
                 "triggers": ["rights", "entitled", "legal rights"],
                 "responses": [
-                    "Legal rights vary by jurisdiction and situation. Consulting a qualified attorney is recommended.",
-                    "Understanding your rights requires specific context. Legal counsel can provide jurisdiction-specific guidance."
+                    "Legal rights vary by jurisdiction and situation. Consulting a qualified attorney is recommended."
                 ],
                 "strength": 0.8, "usage_count": 0
             }
@@ -1003,17 +1799,17 @@ class EnhancedLegalVNI(EnhancedBaseVNI):
         return {
             "general": [
                 "From a legal standpoint, {concept} requires proper documentation and professional advice.",
-                "Legal matters involving {concept} should be reviewed by a qualified attorney.",
-                "Regarding {concept}, outcomes depend on specific circumstances and jurisdiction."
+                "Legal matters involving {concept} should be reviewed by a qualified attorney."
             ]
         }
 
-
 class EnhancedGeneralVNI(EnhancedBaseVNI):
-    """General VNI with multi-domain knowledge"""
-    
+    """General VNI with multi-domain knowledge and generation"""
     def __init__(self, instance_id: str):
         super().__init__("general", instance_id)
+        # Balanced generation settings
+        if self.generation_enabled:
+            self.configure_generation(temperature=0.7, top_p=0.9)
 
     def get_default_concepts(self) -> Dict[str, Any]:
         return {
@@ -1049,24 +1845,21 @@ class EnhancedGeneralVNI(EnhancedBaseVNI):
             "technical_help": {
                 "triggers": ["code", "programming", "debug", "error", "bug"],
                 "responses": [
-                    "For technical issues, systematic debugging helps. Check syntax, test components, review errors.",
-                    "Technical challenges benefit from breaking down problems, writing tests, and incremental development."
+                    "For technical issues, systematic debugging helps. Check syntax, test components, review errors."
                 ],
                 "strength": 0.8, "usage_count": 0
             },
             "analysis_help": {
                 "triggers": ["analyze", "compare", "evaluate", "assess"],
                 "responses": [
-                    "Analytical thinking requires systematic evaluation and logical reasoning.",
-                    "For analysis, gather relevant data, identify patterns, and draw evidence-based conclusions."
+                    "Analytical thinking requires systematic evaluation and logical reasoning."
                 ],
                 "strength": 0.8, "usage_count": 0
             },
             "business_analysis": {
                 "triggers": ["business", "strategy", "market", "profit"],
                 "responses": [
-                    "Business analysis involves market research, financial modeling, and strategic planning.",
-                    "Consider competitive landscape, customer needs, and financial viability."
+                    "Business analysis involves market research, financial modeling, and strategic planning."
                 ],
                 "strength": 0.8, "usage_count": 0
             }
@@ -1075,21 +1868,19 @@ class EnhancedGeneralVNI(EnhancedBaseVNI):
     def get_default_response_templates(self) -> Dict[str, List[str]]:
         return {
             "technical": [
-                "From a technical perspective, {concept} requires understanding implementation and architecture.",
-                "Technical solutions for {concept} depend on performance and scalability."
+                "From a technical perspective, {concept} requires understanding implementation and architecture."
             ],
             "analytical": [
-                "From an analytical perspective, {concept} requires systematic evaluation.",
-                "Analytical approaches to {concept} depend on data interpretation and deduction."
+                "From an analytical perspective, {concept} requires systematic evaluation."
             ],
             "general": [
-                "Regarding {concept}, a comprehensive approach considers multiple perspectives.",
-                "Analysis of {concept} benefits from cross-domain thinking."
+                "Regarding {concept}, a comprehensive approach considers multiple perspectives."
             ]
         }
 
-    def process_query(self, query: str, context: Dict = None, session_id: str = "default") -> Dict[str, Any]:
-        response = super().process_query(query, context, session_id)
+    def process_query(self, query: str, context: Dict = None, session_id: str = "default",
+                     use_generation: bool = None, generation_strategy: str = "auto") -> Dict[str, Any]:
+        response = super().process_query(query, context, session_id, use_generation, generation_strategy)
         
         # Add domain analysis
         detected = self.detect_query_domains(query)
@@ -1123,17 +1914,44 @@ class EnhancedGeneralVNI(EnhancedBaseVNI):
             synthesis += "Balance creative expression with analytical structure. "
         return synthesis.strip()
 
+# ==================== VNI REGISTRY ====================
+class VNIRegistry:
+    """Global registry of all active VNIs"""
+    _instance = None
+    _vnis: Dict[str, EnhancedBaseVNI] = {}
+    _capability_index: Dict[str, List[str]] = {}  # capability -> [vni_ids]
+    
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = VNIRegistry()
+        return cls._instance
+    
+    def register_vni(self, vni: EnhancedBaseVNI):
+        self._vnis[vni.instance_id] = vni
+        
+        # Index by capabilities
+        for capability in vni.available_capabilities.specializations:
+            if capability not in self._capability_index:
+                self._capability_index[capability] = []
+            self._capability_index[capability].append(vni.instance_id)
+    
+    def find_vnis_by_capability(self, capability: str) -> List[str]:
+        return self._capability_index.get(capability, [])
+    
+    def get_vni(self, vni_id: str) -> Optional[EnhancedBaseVNI]:
+        return self._vnis.get(vni_id)
 
 # ==================== VNI MANAGEMENT SYSTEM ====================
-
 class VNIManager:
-    """Manager for coordinating multiple VNI instances"""
+    """Manager for coordinating multiple VNI instances with generation"""
     
-    def __init__(self):
+    def __init__(self, enable_generation: bool = True):
         self.vni_instances: Dict[str, EnhancedBaseVNI] = {}
         self.neural_pathways: Dict[str, NeuralPathway] = {}
         self.session_manager = SessionManager()
         self.attention_scores: Dict[str, float] = {}
+        self.enable_generation = enable_generation
         
     def create_vni(self, vni_type: str, instance_id: str) -> EnhancedBaseVNI:
         vni_classes = {
@@ -1158,18 +1976,22 @@ class VNIManager:
         
         return vni
 
-    def route_query(self, query: str, context: Dict = None, session_id: str = "default") -> Dict[str, Any]:
-        """Route query with attention mechanism"""
+    def route_query(self, query: str, context: Dict = None, session_id: str = "default",
+                   use_generation: bool = None) -> Dict[str, Any]:
+        """Route query with attention mechanism and generation"""
+        if use_generation is None:
+            use_generation = self.enable_generation
+            
         self.session_manager.get_session(session_id)
         
-        # Calculate attention scores for each VNI
+        # Calculate attention scores
         self.attention_scores = self._calculate_attention_scores(query)
         
         # Activate VNIs based on attention
         activated = []
         for vni_id, vni in self.vni_instances.items():
             score = self.attention_scores.get(vni_id, 0.5)
-            if score > 0.3:  # Attention threshold
+            if score > 0.3:
                 activated.append(vni_id)
         
         # Process with activated VNIs
@@ -1179,7 +2001,7 @@ class VNIManager:
             if vni.attention_enabled:
                 response = vni.process_query_with_attention(query, context or {}, self.attention_scores)
             else:
-                response = vni.process_query(query, context, session_id)
+                response = vni.process_query(query, context, session_id, use_generation=use_generation)
             responses.append(response)
             
             # Update neural pathways
@@ -1187,10 +2009,39 @@ class VNIManager:
         
         return self._combine_responses(responses, query)
 
+    def test_generation(self, query: str = "How can AI help healthcare?") -> Dict[str, Any]:
+        """Test generation capability of all VNIs"""
+        results = {}
+        
+        for vni_id, vni in self.vni_instances.items():
+            if vni.generation_enabled:
+                try:
+                    generated = vni.generate_with_transformer(query)
+                    results[vni_id] = {
+                        'response': generated,
+                        'success': True,
+                        'model': 'DialoGPT-medium',
+                        'vni_type': vni.vni_type
+                    }
+                except Exception as e:
+                    results[vni_id] = {
+                        'response': str(e),
+                        'success': False,
+                        'model': 'none',
+                        'error': str(e)
+                    }
+            else:
+                results[vni_id] = {
+                    'response': "Generation not enabled",
+                    'success': False,
+                    'model': 'none'
+                }
+        
+        return results
+
     def _calculate_attention_scores(self, query: str) -> Dict[str, float]:
-        """Calculate attention scores for each VNI based on query"""
+        """Calculate attention scores for each VNI"""
         scores = {}
-        q = query.lower()
         
         for vni_id, vni in self.vni_instances.items():
             concepts, patterns = vni.extract_concepts_and_patterns(query)
@@ -1204,16 +2055,16 @@ class VNIManager:
                 if pathway.target == vni_id:
                     pathway_boost += pathway.strength * 0.1
             
-            scores[vni_id] = min(1.0, base_score + pathway_boost + 0.3)  # Min 0.3 baseline
+            scores[vni_id] = min(1.0, base_score + pathway_boost + 0.3)
         
         return scores
 
     def _update_pathways(self, vni_id: str, success: bool):
-        """Update neural pathways based on VNI response success"""
+        """Update neural pathways based on success"""
         for pid, pathway in self.neural_pathways.items():
             if pathway.source == vni_id:
                 pathway.activate(success)
-            pathway.decay()  # Apply temporal decay
+            pathway.decay()
 
     def _combine_responses(self, responses: List[Dict[str, Any]], query: str) -> Dict[str, Any]:
         if not responses:
@@ -1234,6 +2085,7 @@ class VNIManager:
             'response': best['response'],
             'confidence': best['confidence'],
             'attention_score': best.get('attention_score', 1.0),
+            'generation_used': best.get('generation_used', False),
             'sources': [r['vni_instance'] for r in responses],
             'combined': len(responses) > 1,
             'all_responses': responses if len(responses) > 1 else None
@@ -1244,6 +2096,8 @@ class VNIManager:
             'vni_count': len(self.vni_instances),
             'pathway_count': len(self.neural_pathways),
             'active_sessions': len(self.session_manager.sessions),
+            'generation_enabled': self.enable_generation,
+            'generation_available': GENERATION_AVAILABLE,
             'vni_capabilities': {vid: vni.get_capabilities() for vid, vni in self.vni_instances.items()}
         }
 
@@ -1281,21 +2135,35 @@ class SessionManager:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     
+    print("="*60)
+    print("🧠 Enhanced VNI System with Text Generation")
+    print("="*60)
+    
     # Create manager and VNIs
-    manager = VNIManager()
+    manager = VNIManager(enable_generation=True)
     medical = manager.create_vni('medical', 'med_001')
     legal = manager.create_vni('legal', 'legal_001')
     general = manager.create_vni('general', 'gen_001')
     
-    print("=== VNI System Status ===")
+    print("\n=== VNI System Status ===")
     print(json.dumps(manager.get_system_status(), indent=2, default=str))
+    
+    # Test generation capability
+    if GENERATION_AVAILABLE:
+        print("\n=== Testing Generation Capability ===")
+        test_results = manager.test_generation("What are the benefits of AI in healthcare?")
+        for vni_id, result in test_results.items():
+            print(f"\n{vni_id}:")
+            print(f"  Success: {result['success']}")
+            if result['success']:
+                print(f"  Response: {result['response'][:100]}...")
     
     # Test queries
     queries = [
         "I have a headache and fever, what should I do?",
         "I need help reviewing a contract agreement",
         "How can I analyze my business data effectively?",
-        "What's the latest news about AI developments?",
+        "What are the latest developments in AI?",
         "Can you help me debug this code error?",
         "What are my legal rights in this situation?"
     ]
@@ -1306,32 +2174,26 @@ if __name__ == "__main__":
         print(f"Query {i+1}: {query}")
         print("-" * 50)
         
-        response = manager.route_query(query, session_id=f"test_session")
+        response = manager.route_query(query, session_id="test_session")
         
         print(f"Response: {response['response'][:200]}...")
         print(f"Confidence: {response['confidence']:.2f}")
+        print(f"Generation Used: {response.get('generation_used', False)}")
         print(f"Attention Score: {response.get('attention_score', 'N/A')}")
         print(f"Sources: {response['sources']}")
-        print(f"Combined: {response['combined']}")
         print("\n")
-    
-    # Test attention-based routing
-    print("=== Attention Scores for Last Query ===")
-    for vni_id, score in manager.attention_scores.items():
-        print(f"  {vni_id}: {score:.3f}")
-    
-    # Test neural pathway status
-    print("\n=== Neural Pathway Status ===")
-    for pid, pathway in list(manager.neural_pathways.items())[:5]:
-        print(f"  {pid}: strength={pathway.strength:.3f}, activations={pathway.activation_count}")
-    
-    # Test session cleanup
-    cleaned = manager.session_manager.cleanup_expired_sessions()
-    print(f"\n=== Cleaned {cleaned} expired sessions ===")
     
     # Save all knowledge bases
     for vni in manager.vni_instances.values():
         vni.save_knowledge_base()
     
-    print("\n=== All knowledge bases saved ===")
-    print("System ready for production use.") 
+    print("\n=== System Statistics ===")
+    for vni_id, vni in manager.vni_instances.items():
+        stats = vni.get_knowledge_stats()
+        print(f"\n{vni_id}:")
+        print(f"  Concepts: {stats['concepts_count']}")
+        print(f"  Learned Responses: {stats['learned_responses_count']}")
+        print(f"  Generation Enabled: {stats['generation_enabled']}")
+    
+    print("\n✅ All knowledge bases saved")
+    print("🚀 System ready for production use with text generation!")

@@ -1,0 +1,22 @@
+{
+  "episode": 0,
+  "training_stats": {
+    "total_episodes": 1,
+    "successful_episodes": 0,
+    "average_reward": -0.7894736842105263,
+    "domain_performance": {
+      "legal": {
+        "total_episodes": 1,
+        "successful_episodes": 0,
+        "total_reward": -0.7894736842105263
+      }
+    },
+    "start_time": 1764670866.5542567
+  },
+  "q_table": {
+    "legal_short": {
+      "VNI_legal_001": -0.007894736842105263
+    }
+  },
+  "timestamp": 1764670866.7699783
+}

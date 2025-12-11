@@ -1,0 +1,45 @@
+# docker-compose.dev.yml
+# version: '3.8'
+
+services:
+  babybionn-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: babybionn-app-dev
+    ports:
+      - "8001:8001"
+      - "8888:8888"
+    env_file:
+      - .env  # Same .env file, but can create .env.dev if different  
+    volumes:
+      # Mount entire code for hot reload
+      - .:/app
+      # Exclude heavy directories from being overwritten
+      - /app/models
+      - /app/__pycache__
+      - /app/.cache
+    environment:
+      - PYTHONUNBUFFERED=1
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - PYTHONPATH=/app
+      - RELOAD=true
+      - WORKERS=1
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload --log-level debug
+    restart: unless-stopped
+    networks:
+      - babybionn-dev-network
+
+networks:
+  babybionn-dev-network:
+    driver: bridge

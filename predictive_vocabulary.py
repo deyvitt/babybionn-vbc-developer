@@ -268,7 +268,33 @@ class PredictiveVocabulary:
         except Exception as e:
             logger.warning(f"Predictive completions failed: {e}")
             return []
-    
+
+    def update_vocabulary(self, text: str, domain: str = "general"):
+        """Update vocabulary with text from a specific domain"""
+        try:
+            words = text.lower().split()
+            for word in words:
+                if len(word) > 2:  # Only consider words with more than 2 characters
+                    context = {
+                        'domain': domain,
+                        'surrounding_words': words,
+                        'previous_words': words[:-1] if len(words) > 1 else []
+                    }
+                    self.learn_word(word, context, domain)
+        
+            # Update learning metrics
+            self.learning_metrics['total_interactions'] += 1
+            logger.debug(f"Updated vocabulary with {len(words)} words from {domain} domain")
+            return True
+        
+        except Exception as e:
+            logger.error(f"Vocabulary update failed: {e}")
+            return False
+
+    def get_predictive_suggestions(self, text: str, max_suggestions: int = 3) -> List[str]:
+        """Get predictive suggestions for the given text - alias for get_predictive_completions"""
+        return self.get_predictive_completions(text, max_suggestions)
+
     def integrate_autonomous_term(self, term: str, base_concepts: List[str], context: Dict):
         """Integrate autonomously created terms into vocabulary"""
         # If this term doesn't exist, add it
@@ -281,7 +307,8 @@ class PredictiveVocabulary:
                 'base_concepts': base_concepts,
                 'created_at': datetime.datetime.now().isoformat()
             }
-            logger.info(f"🧠 Integrated autonomous term: '{term}'")
+            logger.info(f"🧠 Integrated autonomous term: '{term}'"
+        )
         else:
             # Update existing term
             self.vocabulary[term]['frequency'] += 1
@@ -302,5 +329,5 @@ class PredictiveVocabulary:
         
         with open(self.vocab_file, 'w') as f:
             json.dump(data, f, indent=2)
-        
-        logger.info(f"💾 Vocabulary saved: {len(self.vocabulary)} words, {sum(len(t) for t in self.transition_probs.values())} transitions") 
+    
+        logger.info(f"💾 Vocabulary saved: {len(self.vocabulary)} words, {sum(len(t) for t in self.transition_probs.values())} transitions")

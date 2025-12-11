@@ -1,40 +1,66 @@
+# docker-compose.yml
+# version: '3.8'
+
 services:
-  babybionn:
-    image: babybionn:latest   
-    build: 
+  babybionn-app:
+    build:
       context: .
       dockerfile: Dockerfile
-    container_name: babybionn-app  # Optional
+      args:
+        - BUILD_ENV=production
+    container_name: babybionn-app
+    hostname: babybionn
     ports:
       - "8001:8001"
+      - "8888:8888"
+    env_file:
+      - .env
     volumes:
+      - babybionn_knowledge:/app/knowledge_bases
+      - babybionn_models:/app/models
+      - babybionn_checkpoints:/app/checkpoints
+      - babybionn_logs:/app/logs
+      - babybionn_cache:/app/cache
+      - babybionn_patterns:/app/mesh_patterns
       - ./knowledge_bases:/app/knowledge_bases
       - ./models:/app/models
-      - ./ultralytics_cache:/app/ultralytics_cache
-      - ./pretraining_data:/app/pretraining_data       
+      - ./cache:/app/cache
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app
-      - ULTRAALYTICS_CACHE_DIR=/app/ultralytics_cache
-      - KNOWLEDGE_BASE_DIR=/app/knowledge_bases
-      - MODEL_CACHE_DIR=/app/models
-    restart: unless-stopped  # Optional
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s    
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-          cpus: '2.0'
-        reservations:
-          memory: 2G
-          cpus: '1.0'
-        # OPTIONAL: if want to use GPU
-        # devices:
-        #   - driver: nvidia
-        #     count: 1
-        #     capabilities: [gpu]         
+      - PYTHONHASHSEED=42
+      - TRANSFORMERS_CACHE=/app/models
+      - HF_HOME=/app/models
+      - CUDA_VISIBLE_DEVICES=0
+      - NVIDIA_VISIBLE_DEVICES=all
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - WORKERS=2
+      - NEURAL_MESH_ENABLED=true
+      - MESH_LEARNING_RATE=0.1
+    restart: unless-stopped
+    mem_limit: 16g
+    mem_reservation: 8g
+    cpus: 4.0
+    networks:
+      - babybionn-network
+    command: >
+      sh -c "
+        echo '🚀 Starting BabyBIONN initialization...' &&
+        exec uvicorn main:app --host 0.0.0.0 --port 8001 --workers 2
+       # python /app/initialize_orchestrator.py &&
+        echo '✅ BabyBIONN initialized. Starting FastAPI server...' &&
+        exec uvicorn main:app --host 0.0.0.0 --port 8001 --workers 2
+      "
+
+networks:
+  babybionn-network:
+    driver: bridge
+
+volumes:
+  babybionn_knowledge:
+  babybionn_models:
+  babybionn_checkpoints:
+  babybionn_logs:
+  babybionn_cache:
+  babybionn_patterns:

@@ -1,14 +1,15 @@
 # transVNI_compare_segregate.py
 import time
 import torch
+import logging
+import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, List, Optional, Any, Tuple
-import logging
 from dataclasses import dataclass
-import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 from collections import defaultdict
+from typing import Dict, List, Optional, Any, Tuple
+from sklearn.metrics.pairwise import cosine_similarity
+from enhanced_vni_classes import VNIManager, EnhancedBaseVNI
 
 logger = logging.getLogger("transVNI_compare_segregate")
 
@@ -160,10 +161,10 @@ class TransVNIConfig:
     def __post_init__(self):
         if self.specialist_mappings is None:
             self.specialist_mappings = {
-                'medical': ['operAction_medical'],
-                'legal': ['operAction_legal'],
-                'technical': ['operAction_technical'],
-                'cross_domain': ['operAction_medical', 'operAction_legal', 'operAction_technical']
+            'medical': ['med_001'],  # EnhancedMedicalVNI instance
+            'legal': ['legal_001'],   # EnhancedLegalVNI instance  
+            'technical': ['gen_001'], # EnhancedGeneralVNI instance
+            'cross_domain': ['med_001', 'legal_001', 'gen_001']
             }
 
 class ComparisonEngine(nn.Module):
@@ -195,7 +196,27 @@ class ComparisonEngine(nn.Module):
             nn.Linear(384, 192),
             nn.Tanh()
         )
+
+        # ==================== NEW METHOD ====================
+    def extract_topic_classification(self, baseVNI_output: Dict[str, Any]) -> Dict[str, float]:
+        """Extract topic classification from enhanced VNI response"""
+        # Look for domain hints in the response
+        response_type = baseVNI_output.get('response_type', '')
+        vni_instance = baseVNI_output.get('vni_instance', '')
         
+        # Infer topics from VNI instance ID
+        scores = {'medical': 0.0, 'legal': 0.0, 'technical': 0.0}
+        
+        if 'med' in vni_instance:
+            scores['medical'] = baseVNI_output.get('confidence', 0.5)
+        elif 'legal' in vni_instance:
+            scores['legal'] = baseVNI_output.get('confidence', 0.5)
+        elif 'gen' in vni_instance:
+            scores['technical'] = baseVNI_output.get('confidence', 0.5)
+        
+        return scores
+    # ====================================================
+
     def extract_comparison_features(self, baseVNI_output: Dict[str, Any]) -> Dict[str, torch.Tensor]:
         """Extract features for comparison from baseVNI output"""
         features = {}
@@ -203,11 +224,11 @@ class ComparisonEngine(nn.Module):
         # Extract from each abstraction level
         abstraction_data = baseVNI_output.get('abstraction_levels', {})
         
-        # Cognitive level features (concepts, meaning)
-        if 'cognitive' in abstraction_data:
-            cognitive = abstraction_data['cognitive']
-            features['concepts'] = cognitive.get('tensor', torch.zeros(256))
-            features['intent_embedding'] = self.encode_intent(cognitive.get('intent', 'information'))
+        # semantic level features (concepts, meaning)
+        if 'semantic' in abstraction_data:
+            semantic = abstraction_data['semantic']
+            features['concepts'] = semantic.get('tensor', torch.zeros(256))
+            features['intent_embedding'] = self.encode_intent(semantic.get('intent', 'information'))
         
         # Structural level features (relationships, patterns)
         if 'structural' in abstraction_data:
@@ -341,12 +362,12 @@ class ComparisonEngine(nn.Module):
         """Extract data relevant to specific topic"""
         relevant_data = {}
         
-        # Cognitive level - focus on topic-relevant concepts
-        if 'cognitive' in abstraction_data:
-            cognitive = abstraction_data['cognitive'].copy()
+        # semantic level - focus on topic-relevant concepts
+        if 'semantic' in abstraction_data:
+            semantic = abstraction_data['semantic'].copy()
             # Enhance with topic context
-            cognitive['topic_context'] = topic
-            relevant_data['cognitive'] = cognitive
+            semantic['topic_context'] = topic
+            relevant_data['semantic'] = semantic
         
         # Structural level - maintain relationships
         if 'structural' in abstraction_data:
@@ -366,12 +387,12 @@ class ComparisonEngine(nn.Module):
         # Integrate multiple topic perspectives
         active_topics = [t for t, s in topic_scores.items() if s > self.config.routing_threshold]
         
-        # Enhanced cognitive level with multi-topic context
-        if 'cognitive' in abstraction_data:
-            cognitive = abstraction_data['cognitive'].copy()
-            cognitive['multi_topic_context'] = active_topics
-            cognitive['topic_interactions'] = self.analyze_topic_interactions(topic_scores)
-            cross_domain_data['cognitive'] = cognitive
+        # Enhanced semantic level with multi-topic context
+        if 'semantic' in abstraction_data:
+            semantic = abstraction_data['semantic'].copy()
+            semantic['multi_topic_context'] = active_topics
+            semantic['topic_interactions'] = self.analyze_topic_interactions(topic_scores)
+            cross_domain_data['semantic'] = semantic
         
         # Enhanced structural level with cross-domain relationships
         if 'structural' in abstraction_data:
@@ -509,11 +530,11 @@ class PerformanceTracker:
     
 class TransVNICompareSegregate(nn.Module):
     """Main transVNI compare and segregate class"""
-    
-    def __init__(self, config: TransVNIConfig = None):
+    def __init__(self, config: TransVNIConfig = None, vni_manager: VNIManager = None):
         super().__init__()
         self.config = config or TransVNIConfig()
         self.comparison_engine = ComparisonEngine(self.config)
+        self.vni_manager = vni_manager  # Add VNI manager reference
 
         # Initialize the new intelligent components
         self.routing_memory = RoutingMemory()
@@ -613,7 +634,7 @@ def test_transVNI_demo():
             'name': 'Medical Case',
             'baseVNI_output': {
                 'abstraction_levels': {
-                    'cognitive': {
+                    'semantic': {
                         'tensor': torch.randn(256),
                         'intent': 'question',
                         'concepts': ['patient', 'diagnosis', 'treatment']
@@ -638,7 +659,7 @@ def test_transVNI_demo():
             'name': 'Cross-Domain Case',
             'baseVNI_output': {
                 'abstraction_levels': {
-                    'cognitive': {
+                    'semantic': {
                         'tensor': torch.randn(256),
                         'intent': 'problem_solving',
                         'concepts': ['software', 'patient', 'compliance']

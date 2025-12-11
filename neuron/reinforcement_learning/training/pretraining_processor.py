@@ -1,4 +1,4 @@
-# reinforcement_learning/training/pretraining_processor.py
+# neuron/reinforcement_learning/training/pretraining_processor.py
 """
 BabyBIONN Pretraining Processor
 Converts domain knowledge JSON files into synaptic patterns for VNI initialization
@@ -123,14 +123,14 @@ class ReasoningPatternProcessor:
     
     def _generate_associations(self, domain: str, pattern_data: Dict[str, Any]) -> List[str]:
         """Generate VNI associations for this pattern"""
-        base_associations = [f"VNI_{domain}_001", "VNI_base_001"]
+        base_associations = [f"medical_0", "legal_0", "general_0"]
         
         # Add cross-domain associations based on content
         response = pattern_data.get('response', '').lower()
         if 'legal' in response or 'contract' in response:
-            base_associations.append("VNI_legal_001")
+            base_associations.append("legal_0")
         if 'technical' in response or 'system' in response:
-            base_associations.append("VNI_technical_001")
+            base_associations.append("general_0")
             
         return list(set(base_associations))
 
@@ -246,7 +246,7 @@ class BabyBIONNPretrainer:
     
     def _create_vni(self, vni_id: str, domain: str):
         """Create a new VNI for the domain"""
-        from vni_core import VNIType
+        from neuron.reinforcement_learning.vni_core import VNIType
         
         domain_type_map = {
             'medical': VNIType.MEDICAL,

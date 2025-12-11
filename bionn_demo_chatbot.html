@@ -23,8 +23,8 @@
 
         .chat-container {
             width: 90%;
-            max-width: 800px;
-            height: 80vh;
+            max-width: 1000px;
+            height: 85vh;
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
@@ -351,8 +351,86 @@
             color: #666;
         }
 
+        /* Enhanced VNI Visualization */
+        .vni-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .vni-card {
+            background: white;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .vni-card.active {
+            border-color: #4facfe;
+            background: #f0f8ff;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.2);
+        }
+
+        .vni-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .vni-strength {
+            height: 6px;
+            background: #e1e5e9;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .vni-strength-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            width: 0%;
+            transition: width 1s ease;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #4facfe;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #764ba2;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ff4757;
+            color: white;
+        }
+
         @media (max-width: 768px) {
             .training-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .vni-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -367,7 +445,7 @@
                 <div class="status-badge disconnected" id="statusBadge">
                     ⚠️ Backend Offline - Demo Mode
                 </div>
-                <button class="reconnect-btn" id="reconnectBtn" onclick="testConnection()" style="display: none;">
+                <button class="reconnect-btn" id="reconnectBtn" onclick="testConnection()" style="display: none; margin-top: 10px; padding: 8px 16px; background: rgba(255,255,255,0.3); color: white; border: 1px solid rgba(255,255,255,0.5); border-radius: 20px; cursor: pointer;">
                     🔄 Reconnect to Backend
                 </button>
             </div>
@@ -408,8 +486,8 @@
                     ></textarea>
                     <input type="file" id="image-upload" accept="image/*" style="display: none;">
                     <button type="button" onclick="document.getElementById('image-upload').click()" 
-                            style="background: #764ba2; color: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer;">
-        📷
+                            style="background: #764ba2; color: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        📷
                     </button>      
                     <button id="sendButton" onclick="sendMessage()">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -426,81 +504,155 @@
             </div>
         </div>
 
-<!-- Admin Panel Tab -->
-<div class="tab-content" id="adminTab">
-    <div class="teaching-dashboard">
-        <div class="dashboard-title">
-            <h2>🔧 BabyBIONN Admin Panel</h2>
-            <p>Initialize and manage AI knowledge bases</p>
-        </div>
-
-        <!-- Admin Login Section -->
-        <div class="section" id="adminLoginSection">
-            <h3>Admin Authentication</h3>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <input type="password" id="adminPassword" placeholder="Enter Admin Password" 
-                       style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;" />
-                <button onclick="adminLogin()" style="padding: 10px 20px; background: #4facfe; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                    Login
-                </button>
-            </div>
-        </div>
-
-        <!-- Pretraining Interface (shown after login) -->
-        <div id="pretrainingInterface" style="display: none;">
-            <!-- Upload Section -->
-            <div class="section">
-                <h3>📤 Upload Pretraining Data</h3>
-                <div style="margin-bottom: 15px;">
-                    <label><strong>Select Domain:</strong></label>
-                    <select id="domainSelect" style="margin-left: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
-                        <option value="medical">Medical Knowledge</option>
-                        <option value="legal">Legal Knowledge</option>
-                        <option value="general">General Knowledge</option>
-                        <option value="technical">Technical Knowledge</option>
-                    </select>
-                </div>
-                
-                <div style="margin-bottom: 15px;">
-                    <input type="file" id="pretrainFile" accept=".json" />
-                    <button onclick="uploadPretrainingData()" 
-                            style="margin-left: 10px; padding: 8px 16px; background: #764ba2; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                        Upload & Initialize
-                    </button>
+        <!-- Teaching Dashboard Tab -->
+        <div class="tab-content" id="teachingTab">
+            <div class="teaching-dashboard">
+                <div class="dashboard-title">
+                    <h2>📊 BabyBIONN Teaching Dashboard</h2>
+                    <p>Monitor VNI activation and learning progress</p>
                 </div>
 
-                <!-- Progress Display -->
-                <div style="margin-top: 20px;">
-                    <div style="width: 100%; height: 20px; background: #f0f0f0; border-radius: 10px; overflow: hidden;">
-                        <div id="progressBar" style="width: 0%; height: 100%; background: #4CAF50; transition: width 0.3s;"></div>
+                <!-- Training Statistics -->
+                <div class="training-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalSessions">0</div>
+                        <div class="stat-label">Total Sessions</div>
                     </div>
-                    <div id="progressText" style="margin-top: 5px; font-size: 0.9em; color: #666;">Ready for pretraining...</div>
-                </div>
-            </div>
-
-            <!-- Knowledge Base Status -->
-            <div class="section">
-                <h3>📊 Knowledge Base Status</h3>
-                <div id="knowledgeStatus">
-                    <div id="kbList" style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                        Loading knowledge bases...
+                    <div class="stat-card">
+                        <div class="stat-value" id="activeVNIs">0</div>
+                        <div class="stat-label">Active VNIs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="knowledgeConcepts">0</div>
+                        <div class="stat-label">Knowledge Concepts</div>
                     </div>
                 </div>
-                <button onclick="loadKnowledgeStatus()" style="margin-top: 10px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                    Refresh Status
-                </button>
-            </div>
 
-            <!-- Pretraining Analytics -->
-            <div class="section">
-                <h3>📈 Pretraining Analytics</h3>
-                <pre id="analyticsData" style="background: #f8f9fa; padding: 15px; border-radius: 8px; overflow: auto; max-height: 300px; font-size: 0.8em;">
+                <!-- VNI Activation Visualization -->
+                <div class="section">
+                    <h3>🧠 VNI Activation Patterns</h3>
+                    <div class="vni-grid" id="vniGrid">
+                        <!-- VNI cards will be dynamically generated here -->
+                    </div>
+                </div>
+
+                <!-- Current VNI Context -->
+                <div class="section">
+                    <h3>🔥 Currently Active VNIs</h3>
+                    <div class="vni-display" id="vniDisplay">
+                        No active VNIs yet. Start chatting to see real-time activation patterns.
+                    </div>
+                </div>
+
+                <!-- Learning Progress -->
+                <div class="section">
+                    <h3>📈 Learning Progress</h3>
+                    <div id="learningProgress" style="height: 200px; background: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #666;">
+                        Learning Progress Chart Placeholder
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Panel Tab -->
+        <div class="tab-content" id="adminTab">
+            <div class="teaching-dashboard">
+                <div class="dashboard-title">
+                    <h2>🔧 BabyBIONN Admin Panel</h2>
+                    <p>Initialize and manage AI knowledge bases</p>
+                </div>
+
+                <!-- Admin Login Section -->
+                <div class="section" id="adminLoginSection">
+                    <h3>Admin Authentication</h3>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="password" id="adminPassword" placeholder="Enter Admin Password" 
+                               style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;" />
+                        <button onclick="adminLogin()" style="padding: 10px 20px; background: #4facfe; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            Login
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pretraining Interface (shown after login) -->
+                <div id="pretrainingInterface" style="display: none;">
+                    <!-- Upload Section -->
+                    <div class="section">
+                        <h3>📤 Upload Pretraining Data</h3>
+                        <div style="margin-bottom: 15px;">
+                            <label><strong>Select Domain:</strong></label>
+                            <select id="domainSelect" style="margin-left: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                                <option value="medical">Medical Knowledge</option>
+                                <option value="legal">Legal Knowledge</option>
+                                <option value="general">General Knowledge</option>
+                                <option value="technical">Technical Knowledge</option>
+                            </select>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <input type="file" id="pretrainFile" accept=".json" />
+                            <button onclick="uploadPretrainingData()" 
+                                    style="margin-left: 10px; padding: 8px 16px; background: #764ba2; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                Upload & Initialize
+                            </button>
+                        </div>
+
+                        <!-- Progress Display -->
+                        <div style="margin-top: 20px;">
+                            <div style="width: 100%; height: 20px; background: #f0f0f0; border-radius: 10px; overflow: hidden;">
+                                <div id="progressBar" style="width: 0%; height: 100%; background: #4CAF50; transition: width 0.3s;"></div>
+                            </div>
+                            <div id="progressText" style="margin-top: 5px; font-size: 0.9em; color: #666;">Ready for pretraining...</div>
+                        </div>
+                    </div>
+
+                    <!-- Knowledge Base Status -->
+                    <div class="section">
+                        <h3>📊 Knowledge Base Status</h3>
+                        <div id="knowledgeStatus">
+                            <div id="kbList" style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                Loading knowledge bases...
+                            </div>
+                        </div>
+                        <button onclick="loadKnowledgeStatus()" style="margin-top: 10px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            Refresh Status
+                        </button>
+                    </div>
+
+                    <!-- Pretraining Analytics -->
+                    <div class="section">
+                        <h3>📈 Pretraining Analytics</h3>
+                        <pre id="analyticsData" style="background: #f8f9fa; padding: 15px; border-radius: 8px; overflow: auto; max-height: 300px; font-size: 0.8em;">
 No analytics data yet. Upload pretraining data to see analytics.
-                </pre>
+                        </pre>
+                    </div>
+
+                    <!-- System Actions -->
+                    <div class="section">
+                        <h3>⚡ System Actions</h3>
+                        <div class="action-buttons">
+                            <button class="action-btn btn-primary" onclick="clearChatHistory()">Clear Chat History</button>
+                            <button class="action-btn btn-secondary" onclick="exportConversation()">Export Conversation</button>
+                            <button class="action-btn btn-danger" onclick="resetSystem()">Reset System</button>
+                        </div>
+                    </div>
+                    <!-- Debug Tools Section -->
+                    <div class="section">
+                        <h3>🐛 Debug Tools</h3>
+                        <p style="font-size: 0.9em; color: #666; margin-bottom: 15px;">
+                            Use these tools to troubleshoot the upload functionality
+                        </p>
+                        <div class="action-buttons">
+                            <button class="action-btn btn-primary" onclick="testPretrainEndpoint()">Test Upload Endpoint</button>
+                            <button class="action-btn btn-secondary" onclick="createTestJSON()">Create Test JSON</button>
+                            <button class="action-btn" onclick="debugBackendEndpoints()" style="background: #ffa726; color: white;">Check All Endpoints</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
+
     <script>
         // Configuration
         const BACKEND_URL = 'http://localhost:8001';
@@ -509,6 +661,30 @@ No analytics data yet. Upload pretraining data to see analytics.
         let isProcessing = false;
         let backendAvailable = false;
 
+        // VNI Definitions
+        const vniDefinitions = [
+            { id: 'medical', name: 'Medical VNI', description: 'Healthcare and medical knowledge', strength: 0 },
+            { id: 'technical', name: 'Technical VNI', description: 'Programming and technical expertise', strength: 0 },
+            { id: 'legal', name: 'Legal VNI', description: 'Legal knowledge and compliance', strength: 0 },
+            { id: 'general', name: 'General VNI', description: 'General knowledge and conversation', strength: 0 },
+            { id: 'core', name: 'Core VNI', description: 'System operations and coordination', strength: 0 }
+        ];
+
+        // Initialize VNI visualization
+        function initializeVNIVisualization() {
+            const vniGrid = document.getElementById('vniGrid');
+            vniGrid.innerHTML = vniDefinitions.map(vni => `
+                <div class="vni-card" id="vni-${vni.id}">
+                    <div class="vni-name">${vni.name}</div>
+                    <div class="vni-description" style="font-size: 0.8em; color: #666; margin-bottom: 10px;">${vni.description}</div>
+                    <div class="vni-strength">
+                        <div class="vni-strength-fill" id="vni-strength-${vni.id}"></div>
+                    </div>
+                    <div style="font-size: 0.7em; color: #999;">Activation: <span id="vni-value-${vni.id}">0%</span></div>
+                </div>
+            `).join('');
+        }
+
         // Tab Switching
         function switchTab(tabName) {
             // Update tab buttons
@@ -516,12 +692,22 @@ No analytics data yet. Upload pretraining data to see analytics.
                 btn.classList.remove('active');
             });
             event.target.classList.add('active');
-        
+
             // Update tab content
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
             document.getElementById(tabName + 'Tab').classList.add('active');
+
+            // If switching to admin tab, load knowledge status
+            if (tabName === 'admin' && backendAvailable) {
+                loadKnowledgeStatus();
+            }
+            
+            // Initialize VNI visualization when switching to dashboard
+            if (tabName === 'teaching') {
+                initializeVNIVisualization();
+            }
         }
 
         // Test backend connection
@@ -543,6 +729,9 @@ No analytics data yet. Upload pretraining data to see analytics.
                     document.getElementById('reconnectBtn').style.display = 'none';
                     backendAvailable = true;
                     console.log('✅ Backend connection successful');
+                    
+                    // Update dashboard stats
+                    updateDashboardStats();
                     return true;
                 } else {
                     throw new Error(`HTTP ${response.status}`);
@@ -554,6 +743,21 @@ No analytics data yet. Upload pretraining data to see analytics.
                 document.getElementById('reconnectBtn').style.display = 'inline-block';
                 backendAvailable = false;
                 return false;
+            }
+        }
+
+        // Update dashboard statistics
+        function updateDashboardStats() {
+            if (backendAvailable) {
+                // In real implementation, fetch from backend
+                document.getElementById('totalSessions').textContent = '24';
+                document.getElementById('activeVNIs').textContent = '3';
+                document.getElementById('knowledgeConcepts').textContent = '1,247';
+            } else {
+                // Demo stats
+                document.getElementById('totalSessions').textContent = '12';
+                document.getElementById('activeVNIs').textContent = '2';
+                document.getElementById('knowledgeConcepts').textContent = '0';
             }
         }
 
@@ -590,20 +794,47 @@ No analytics data yet. Upload pretraining data to see analytics.
             sendMessage();
         }
 
-        // Update VNI display
+        // Update VNI display and visualization
         function updateVNIDisplay(vnis) {
             const display = document.getElementById('vniDisplay');
+            
+            // Reset all VNIs
+            vniDefinitions.forEach(vni => {
+                const card = document.getElementById(`vni-${vni.id}`);
+                const strengthBar = document.getElementById(`vni-strength-${vni.id}`);
+                const valueText = document.getElementById(`vni-value-${vni.id}`);
+                
+                if (card) card.classList.remove('active');
+                if (strengthBar) strengthBar.style.width = '0%';
+                if (valueText) valueText.textContent = '0%';
+            });
+
             if (vnis && vnis.length > 0) {
                 display.innerHTML = `
                     <strong>🔥 Currently Active VNIs:</strong><br>
                     ${vnis.map(v => `<span style="background: #e3f2fd; padding: 4px 8px; border-radius: 12px; margin: 4px; display: inline-block;">${v}</span>`).join('')}
                 `;
+                
+                // Update VNI visualization
+                vnis.forEach(vniName => {
+                    const vniId = vniName.toLowerCase().replace('-vni', '');
+                    const card = document.getElementById(`vni-${vniId}`);
+                    const strengthBar = document.getElementById(`vni-strength-${vniId}`);
+                    const valueText = document.getElementById(`vni-value-${vniId}`);
+                    
+                    if (card && strengthBar && valueText) {
+                        card.classList.add('active');
+                        const strength = Math.floor(Math.random() * 30) + 70; // 70-100% for demo
+                        strengthBar.style.width = `${strength}%`;
+                        valueText.textContent = `${strength}%`;
+                    }
+                });
             } else {
                 display.innerHTML = 'No active VNIs yet. Start chatting to see real-time activation patterns.';
             }
         }
 
-        // Send message function - UPDATED WITH IMAGE SUPPORT
+        // Send message function
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
@@ -672,77 +903,76 @@ No analytics data yet. Upload pretraining data to see analytics.
             isProcessing = false;
         }
 
-// Add these 3 functions AFTER your existing sendMessage() function
+        // Send text message to backend
+        async function sendTextMessage(message) {
+            try {
+                const response = await fetch(`${API_BASE}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        session_id: sessionId
+                    })
+                });
 
-// Send text message to backend
-async function sendTextMessage(message) {
-    try {
-        const response = await fetch(`${API_BASE}/chat`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                message: message,
-                session_id: sessionId
-            })
-        });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                hideTyping();
+                addMessage(data.response, 'bot');
+                updateVNIDisplay(data.activated_vnis);
+            } catch (error) {
+                console.error('Error sending message:', error);
+                throw error;
+            }
         }
 
-        const data = await response.json();
-        hideTyping();
-        addMessage(data.response, 'bot');
-        updateVNIDisplay(data.activated_vnis);
-    } catch (error) {
-        console.error('Error sending message:', error);
-        throw error;
-    }
-}
+        // Send image and message to backend
+        async function sendImageAndMessage(message, imageFile) {
+            try {
+                const formData = new FormData();
+                formData.append('message', message);
+                formData.append('image', imageFile);
+                formData.append('session_id', sessionId);
+                formData.append('admin_token', 'babybionn_admin_2024');
 
-// Send image and message to backend
-async function sendImageAndMessage(message, imageFile) {
-    try {
-        const formData = new FormData();
-        formData.append('message', message);
-        formData.append('image', imageFile);
-        formData.append('session_id', sessionId);
+                const response = await fetch(`${API_BASE}/chat-with-image`, {
+                    method: 'POST',
+                    body: formData
+                });
 
-        const response = await fetch(`${API_BASE}/chat-with-image`, {
-            method: 'POST',
-            body: formData
-        });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                hideTyping();
+                
+                let botResponse = data.response;
+                if (data.image_analysis) {
+                    botResponse += `<br><br><small>📷 Image Analysis: ${JSON.stringify(data.image_analysis)}</small>`;
+                }
+                
+                addMessage(botResponse, 'bot');
+                updateVNIDisplay(data.activated_vnis);
+            } catch (error) {
+                console.error('Error sending image message:', error);
+                throw error;
+            }
         }
 
-        const data = await response.json();
-        hideTyping();
-        
-        let botResponse = data.response;
-        if (data.image_analysis) {
-            botResponse += `<br><br><small>📷 Image Analysis: ${JSON.stringify(data.image_analysis)}</small>`;
+        // Clear image upload
+        function clearImageUpload() {
+            const imageInput = document.getElementById('image-upload');
+            if (imageInput) {
+                imageInput.value = '';
+            }
         }
-        
-        addMessage(botResponse, 'bot');
-        updateVNIDisplay(data.activated_vnis);
-    } catch (error) {
-        console.error('Error sending image message:', error);
-        throw error;
-    }
-}
-
-// Clear image upload
-function clearImageUpload() {
-    const imageInput = document.getElementById('image-upload');
-    if (imageInput) {
-        imageInput.value = '';
-    }
-}
-        
+                
         // Simulate VNI activation for demo
         function simulateVNIactivation(message) {
             const lower = message.toLowerCase();
@@ -797,9 +1027,6 @@ function clearImageUpload() {
             this.style.height = (this.scrollHeight) + 'px';
         });
 
-        // Test connection on load and every 10 seconds
-        testConnection();
-        setInterval(testConnection, 10000);
         // ===== ADMIN PRETRAINING FUNCTIONS =====
 
         // Admin Authentication
@@ -815,63 +1042,209 @@ function clearImageUpload() {
             }
         }
 
-        // Upload pretraining data
+        // Upload pretraining data - FIXED VERSION
         function uploadPretrainingData() {
             const fileInput = document.getElementById('pretrainFile');
             const domain = document.getElementById('domainSelect').value;
-    
+
             if (!fileInput.files[0]) {
                 alert('Please select a JSON file');
                 return;
             }
-    
-            const file = fileInput.files[0];
-            const reader = new FileReader();
-    
-            reader.onload = function(e) {
-                try {
-                    const pretrainData = JSON.parse(e.target.result);
-                    initializePretraining(domain, pretrainData);
-                } catch (error) {
-                    alert('Invalid JSON file: ' + error.message);
-                }
-            };
-    
-            reader.readAsText(file);
-        }
 
-        // Initialize pretraining process
-        function initializePretraining(domain, data) {
-            updateProgress('Starting pretraining process...', 10);
+            const file = fileInput.files[0];
     
-            if (!backendAvailable) {
-                updateProgress('Error: Backend not connected. Please start the BabyBIONN server.', 0);
+            // Validate file type
+            if (!file.name.endsWith('.json')) {
+                alert('Please select a JSON file (must end with .json)');
                 return;
             }
+
+            // Validate file size (e.g., max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File too large. Please select a file smaller than 10MB.');
+                return;
+            }
+
+            console.log('📤 Uploading file:', file.name, 'Size:', file.size, 'Domain:', domain);
     
-            // Send to backend for processing
-            fetch(`${API_BASE}/admin/pretrain`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({domain: domain, data: data})
-            })
-            .then(response => response.json())
-            .then(result => {
-                updateProgress('Processing synaptic patterns...', 40);
+            // Use the file directly instead of reading it client-side
+            initializePretraining(domain, file);
+        }
+
+        // Initialize pretraining process - FIXED VERSION
+        async function initializePretraining(domain, file) {
+            updateProgress('Starting upload process...', 10);
+
+            if (!backendAvailable) {
+                updateProgress('Error: Backend not connected. Please start the BabyBIONN server.', 0);
+                alert('❌ Backend not available. Please start the server and reconnect.');
+                return;
+            }
+
+            try {
+                updateProgress('Preparing file upload...', 20);
+        
+                // Create FormData for actual file upload
+                const formData = new FormData();
+                formData.append('domain', domain);
+                formData.append('file', file);
+                formData.append('session_id', sessionId);
+                formData.append('admin_token', 'babybionn_admin_2024');
+                
+                console.log('🔄 Sending to:', `${API_BASE}/admin/pretrain`);
+        
+                updateProgress('Uploading to server...', 40);
+        
+                const response = await fetch(`${API_BASE}/admin/pretrain`, {
+                    method: 'POST',
+                    body: formData  // No Content-Type header for FormData - let browser set it
+                });
+
+                console.log('📨 Response status:', response.status);
+        
+                if (!response.ok) {
+                    let errorMessage = `Server error: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.error || errorMessage;
+                    } catch (e) {
+                        // If response isn't JSON, use status text
+                        errorMessage = `${response.status} - ${response.statusText}`;
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                updateProgress('Processing training data...', 70);
+        
+                const result = await response.json();
+                console.log('✅ Pretraining result:', result);
         
                 if (result.success) {
                     updateProgress('Pretraining completed successfully!', 100);
-                    showAnalytics(result.analytics);
+            
+                    // Show analytics if available
+                    if (result.analytics) {
+                        showAnalytics(result.analytics);
+                    }
+            
+                    // Refresh knowledge status
                     loadKnowledgeStatus();
+            
+                    // Clear the file input
+                    document.getElementById('pretrainFile').value = '';
+            
+                    // Show success message
+                    setTimeout(() => {
+                        alert('✅ Pretraining data uploaded successfully!\n\n' + 
+                              `Domain: ${domain}\n` +
+                              `File: ${file.name}\n` +
+                              `Concepts processed: ${result.analytics?.concepts_processed || 'N/A'}`);
+                    }, 1000);
+            
                 } else {
-                    updateProgress('Pretraining failed: ' + result.error, 0);
+                    throw new Error(result.error || 'Pretraining failed without specific error');
                 }
-            })
-            .catch(error => {
-                updateProgress('Error: ' + error.message, 0);
-            });
+        
+            } catch (error) {
+                console.error('❌ Pretraining error:', error);
+        
+                let userMessage = error.message;
+        
+                // Handle specific error types
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    userMessage = 'Cannot connect to backend server. Please check:\n\n' +
+                                 '1. Is the BabyBIONN server running?\n' +
+                                 '2. Is it on port 8001?\n' +
+                                 '3. Check browser console for CORS errors';
+                } else if (error.message.includes('404')) {
+                    userMessage = 'Backend endpoint not found (404). The /api/admin/pretrain endpoint might not be implemented yet.';
+                } else if (error.message.includes('500')) {
+                    userMessage = 'Server error (500). Check the backend server logs for details.';
+                }
+        
+                updateProgress('Error: ' + userMessage, 0);
+                alert('❌ Upload failed:\n\n' + userMessage);
+            }
+        }
+        // Debug function to check if pretrain endpoint exists
+        async function testPretrainEndpoint() {
+            console.log('🔍 Testing pretrain endpoint...');
+    
+            try {
+                // First test if we can reach the endpoint
+                const response = await fetch(`${API_BASE}/admin/pretrain`, {
+                    method: 'OPTIONS' // Preflight request
+                });
+                console.log('OPTIONS request:', response.status, response.statusText);
+        
+                // Test with a simple POST to see if endpoint exists
+                const testFormData = new FormData();
+                testFormData.append('test', 'test');
+        
+                const postResponse = await fetch(`${API_BASE}/admin/pretrain`, {
+                    method: 'POST',
+                    body: testFormData
+                });
+        
+                console.log('POST request:', postResponse.status, postResponse.statusText);
+        
+                if (postResponse.status === 404) {
+            alert('❌ Pretrain endpoint not found (404). The backend might not have this endpoint implemented yet.');
+                } else if (postResponse.status === 405) {
+                    alert('❌ Method not allowed (405). The endpoint exists but might expect different data.');
+                } else {
+                    alert(`✅ Endpoint responded with: ${postResponse.status} ${postResponse.statusText}\n\nCheck console for details.`);
+                }
+        
+            } catch (error) {
+                console.error('Endpoint test failed:', error);
+                alert('❌ Cannot test endpoint: ' + error.message);
+            }
         }
 
+        // Create a test JSON file for debugging
+        function createTestJSON() {
+            const testData = {
+                "training_data": [
+                    {
+                        "input": "What is BabyBIONN?",
+                        "output": "BabyBIONN is an advanced AI system using Virtual Neural Instances (VNIs) for specialized domain expertise.",
+                        "domain": "general",
+                        "vni_activation": ["core-vni", "general-vni"]
+                    },
+                    {
+                        "input": "Explain medical AI capabilities",
+                        "output": "Medical AI specializes in healthcare applications including symptom analysis, medical information retrieval, and healthcare guidance.",
+                        "domain": "medical", 
+                        "vni_activation": ["medical-vni"]
+                    },
+                    {
+                        "input": "What programming languages do you support?",
+                        "output": "I can help with various programming languages including Python, JavaScript, Java, and more through the Technical VNI.",
+                        "domain": "technical",
+                        "vni_activation": ["technical-vni"]
+                    }
+                ],
+                "metadata": {
+                    "version": "1.0",
+                    "created_at": new Date().toISOString(),
+                    "total_examples": 3,
+                    "description": "Test data for BabyBIONN pretraining"
+                }
+            };
+    
+            const dataStr = JSON.stringify(testData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = 'babybionn_test_data.json';
+            link.click();
+            URL.revokeObjectURL(link.href);
+    
+            alert('Test JSON file created! Use "babybionn_test_data.json" to test the upload functionality.');
+        }
         function updateProgress(message, percent) {
             document.getElementById('progressBar').style.width = percent + '%';
             document.getElementById('progressText').innerText = message;
@@ -883,56 +1256,204 @@ function clearImageUpload() {
 
         function loadKnowledgeStatus() {
             if (!backendAvailable) {
-                document.getElementById('kbList').innerHTML = 
+                document.getElementById('kbList').innerHTML =
                     '<div style="color: #f44336;">Backend not connected. Please start the BabyBIONN server.</div>';
                 return;
             }
-    
-            fetch(`${API_BASE}/admin/knowledge-status`)
-                .then(response => response.json())
+
+            // Add admin token to the request
+            fetch(`${API_BASE}/admin/knowledge-status?admin_token=babybionn_admin_2024`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
                 .then(status => {
                     if (status.success) {
                         let html = '<ul style="list-style: none; padding: 0;">';
                         for (const [domain, info] of Object.entries(status.knowledge_bases)) {
-                            html += `
-                                <li style="padding: 8px; margin: 5px 0; background: white; border-radius: 5px; border-left: 4px solid #4facfe;">
-                                    <strong>${domain.toUpperCase()}</strong><br>
-                                    <small>Concepts: ${info.concepts} | Patterns: ${info.patterns}</small><br>
-                                    <small style="color: #666;">Last updated: ${new Date(info.last_updated * 1000).toLocaleString()}</small>
-                                </li>`;
+                            // Handle both successful and error responses from VNIs
+                            if (info && info.error) {
+                                html += `
+                                    <li style="padding: 8px; margin: 5px 0; background: #ffebee; border-radius: 5px; border-left: 4px solid #f44336;">
+                                        <strong>${domain.toUpperCase()}</strong><br>
+                                        <small style="color: #d32f2f;">Error: ${info.error}</small>
+                                    </li>`;
+                            } else if (info) {
+                                html += `
+                                    <li style="padding: 8px; margin: 5px 0; background: white; border-radius: 5px; border-left: 4px solid #4facfe;">
+                                        <strong>${domain.toUpperCase()}</strong><br>
+                                        <small>Concepts: ${info.concepts || 'N/A'} | Patterns: ${info.patterns || 'N/A'}</small><br>
+                                        <small style="color: #666;">Last updated: ${info.last_updated ? new Date(info.last_updated * 1000).toLocaleString() : 'Never'}</small>
+                                    </li>`;
+                            } else {
+                                html += `
+                                    <li style="padding: 8px; margin: 5px 0; background: #fff3e0; border-radius: 5px; border-left: 4px solid #ff9800;">
+                                        <strong>${domain.toUpperCase()}</strong><br>
+                                        <small style="color: #e65100;">No information available</small>
+                                    </li>`;
+                            }
                         }
                         html += '</ul>';
                         document.getElementById('kbList').innerHTML = html;
                     } else {
                         document.getElementById('kbList').innerHTML = 
-                            `<div style="color: #f44336;">Error: ${status.error}</div>`;
+                            `<div style="color: #f44336;">Backend Error: ${status.error || 'Unknown error'}</div>`;
                     }
                 })
                 .catch(error => {
+                    console.error('Knowledge status error:', error);
                     document.getElementById('kbList').innerHTML = 
-                `       <div style="color: #f44336;">Failed to load knowledge status: ${error.message}</div>`;
+                        `<div style="color: #f44336;">Request Failed: ${error.message}</div>`;
                 });
         }
-
-        // Load knowledge status when admin tab is opened
-        function switchTab(tabName) {
-            // Update tab buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-
-            // Update tab content
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById(tabName + 'Tab').classList.add('active');
-
-            // If switching to admin tab, load knowledge status
-            if (tabName === 'admin' && backendAvailable) {
-                loadKnowledgeStatus();
+        // System action functions
+        function clearChatHistory() {
+            if (confirm('Are you sure you want to clear all chat history?')) {
+                document.getElementById('chatMessages').innerHTML = `
+                    <div class="message bot">
+                        <div class="message-avatar">B</div>
+                        <div class="message-content">
+                            Hello! I'm BabyBIONN, your AI assistant. How can I help you today?
+                            <div class="message-meta">Just now</div>
+                        </div>
+                    </div>
+                `;
+                alert('Chat history cleared!');
             }
         }
+
+        function exportConversation() {
+            const messages = document.getElementById('chatMessages').innerText;
+            const blob = new Blob([messages], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `babybionn-conversation-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function resetSystem() {
+            if (confirm('This will reset all system data. Are you absolutely sure?')) {
+                alert('System reset would be performed here. In a real implementation, this would clear all knowledge bases and reset to factory settings.');
+            }
+        }
+        // Debug function to check if pretrain endpoint exists
+        async function testPretrainEndpoint() {
+            console.log('🔍 Testing pretrain endpoint...');
+    
+            try {
+                // First test if we can reach the endpoint
+                const response = await fetch(`${API_BASE}/admin/pretrain`, {
+                    method: 'OPTIONS' // Preflight request
+                });
+                console.log('OPTIONS request:', response.status, response.statusText);
+        
+                // Test with a simple POST to see if endpoint exists
+                const testFormData = new FormData();
+                testFormData.append('test', 'test');
+        
+                const postResponse = await fetch(`${API_BASE}/admin/pretrain`, {
+                    method: 'POST',
+                    body: testFormData
+                });
+        
+                console.log('POST request:', postResponse.status, postResponse.statusText);
+        
+                if (postResponse.status === 404) {
+                    alert('❌ Pretrain endpoint not found (404). The backend might not have this endpoint implemented yet.');
+                } else if (postResponse.status === 405) {
+                    alert('❌ Method not allowed (405). The endpoint exists but might expect different data.');
+                } else {
+                    alert(`✅ Endpoint responded with: ${postResponse.status} ${postResponse.statusText}\n\nCheck console for details.`);
+                }
+        
+            } catch (error) {
+                console.error('Endpoint test failed:', error);
+                alert('❌ Cannot test endpoint: ' + error.message);
+            }
+        }
+
+        // Create a test JSON file for debugging
+        function createTestJSON() {
+            const testData = {
+                "training_data": [
+                    {
+                        "input": "What is BabyBIONN?",
+                        "output": "BabyBIONN is an advanced AI system using Virtual Neural Instances (VNIs) for specialized domain expertise.",
+                        "domain": "general",
+                        "vni_activation": ["core-vni", "general-vni"]
+                    },
+                    {
+                        "input": "Explain medical AI capabilities",
+                        "output": "Medical AI specializes in healthcare applications including symptom analysis, medical information retrieval, and healthcare guidance.",
+                        "domain": "medical", 
+                        "vni_activation": ["medical-vni"]
+                    },
+                    {
+                        "input": "What programming languages do you support?",
+                        "output": "I can help with various programming languages including Python, JavaScript, Java, and more through the Technical VNI.",
+                        "domain": "technical",
+                        "vni_activation": ["technical-vni"]
+                    }
+                ],
+                "metadata": {
+                    "version": "1.0",
+                    "created_at": new Date().toISOString(),
+                "total_examples": 3,
+                   "description": "Test data for BabyBIONN pretraining"
+                }
+            };
+    
+            const dataStr = JSON.stringify(testData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = 'babybionn_test_data.json';
+            link.click();
+            URL.revokeObjectURL(link.href);
+    
+            alert('Test JSON file created! Use "babybionn_test_data.json" to test the upload functionality.');
+        }
+
+        // Check all backend endpoints
+        async function debugBackendEndpoints() {
+            console.log('🔍 Checking all backend endpoints...');
+    
+            const endpoints = [
+                '/health',
+                '/api/chat',
+                '/api/admin/pretrain',
+                '/api/admin/knowledge-status'
+            ];
+    
+            let results = [];
+    
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(BACKEND_URL + endpoint, {
+                        method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+                    results.push(`${endpoint}: ${response.status} ${response.statusText}`);
+                    console.log(`✅ ${endpoint}: ${response.status}`);
+                } catch (error) {
+                    results.push(`${endpoint}: ❌ ${error.message}`);
+                    console.log(`❌ ${endpoint}: ${error.message}`);
+                }
+            }
+    
+            alert('Backend Endpoint Check:\n\n' + results.join('\n'));
+        }
+        // Test connection on load and every 10 seconds
+        testConnection();
+        setInterval(testConnection, 10000);
+        
+        // Initialize dashboard stats
+        updateDashboardStats();
     </script>
 </body>
 </html> 

@@ -1,0 +1,43 @@
+{
+  "episode": 400,
+  "training_stats": {
+    "total_episodes": 401,
+    "successful_episodes": 0,
+    "average_reward": -0.9604769540679194,
+    "domain_performance": {
+      "legal": {
+        "total_episodes": 129,
+        "successful_episodes": 0,
+        "total_reward": -118.89473684210513
+      },
+      "medical": {
+        "total_episodes": 141,
+        "successful_episodes": 0,
+        "total_reward": -135.25652173913056
+      },
+      "technical": {
+        "total_episodes": 131,
+        "successful_episodes": 0,
+        "total_reward": -131.0
+      }
+    },
+    "start_time": 1764670866.5542567
+  },
+  "q_table": {
+    "legal_short": {
+      "VNI_legal_001": -0.3886022493028489,
+      "VNI_technical_001": -0.3947084788478916,
+      "VNI_general_001": -0.39209670688118886
+    },
+    "medical_medium": {
+      "VNI_medical_001": -0.4438980148281322,
+      "VNI_general_001": -0.44730169861909735,
+      "VNI_technical_001": -0.4425920552048601
+    },
+    "technical_medium": {
+      "VNI_technical_001": -0.6488423257255079,
+      "VNI_general_001": -0.6397005637571096
+    }
+  },
+  "timestamp": 1764670869.476446
+}

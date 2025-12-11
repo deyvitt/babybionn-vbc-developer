@@ -1,4 +1,4 @@
-# reinforcement_learning.py
+# neuron/reinforcement_learning/reinforce_learn.py
 import torch
 import torch.nn as nn
 import numpy as np
@@ -462,8 +462,8 @@ def test_reinforcement_system():
     
     # Test stimulus 1
     stimulus_1 = {
-        'target_vnis': ['VNI_medical_001', 'VNI_legal_001'],
-        'context_vnis': ['VNI_base_001'],
+        'target_vnis': ['medical_0', 'legal_0'],
+        'context_vnis': ['medical_0', 'legal_0', 'general_0'],
         'input_data': {'text': 'Patient has fever and contract needs review'},
         'session_type': 'multi_domain'
     }
@@ -477,14 +477,14 @@ def test_reinforcement_system():
     rl_system.provide_feedback(
         response_1['session_id'], 
         0.8,  # Good response
-        {'target_vnis': ['VNI_medical_001', 'VNI_legal_001']}
+        {'target_vnis': ['medical_0', 'legal_0']}
     )
     
     # Test stimulus 2
     stimulus_2 = {
-        'target_vnis': ['VNI_technical_001'],
+        'target_vnis': ['general_0'],
         'input_data': {'text': 'System performance issue'},
-        'session_type': 'technical'
+        'session_type': 'general'
     }
     
     response_2 = rl_system.stimulate_system(stimulus_2)
@@ -496,7 +496,7 @@ def test_reinforcement_system():
     rl_system.punish_system(
         response_2['session_id'],
         -0.6,  # Poor response
-        {'target_vnis': ['VNI_technical_001']}
+        {'target_vnis': ['general_0']}
     )
     
     # Show system state

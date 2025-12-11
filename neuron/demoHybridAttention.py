@@ -1,17 +1,14 @@
 # neuron/demoHybridAttention.py - Simplified hybrid attention for BabyBIONN demo
 import torch
-import torch.nn as nn
 import math
-from typing import Optional, Tuple, Dict, Any
+import torch.nn as nn
+from typing import List, Optional, Tuple, Dict, Any, Union
 # from neurosynaptic_tensor_encoder import NeurosynapticEventEncoder
 
 class DemoHybridAttention(nn.Module):
-    """
-    Simplified hybrid attention for BabyBIONN demo
+    """Simplified hybrid attention for BabyBIONN demo
     - Keeps: hierarchical, sliding window, memory tokens, multi-modal fusion
-    - Removes: quantum components, content-aware selection, C++ extensions
-    """
-    
+    - Removes: quantum components, content-aware selection, C++ extensions"""
     def __init__(
         self,
         dim: int,
@@ -338,7 +335,289 @@ class DemoHybridAttention(nn.Module):
             "use_sliding": self.use_sliding,
             "multi_modal": self.multi_modal
         }
+
+class DemoHybridAttention(nn.Module):
+    """Simplified hybrid attention for BabyBIONN demo
+    - Keeps: hierarchical, sliding window, memory tokens, multi-modal fusion
+    - Removes: quantum components, content-aware selection, C++ extensions"""
+    def __init__(
+        self,
+        dim: int,
+        num_heads: int = 8,
+        window_size: int = 256,
+        use_sliding: bool = True,
+        use_global: bool = True,
+        use_hierarchical: bool = True,
+        global_token_ratio: float = 0.05,
+        memory_tokens: int = 16,
+        multi_modal: bool = True,
+    ):
+        super().__init__()
+        # Validate parameters
+        if dim % num_heads != 0:
+            raise ValueError(f"dim ({dim}) must be divisible by num_heads ({num_heads})")
+        
+        self.dim = dim
+        self.num_heads = num_heads
+        self.head_dim = dim // num_heads
+        self.window_size = window_size
+        self.scale = self.head_dim ** -0.5
+        
+        # Feature flags
+        self.use_sliding = use_sliding
+        self.use_global = use_global
+        self.use_hierarchical = use_hierarchical
+        self.multi_modal = multi_modal
+        
+        # Configuration parameters
+        self.global_token_ratio = global_token_ratio
+        self.memory_tokens = memory_tokens
+        
+        # Persistent memory (simplified)
+        self.persistent_memory = nn.Parameter(torch.zeros(1, memory_tokens, dim))
+        nn.init.normal_(self.persistent_memory, mean=0.0, std=0.02)
+        
+        # Projections
+        self.q_proj = nn.Linear(dim, dim)
+        self.k_proj = nn.Linear(dim, dim)
+        self.v_proj = nn.Linear(dim, dim)
+        self.out_proj = nn.Linear(dim, dim)
+        
+        # Multi-modal support (keep for demo)
+        if multi_modal:
+            self.modal_gate = nn.Linear(dim, 1)
+            self.modal_projection = nn.Linear(dim * 2, dim)
+            
+# ============ NEW CLASS - ADD THIS ============
+class HybridAttentionEngine:
+    """High-level attention engine for VNI routing decisions
+    - Computes which VNIs should handle queries
+    - Evaluates VNI collaboration potential
+    - Used by orchestrator for intelligent routing"""
     
+    def __init__(self):
+        self.vni_history = {}  # Track VNI performance
+        self.collaboration_patterns = {}  # Learn which VNIs work well together
+    
+    def compute_vni_attention(self, query: str, vni_descriptors: List[Dict], 
+                             context: Dict = None) -> List[float]:
+        """Compute attention scores for VNIs based on query"""
+        
+        # Extract query features
+        query_features = self._extract_query_features(query, context)
+        
+        scores = []
+        for descriptor in vni_descriptors:
+            # Compute compatibility between query and VNI capabilities
+            vni_features = self._extract_vni_features(descriptor)
+            
+            # Attention score based on:
+            # 1. Capability match
+            # 2. Historical success
+            # 3. Current load/availability
+            # 4. Collaboration compatibility
+            
+            score = self._compute_attention_score(query_features, vni_features, context)
+            scores.append(score)
+        
+        # Normalize scores
+        if scores:
+            max_score = max(scores)
+            if max_score > 0:
+                scores = [s / max_score for s in scores]
+        
+        return scores
+    
+    def _extract_query_features(self, query: str, context: Dict) -> Dict[str, Any]:
+        """Extract relevant features from query"""
+        # Simple feature extraction - can be enhanced
+        query_lower = query.lower()
+        
+        features = {
+            "length": len(query),
+            "word_count": len(query.split()),
+            "contains_question": "?" in query,
+            "contains_medical": any(word in query_lower for word in ["medical", "health", "doctor"]),
+            "contains_legal": any(word in query_lower for word in ["legal", "law", "contract"]),
+            "contains_technical": any(word in query_lower for word in ["code", "software", "system"]),
+            "urgency": "urgent" in query_lower or "emergency" in query_lower,
+            "complexity": self._estimate_complexity(query)
+        }
+        
+        # Add context features if available
+        if context:
+            features.update({
+                "session_depth": context.get("session_depth", 0),
+                "previous_vnis": context.get("previous_vnis", []),
+                "user_preference": context.get("user_preference", {})
+            })
+        
+        return features
+    
+    def _extract_vni_features(self, descriptor: Dict) -> Dict[str, Any]:
+        """Extract features from VNI descriptor"""
+        return {
+            "type": descriptor.get("type", "general"),
+            "capabilities": set(descriptor.get("capabilities", [])),
+            "collaboration_score": descriptor.get("collaboration_score", 0.5),
+            "specializations": set(descriptor.get("specializations", set())),
+            "performance_history": descriptor.get("performance", {}),
+            "availability": descriptor.get("availability", 1.0)
+        }
+    
+    def _compute_attention_score(self, query_features: Dict, vni_features: Dict, 
+                                context: Dict) -> float:
+        """Compute attention score between query and VNI"""
+        
+        score = 0.0
+        weight_sum = 0.0
+        
+        # 1. Capability matching (40% weight)
+        capability_match = self._compute_capability_match(query_features, vni_features)
+        score += capability_match * 0.4
+        weight_sum += 0.4
+        
+        # 2. Historical performance (30% weight)
+        if vni_features["performance_history"]:
+            historical_score = vni_features["performance_history"].get("success_rate", 0.5)
+            score += historical_score * 0.3
+        weight_sum += 0.3
+        
+        # 3. Collaboration potential (20% weight)
+        collaboration_score = vni_features["collaboration_score"]
+        score += collaboration_score * 0.2
+        weight_sum += 0.2
+        
+        # 4. Availability (10% weight)
+        availability = vni_features["availability"]
+        score += availability * 0.1
+        weight_sum += 0.1
+        
+        # Normalize by weight sum (in case some weights weren't applied)
+        if weight_sum > 0:
+            score = score / weight_sum
+        
+        return min(1.0, max(0.0, score))  # Clamp between 0 and 1
+    
+    def _compute_capability_match(self, query_features: Dict, vni_features: Dict) -> float:
+        """Compute how well VNI capabilities match query needs"""
+        
+        match_score = 0.0
+        matches = 0
+        
+        # Check domain matches
+        if query_features.get("contains_medical") and "medical" in vni_features["type"]:
+            matches += 1
+        if query_features.get("contains_legal") and "legal" in vni_features["type"]:
+            matches += 1
+        if query_features.get("contains_technical") and "technical" in vni_features["capabilities"]:
+            matches += 1
+        
+        # Complexity match
+        query_complexity = query_features.get("complexity", "medium")
+        if query_complexity == "high" and "complex_processing" in vni_features["capabilities"]:
+            matches += 1
+        elif query_complexity == "low" and "simple_processing" in vni_features["capabilities"]:
+            matches += 1
+        
+        # Question answering capability
+        if query_features.get("contains_question") and "question_answering" in vni_features["capabilities"]:
+            matches += 1
+        
+        # Normalize by total possible matches (adjust based on your criteria)
+        total_possible_matches = 5  # Adjust this based on your matching criteria
+        match_score = matches / total_possible_matches
+        
+        return match_score
+    
+    def _estimate_complexity(self, query: str) -> str:
+        """Estimate query complexity"""
+        word_count = len(query.split())
+        
+        if word_count > 50:
+            return "high"
+        elif word_count > 20:
+            return "medium"
+        else:
+            return "low"
+    
+    def create_vni_collaboration_matrix(self, vni_descriptors: List[Dict], 
+                                       query: str, context: Dict) -> List[List[float]]:
+        """Create collaboration matrix showing which VNIs work well together"""
+        
+        matrix = []
+        for i, vni1 in enumerate(vni_descriptors):
+            row = []
+            for j, vni2 in enumerate(vni_descriptors):
+                if i == j:
+                    row.append(1.0)  # Self-collaboration (always works with itself)
+                else:
+                    # Compute collaboration potential
+                    collaboration_score = self._compute_collaboration_potential(
+                        vni1, vni2, query, context
+                    )
+                    row.append(collaboration_score)
+            matrix.append(row)
+        
+        return matrix
+    
+    def _compute_collaboration_potential(self, vni1: Dict, vni2: Dict, 
+                                        query: str, context: Dict) -> float:
+        """Compute how well two VNIs might collaborate"""
+        
+        # Check if they've collaborated before
+        history_key = f"{vni1.get('id')}_{vni2.get('id')}"
+        if history_key in self.collaboration_patterns:
+            historical_score = self.collaboration_patterns[history_key].get("success_rate", 0.5)
+        else:
+            historical_score = 0.5
+        
+        # Domain complementarity
+        vni1_type = vni1.get("type", "general")
+        vni2_type = vni2.get("type", "general")
+        
+        # Different types often collaborate well (medical + legal for medical-legal queries)
+        type_diversity = 1.0 if vni1_type != vni2_type else 0.3
+        
+        # Capability overlap (some overlap is good, too much means redundancy)
+        vni1_caps = set(vni1.get("capabilities", []))
+        vni2_caps = set(vni2.get("capabilities", []))
+        overlap = len(vni1_caps & vni2_caps) / max(len(vni1_caps | vni2_caps), 1)
+        
+        # Ideal is about 30% overlap (some common ground but different specialties)
+        overlap_score = 1.0 - abs(overlap - 0.3)  # Peak at 30% overlap
+        
+        # Combine factors
+        collaboration_potential = (
+            historical_score * 0.4 +
+            type_diversity * 0.3 +
+            overlap_score * 0.3
+        )
+        
+        return min(1.0, max(0.0, collaboration_potential))
+    
+    def update_collaboration_history(self, vni_pair: Tuple[str, str], success: bool):
+        """Update collaboration history based on outcome"""
+        key = f"{vni_pair[0]}_{vni_pair[1]}"
+        reverse_key = f"{vni_pair[1]}_{vni_pair[0]}"
+        
+        if key not in self.collaboration_patterns:
+            self.collaboration_patterns[key] = {
+                "success_count": 0,
+                "total_count": 0,
+                "success_rate": 0.5
+            }
+        
+        pattern = self.collaboration_patterns[key]
+        pattern["total_count"] += 1
+        if success:
+            pattern["success_count"] += 1
+        
+        pattern["success_rate"] = pattern["success_count"] / pattern["total_count"]
+        
+        # Also update reverse (symmetrical)
+        self.collaboration_patterns[reverse_key] = pattern
+
 # neurosyntaptic_tensor_encoder.py
 import torch
 import torch.nn as nn

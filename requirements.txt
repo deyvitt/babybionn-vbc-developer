@@ -1,66 +1,105 @@
-# Core web framework
+# BabyBIONN Requirements with Neural Mesh Integration
+# ============================ CORE ============================
 fastapi>=0.109.2
-uvicorn==0.24.0
-pydantic==2.5.0
+uvicorn[standard]==0.24.0
+pydantic>=2.6.0
 python-multipart==0.0.6
+python-jose[cryptography]==3.3.0
+python-dotenv==1.0.0
+passlib[bcrypt]==1.7.4
 
-# Core data science & ML
-torch>=2.0.0
-torchvision>=0.15.0
-transformers>=4.30.0
-numpy>=1.24.3,<2
-pandas>=2.0.0
-scipy>=1.10.0
+# ============================ MACHINE LEARNING ============================
+# PyTorch with CUDA 11.8
+torch==2.1.2+cu118 --index-url https://download.pytorch.org/whl/cu118
+torchvision==0.16.2+cu118 --index-url https://download.pytorch.org/whl/cu118
+torchaudio==2.1.2+cu118 --index-url https://download.pytorch.org/whl/cu118
 
-# Enhanced NLP capabilities
-spacy>=3.5.0
-# After installing spacy, run: python -m spacy download en_core_web_sm
+# Transformers and NLP
+transformers==4.40.0
+sentence-transformers==2.7.0
+accelerate==0.30.1
+tokenizers==0.19.0
+datasets==2.19.1
 
-# Enhanced computer vision
-ultralytics>=8.0.186  # For YOLO object detection
-Pillow>=10.1.0  # Enhanced image processing
-opencv-python>=4.8.1  # Computer vision utilities
+# Enhanced Attention Mechanisms
+einops==0.7.0
+xformers==0.0.24  # For memory-efficient attention
 
-# Utilities - for visualization & analysis
+# ============================ SCIENTIFIC COMPUTING ============================
+numpy>=1.24.3,<2.0.0
 pandas==2.1.4
+scipy==1.15.3
+scikit-learn==1.5.2
+scikit-image==0.22.0
+
+# ============================ NATURAL LANGUAGE PROCESSING ============================
+spacy==3.7.2
+https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl
+nltk==3.9.1
+gensim==4.3.2
+
+# ============================ DATA VISUALIZATION ============================
+matplotlib==3.8.2
 seaborn==0.13.0
 plotly==5.17.0
 networkx==3.2.1
-matplotlib==3.8.2
 
-# Enhanced VNI capabilities
-scikit-learn>=1.3.2  # For improved topic classification
-nltk>=3.8.0  # Additional NLP capabilities
-python-dateutil>=2.8.0  # Enhanced time handling
+# ============================ UTILITIES ============================
+# Web search and APIs
+duckduckgo-search==3.9.6
+requests==2.31.0
+aiohttp==3.9.1
 
-# Enhanced Attention Mechanisms
-einops==0.7.0          # For flexible tensor operations
-xformers==0.0.22       # Optional: for memory-efficient attention
-# flash-attn==2.3.0      # Optional: for faster attention - uncomment only when Decentralized BabyBIONN is ready
+# File handling
+Pillow==10.1.0
+openpyxl==3.1.2
+pyyaml==6.0.1
+orjson==3.9.10
 
-# Performance & utilities
-psutil>=5.9.0  # System monitoring for enhanced VNIs
-tqdm>=4.65.0  # Progress bars for training
-joblib>=1.2.0  # Parallel processing
+# Performance monitoring
+psutil==5.9.6
+tqdm==4.66.1
+joblib==1.3.2
 
-# Enhanced data handling
-openpyxl>=3.0.0  # For Excel file support in knowledge bases
-pyyaml>=6.0  # Enhanced configuration files
+# Math and symbolic computation
+sympy==1.12
 
-# Optional: For medical/legal domain enhancements
-sympy>=1.11.0  # Symbolic mathematics for technical VNIs
-requests>=2.28.0  # API calls for enhanced VNIs 
+# ============================ NEURAL MESH SPECIFIC ============================
+# Neural mesh dependencies
+h5py==3.10.0  # For pattern storage
+msgpack==1.0.7  # For efficient serialization
+redis==5.0.1  # For distributed mesh caching (optional)
 
-# Websearch
-duckduckgo-search>=3.9.6
+# Graph processing for neural mesh
+igraph==0.11.3  # For complex network analysis
+python-louvain==0.16  # For community detection in mesh
 
-# For enhanced attention and hybrid mechanisms
-accelerate>=0.24.0  # For distributed training compatibility
-sentence-transformers>=2.2.2  # For semantic similarity
-datasets>=2.14.0  # For pretraining data handling
+# ============================ OPTIONAL FOR ADVANCED FEATURES ============================
+# For computer vision (optional - uncomment if needed)
+ultralytics==8.1.0
+# opencv-python==4.8.1.78
 
-# For advanced mathematical operations
-scikit-image>=0.21.0  # For image processing in VNIs
+# For audio processing (optional)
+# librosa==0.10.1
+# pydub==0.25.1
 
-# For enhanced serialization
-orjson>=3.9.0  # Faster JSON parsing
+# For PDF/document processing (optional)
+# PyPDF2==3.0.1
+# python-docx==1.1.0
+
+# For distributed processing (optional)
+# ray==2.9.0
+# dask==2023.12.0
+# distributed==2023.12.0
+
+# ============================ DEVELOPMENT ============================
+# Testing and debugging
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+ipython==8.18.1
+
+# Code quality
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.0 

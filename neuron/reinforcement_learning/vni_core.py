@@ -1,4 +1,4 @@
-# vni_core.py
+# neuron/reinforcement_learning/vni_core.py
 """
 Minimal VNI core implementation for RL integration
 Provides the necessary classes and interfaces for the reinforcement learning system
@@ -153,16 +153,9 @@ def create_sample_vni_manager() -> VNIManager:
     manager = VNIManager()
     
     # Register various types of VNIs
-    manager.register_vni("VNI_base_001", VNIType.GENERAL)
-    manager.register_vni("VNI_medical_001", VNIType.MEDICAL)
-    manager.register_vni("VNI_health_001", VNIType.HEALTH)
-    manager.register_vni("VNI_legal_001", VNIType.LEGAL)
-    manager.register_vni("VNI_compliance_001", VNIType.COMPLIANCE)
-    manager.register_vni("VNI_technical_001", VNIType.TECHNICAL)
-    manager.register_vni("VNI_software_001", VNIType.SOFTWARE)
-    manager.register_vni("VNI_bio_001", VNIType.BIO)
-    manager.register_vni("VNI_ethics_001", VNIType.ETHICS)
-    manager.register_vni("VNI_math_001", VNIType.MATH)
+    manager.register_vni("medical_0", VNIType.MEDICAL)
+    manager.register_vni("legal_0", VNIType.LEGAL)  
+    manager.register_vni("general_0", VNIType.GENERAL)
     
     return manager
 
@@ -179,7 +172,7 @@ if __name__ == "__main__":
     
     # Process through different VNIs
     responses = {}
-    for vni_id in ["VNI_medical_001", "VNI_legal_001", "VNI_technical_001"]:
+    for vni_id in ["medical_0", "legal_0", "general_0"]:
         try:
             response = manager.process_stimulus(vni_id, stimulus)
             responses[vni_id] = response

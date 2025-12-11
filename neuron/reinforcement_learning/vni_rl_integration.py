@@ -1,4 +1,4 @@
-# vni_rl_integration.py
+# neuron/reinforcement_learning/vni_rl_integration.py
 """
 Integration module connecting the reinforcement learning system with VNIs
 Creates a complete learning loop where VNIs can evolve based on feedback
@@ -13,10 +13,10 @@ import time
 from collections import defaultdict
 import json
 
-from reinforcement_learning import BabyBIONNReinforcementSystem, RLConfig
+from .reinforce_learn import BabyBIONNReinforcementSystem, RLConfig
 # Import the minimal VNI core implementation
 try:
-    from vni_core import VNIManager, VNIType, VNIResponse, VNIStimulus
+    from neuron.reinforcement_learning.vni_core import VNIManager, VNIType, VNIResponse, VNIStimulus
 except ImportError:
     # Fallback to the implementation above if separate file doesn't exist
     from dataclasses import dataclass, field
@@ -165,6 +165,7 @@ class VNILearningOrchestrator:
     """
     
     def __init__(self, vni_manager: VNIManager, config: VNIRLIntegrationConfig = None):
+        self.vnis = {}  
         self.vni_manager = vni_manager
         self.config = config or VNIRLIntegrationConfig()
         self.rl_system = BabyBIONNReinforcementSystem(self.config.rl_config)
@@ -176,7 +177,33 @@ class VNILearningOrchestrator:
         self.active_context = {}
         
         logger.info("VNI Learning Orchestrator initialized")
+
+    def register_vni(self, vni_id: str, vni_type, processor_func=None):
+        """
+        Register a VNI instance with the learning orchestrator - compatibility method
+        This matches the VNIManager interface expected by pretraining_processor.py
+        """
+        logger.info(f"Registering VNI {vni_id} with type {vni_type} in learning orchestrator")
     
+        # For compatibility with pretraining_processor.py
+        # We need to create or register the VNI in a way that matches the expected interface
+        if not hasattr(self, 'vnis'):
+            self.vnis = {}
+    
+        # Store the VNI information in a way that's compatible with the pretraining processor
+        self.vnis[vni_id] = {
+            'type': vni_type,
+            'pretrained_patterns': {},
+            'reasoning_patterns': {},
+            'response_templates': {}
+        }
+        
+        # Also register with the underlying VNI manager for actual processing
+        if hasattr(self.vni_manager, 'register_vni'):
+            self.vni_manager.register_vni(vni_id, vni_type, processor_func)
+    
+        logger.info(f"✅ Registered VNI {vni_id} for domain type: {vni_type}")
+
     def process_stimulus_with_learning(self, stimulus: VNIStimulus) -> Dict[str, Any]:
         """Process stimulus through VNIs with RL-guided pattern selection"""
         
@@ -298,24 +325,20 @@ class VNILearningOrchestrator:
         # Example selection logic - adapt based on your VNI manager
         stimulus_type = getattr(stimulus, 'stimulus_type', 'general')
         content = getattr(stimulus, 'content', '')
-        
+            
         # Simple type-based routing
         if 'medical' in stimulus_type.lower() or any(med_term in content.lower() 
                                                    for med_term in ['patient', 'treatment', 'diagnosis']):
-            target_vnis.extend(['VNI_medical_001', 'VNI_health_001'])
+            target_vnis.extend(['medical_0'])  # Use medical_0
         
         if 'legal' in stimulus_type.lower() or any(legal_term in content.lower() 
                                                  for legal_term in ['contract', 'law', 'legal']):
-            target_vnis.extend(['VNI_legal_001', 'VNI_compliance_001'])
+            target_vnis.extend(['legal_0'])  # Use legal_0
             
         if 'technical' in stimulus_type.lower() or any(tech_term in content.lower() 
-                                                     for tech_term in ['system', 'code', 'technical']):
-            target_vnis.extend(['VNI_technical_001', 'VNI_software_001'])
-        
-        # Fallback to base VNI
-        if not target_vnis:
-            target_vnis = ['VNI_base_001']
-            
+                                                     for tech_term in ['system', 'code', 'technical', 'maths', 'arithmetic', 'geometry', 'trigonometry']):
+            target_vnis.extend(['general_0'])  # Use general_0 for technical queries
+
         return target_vnis[:self.config.max_context_vnis]
     
     def _get_context_vnis(self, stimulus: VNIStimulus, target_vnis: List[str]) -> List[str]:
@@ -326,9 +349,9 @@ class VNILearningOrchestrator:
         # Add VNIs that are frequently co-activated with targets
         # This would be enhanced with your VNI association graphs
         association_map = {
-            'VNI_medical_001': ['VNI_health_001', 'VNI_bio_001'],
-            'VNI_legal_001': ['VNI_compliance_001', 'VNI_ethics_001'],
-            'VNI_technical_001': ['VNI_software_001', 'VNI_math_001'],
+            'medical_0': ['legal_0', 'general_0'],
+            'legal_0': ['medical_0', 'general_0'],
+            'general_0': ['medical_0', 'legal_0'],
         }
         
         for vni in target_vnis:

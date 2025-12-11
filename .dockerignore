@@ -1,20 +1,101 @@
-cat > .dockerignore << 'EOF'
-__pycache__
-*.pyc
-*.pyo
-*.pyd
+# .dockerignore
+# Ignore unnecessary files in Docker build
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Jupyter
+.ipynb_checkpoints
+
+# Environment
+.env
+.env.*
+!.env.example
+.venv
 env/
 venv/
-.venv/
-.env
-.git
-.mypy_cache
-.pytest_cache
-.history
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
 *.log
-Dockerfile
+logs/
+
+# Data
+*.csv
+*.json
+*.xlsx
+knowledge_*.json  # Don't include knowledge bases in image
+
+# Models (will be downloaded separately)
+models/
+pretrained/
+ultralytics_cache/
+
+# Docker
 docker-compose.yml
+docker-compose.*.yml
+Dockerfile
+.dockerignore
+
+# Documentation
+docs/
 README.md
-EOF
+CONTRIBUTING.md
+CHANGELOG.md
+LICENSE 

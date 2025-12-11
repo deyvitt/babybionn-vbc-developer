@@ -1,14 +1,15 @@
 # neuron/smart_activation_router.py
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from typing import Dict, List, Optional, Any, Tuple
-import logging
-from dataclasses import dataclass
-import asyncio
-import concurrent.futures
-from collections import defaultdict
 import time
+import torch
+import asyncio
+import logging
+import torch.nn as nn
+import concurrent.futures
+import torch.nn.functional as F
+from dataclasses import dataclass
+from collections import defaultdict
+from enhanced_vni_classes import EnhancedBaseVNI
+from typing import Dict, List, Optional, Any, Tuple
 
 logger = logging.getLogger("smart_activation_router")
 
@@ -448,6 +449,67 @@ class SmartActivationRouter(nn.Module):
             logger.error(f"Smart activation routing failed: {str(e)}")
             return self._generate_error_output(str(e))
     
+    def create_vni_pathway(self, vnis: List[EnhancedBaseVNI], query: str, 
+                          context: Dict) -> List[Dict]:
+        """Create optimal processing pathway for VNIs"""
+        
+        # Analyze query to determine processing flow
+        analysis = self._analyze_processing_needs(query, context)
+        
+        # Determine optimal sequence
+        if analysis.get("processing_mode") == "cascade":
+            pathway = self._create_cascade_pathway(vnis, analysis)
+        elif analysis.get("processing_mode") == "parallel":
+            pathway = self._create_parallel_pathway(vnis, analysis)
+        else:
+            pathway = self._create_hybrid_pathway(vnis, analysis)
+        
+        return pathway
+    
+    def _create_cascade_pathway(self, vnis: List[EnhancedBaseVNI], analysis: Dict) -> List[Dict]:
+        """Create sequential processing pathway"""
+        pathway = []
+        
+        # Sort VNIs by specialization match
+        sorted_vnis = sorted(vnis, 
+            key=lambda v: self._compute_specialization_match(v, analysis),
+            reverse=True
+        )
+        
+        for i, vni in enumerate(sorted_vnis):
+            pathway.append({
+                "vni_id": vni.instance_id,
+                "role": self._determine_vni_role(vni, i, analysis),
+                "expected_output": analysis.get(f"stage_{i}_output", "abstraction"),
+                "timeout": analysis.get("stage_timeout", 30)
+            })
+        
+        return pathway
+    
+    def route_between_vnis(self, source_vni: EnhancedBaseVNI, 
+                          target_vnis: List[EnhancedBaseVNI],
+                          data: Dict) -> Dict:
+        """Route data between VNIs intelligently"""
+        
+        routing_decisions = {}
+        
+        for target_vni in target_vnis:
+            # Check if routing makes sense
+            if self._should_route(source_vni, target_vni, data):
+                routing_decisions[target_vni.instance_id] = {
+                    "route": True,
+                    "priority": self._compute_routing_priority(source_vni, target_vni, data),
+                    "data_format": self._determine_data_format(source_vni, target_vni),
+                    "expected_processing_time": self._estimate_processing_time(target_vni, data)
+                }
+            else:
+                routing_decisions[target_vni.instance_id] = {
+                    "route": False,
+                    "reason": "Not compatible for this data type"
+                }
+        
+        return routing_decisions
+
     def calculate_activation_scores(self, baseVNI_output: Dict[str, Any]) -> Dict[str, float]:
         """Calculate activation scores for all registered VNIs"""
         activation_scores = {}

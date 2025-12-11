@@ -1,0 +1,40 @@
+{
+  "current_episode": 450,
+  "training_stats": {
+    "total_episodes": 451,
+    "successful_episodes": 0,
+    "average_reward": -0.9622202377630183,
+    "domain_performance": {
+      "legal": {
+        "total_episodes": 143,
+        "successful_episodes": 0,
+        "total_reward": -132.05263157894723
+      },
+      "medical": {
+        "total_episodes": 151,
+        "successful_episodes": 0,
+        "total_reward": -144.90869565217406
+      },
+      "technical": {
+        "total_episodes": 157,
+        "successful_episodes": 0,
+        "total_reward": -157.0
+      }
+    },
+    "start_time": 1764670866.5542567
+  },
+  "config": {
+    "pretraining_epochs": 3,
+    "domain_knowledge_path": "knowledge_bases",
+    "training_episodes": 500,
+    "learning_rate": 0.01,
+    "discount_factor": 0.95,
+    "exploration_rate": 0.1,
+    "batch_size": 32,
+    "evaluation_interval": 50,
+    "validation_set_size": 50,
+    "save_interval": 25,
+    "model_checkpoint_path": "checkpoints"
+  },
+  "timestamp": 1764670869.973004
+}

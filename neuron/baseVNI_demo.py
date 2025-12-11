@@ -8,7 +8,7 @@ import logging
 from dataclasses import dataclass
 import re
 from transformers import AutoTokenizer, AutoModel
-from PIL import Image
+#from PIL import Image
 import torchvision.transforms as transforms
 import torchvision.models as models
 
@@ -20,12 +20,12 @@ except ImportError:
     SPACY_AVAILABLE = False
     print("⚠️  spaCy not available. Install with: pip install spacy && python -m spacy download en_core_web_sm")
 
-try:
-    from ultralytics import YOLO
-    YOLO_AVAILABLE = True
-except ImportError:
-    YOLO_AVAILABLE = False
-    print("⚠️  YOLO not available. Install with: pip install ultralytics")
+#try:
+#    from ultralytics import YOLO
+#    YOLO_AVAILABLE = False #(change back to True if want to use)
+#except ImportError:
+#    YOLO_AVAILABLE = False
+#    print("⚠️  YOLO not available. Install with: pip install ultralytics")
 
 logger = logging.getLogger("baseVNI_enhanced")
 
@@ -306,35 +306,52 @@ class EnhancedTextAbstraction(nn.Module):
                 'readability': structural_info['readability_score']
             }
         }
-
+"""
 class EnhancedImageAbstraction(nn.Module):
-    """Enhanced image abstraction with real object detection"""
+    # Enhanced image abstraction with real object detection
     
     def __init__(self, config: EnhancedVNIConfig):
         super().__init__()
         self.config = config
         
-        # IN __init__ METHOD, CHANGE:
+        # CORRECT: Just initialize attribute in __init__
         self.yolo_model = None  # Don't load immediately
-
-        # MODIFY analyze_image METHOD:
-        def analyze_image(self, image: Image.Image) -> Dict[str, Any]:
-            """Analyze image with lazy YOLO loading"""
-            try:
-                # Lazy load YOLO when first needed
-                if self.yolo_model is None and YOLO_AVAILABLE and config.use_object_detection:
-                    from ultralytics import YOLO
-                    self.yolo_model = YOLO('yolov8n.pt')
-                    logger.info("✅ YOLO model loaded on first use")
         
-                if self.yolo_model is not None:
-                    return self.analyze_with_yolo(image)
-                else:
-                    return self.analyze_without_yolo(image)
-            
-            except Exception as e:
-                logger.error(f"Image analysis failed: {e}")
+        # CORRECT: Define neural networks in __init__
+        self.semantic_net = nn.Sequential(
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(256, 128),
+            nn.Tanh()
+        )
+        
+        self.feature_net = nn.Sequential(
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(256, 128),
+            nn.Tanh()
+        )
+    
+    # CORRECT: Methods defined at CLASS LEVEL, not inside __init__
+    def analyze_image(self, image: Image.Image) -> Dict[str, Any]:
+        # Analyze image with lazy YOLO loading
+        try:
+            # Lazy load YOLO when first needed
+            if self.yolo_model is None and YOLO_AVAILABLE and self.config.use_object_detection:
+                from ultralytics import YOLO  # Import here for true lazy loading
+                self.yolo_model = YOLO('yolov8n.pt')
+                logger.info("✅ YOLO model loaded on first use")
+    
+            if self.yolo_model is not None:
+                return self.analyze_with_yolo(image)
+            else:
                 return self.analyze_without_yolo(image)
+        
+        except Exception as e:
+            logger.error(f"Image analysis failed: {e}")
+            return self.analyze_without_yolo(image)
         
         # Enhanced semantic abstraction
         self.semantic_net = nn.Sequential(
@@ -355,14 +372,14 @@ class EnhancedImageAbstraction(nn.Module):
         )
     
     def analyze_image_characteristics_advanced(self, image: Image.Image) -> Dict[str, Any]:
-        """Enhanced image analysis with object detection"""
+        #Enhanced image analysis with object detection
         if self.yolo_model is not None:
             return self.analyze_with_yolo(image)
         else:
             return self.analyze_image_characteristics_fallback(image)
     
     def analyze_with_yolo(self, image: Image.Image) -> Dict[str, Any]:
-        """Analyze image using YOLO object detection"""
+        #Analyze image using YOLO object detection
         try:
             # Run YOLO inference
             results = self.yolo_model(image)
@@ -419,7 +436,7 @@ class EnhancedImageAbstraction(nn.Module):
             return self.analyze_image_characteristics_fallback(image)
     
     def analyze_image_characteristics_fallback(self, image: Image.Image) -> Dict[str, Any]:
-        """Fallback image analysis without YOLO"""
+        #Fallback image analysis without YOLO
         img_array = np.array(image)
         
         return {
@@ -434,7 +451,7 @@ class EnhancedImageAbstraction(nn.Module):
         }
     
     def classify_scene(self, objects: List[Dict]) -> str:
-        """Classify scene based on detected objects"""
+        #Classify scene based on detected objects
         object_names = [obj['name'] for obj in objects]
         
         # Scene classification logic
@@ -458,7 +475,7 @@ class EnhancedImageAbstraction(nn.Module):
         return max(scores.items(), key=lambda x: x[1])[0]
     
     def enhanced_color_analysis(self, img_array: np.ndarray) -> Dict[str, Any]:
-        """Enhanced color analysis"""
+        #Enhanced color analysis
         # Convert to HSV for better color analysis
         try:
             from PIL import Image
@@ -495,7 +512,7 @@ class EnhancedImageAbstraction(nn.Module):
             }
     
     def analyze_texture_complexity(self, img_array: np.ndarray) -> Dict[str, Any]:
-        """Analyze texture complexity using edge detection"""
+        #Analyze texture complexity using edge detection
         try:
             from scipy import ndimage
             
@@ -524,7 +541,7 @@ class EnhancedImageAbstraction(nn.Module):
             }
     
     def analyze_composition(self, objects: List[Dict]) -> str:
-        """Analyze image composition based on object distribution"""
+        #Analyze image composition based on object distribution
         if len(objects) == 0:
             return 'minimal'
         elif len(objects) == 1:
@@ -535,7 +552,7 @@ class EnhancedImageAbstraction(nn.Module):
             return 'complex'
     
     def get_dominant_colors_fallback(self, img_array: np.ndarray) -> List[str]:
-        """Fallback color analysis"""
+        #Fallback color analysis
         brightness = img_array.mean()
         if brightness > 200:
             return ['bright']
@@ -545,7 +562,7 @@ class EnhancedImageAbstraction(nn.Module):
             return ['medium']
     
     def forward(self, features: torch.Tensor, image: Image.Image) -> Dict[str, Any]:
-        """Apply enhanced image abstraction"""
+        #Apply enhanced image abstraction
         semantic_features = self.semantic_net(features)
         feature_level_features = self.feature_net(features)
         
@@ -568,12 +585,9 @@ class EnhancedImageAbstraction(nn.Module):
                 'color_variance': image_info['color_variance']
             }
         }
-
+"""
 class SmartAbstractionEngine(nn.Module):
-    """
-    Enhanced smart abstraction with proper NLP and object detection
-    """
-    
+    # Enhanced smart abstraction with proper NLP and object detection
     def __init__(self, config: EnhancedVNIConfig):
         super().__init__()
         self.config = config
@@ -599,7 +613,7 @@ class SmartAbstractionEngine(nn.Module):
             
         # Enhanced modality-specific abstraction networks
         self.text_abstractor = EnhancedTextAbstraction(config)
-        self.image_abstractor = EnhancedImageAbstraction(config)
+        #self.image_abstractor = EnhancedImageAbstraction(config)
         
         # Improved topic classifier
         self.topic_classifier = nn.Sequential(
@@ -612,7 +626,7 @@ class SmartAbstractionEngine(nn.Module):
         
         logger.info(f"✅ Enhanced SmartAbstractionEngine initialized")
         logger.info(f"   - Advanced NLP: {SPACY_AVAILABLE and config.use_advanced_nlp}")
-        logger.info(f"   - Object Detection: {YOLO_AVAILABLE and config.use_object_detection}")
+        #logger.info(f"   - Object Detection: {YOLO_AVAILABLE and config.use_object_detection}")
         
     # [Rest of the SmartAbstractionEngine methods remain the same as in baseVNI_Simplr.py]
     # Only the initialization changed to use enhanced abstractors
@@ -651,7 +665,7 @@ class SmartBaseVNI(nn.Module):
             'abstraction_strategy': 'adaptive_by_modality',
             'advanced_features': {
                 'nlp_engine': 'spaCy' if SPACY_AVAILABLE else 'fallback',
-                'object_detection': 'YOLOv8' if YOLO_AVAILABLE else 'fallback',
+                #'object_detection': 'YOLOv8' if YOLO_AVAILABLE else 'fallback',
                 'sentiment_analysis': True,
                 'relationship_detection': True
             }
@@ -669,7 +683,7 @@ def demo_enhanced_abstraction():
     config = EnhancedVNIConfig(
         vni_id="enhanced_demo_001",
         use_advanced_nlp=SPACY_AVAILABLE,
-        use_object_detection=YOLO_AVAILABLE
+        use_object_detection= False #YOLO_AVAILABLE (uncomment this and delete False if want to use image again)
     )
     enhanced_vni = SmartBaseVNI(config)
     
@@ -721,7 +735,7 @@ def demo_enhanced_abstraction():
     print("\n" + "=" * 60)
     print("🎯 ENHANCED FEATURES DEMONSTRATED:")
     print("  ✅ Advanced NLP with spaCy (entity recognition, dependency parsing)")
-    print("  ✅ Real object detection with YOLO")
+    #print("  ✅ Real object detection with YOLO")
     print("  ✅ Enhanced semantic abstraction (concepts, entities, sentiment)")
     print("  ✅ Improved structural analysis (syntax complexity, relationships)")
     print("  ✅ Scene classification and composition analysis")

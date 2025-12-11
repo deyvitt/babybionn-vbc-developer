@@ -1,0 +1,18 @@
+{
+  "domain": "legal",
+  "timestamp": 1764670866.552909,
+  "synaptic_patterns": {},
+  "reasoning_patterns": {},
+  "response_templates": {
+    "general": [
+      "From a legal standpoint, {concept} requires proper documentation and professional legal advice.",
+      "Legal matters involving {concept} should be reviewed by a qualified attorney.",
+      "Regarding {concept}, legal outcomes depend on specific circumstances and jurisdiction."
+    ]
+  },
+  "metadata": {
+    "total_patterns": 0,
+    "total_reasoning_patterns": 0,
+    "version": "1.0"
+  }
+}
