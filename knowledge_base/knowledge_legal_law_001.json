@@ -1,0 +1,34 @@
+{
+  "domain": "legal",
+  "title": "Legal Knowledge Base - Core Concepts",
+  "version": "1.0",
+  "content": [
+    {
+      "concept": "Contract Law",
+      "definition": "Body of law that relates to making and enforcing agreements",
+      "key_principles": [
+        "Offer and acceptance",
+        "Consideration",
+        "Intention to create legal relations",
+        "Capacity to contract",
+        "Legality of purpose"
+      ],
+      "common_contracts": ["Employment contracts", "Sales agreements", "Leases", "Service agreements"]
+    },
+    {
+      "concept": "Intellectual Property",
+      "definition": "Legal rights that protect creations of the mind",
+      "types": [
+        "Copyright: Protects original works of authorship",
+        "Patents: Protects inventions and processes",
+        "Trademarks: Protects brand names and logos",
+        "Trade secrets: Protects confidential business information"
+      ],
+      "duration": {
+        "copyright": "Life of author + 70 years",
+        "patents": "20 years from filing",
+        "trademarks": "Indefinite with renewal"
+      }
+    }
+  ]
+}

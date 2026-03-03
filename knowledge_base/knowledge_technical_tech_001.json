@@ -1,0 +1,28 @@
+{
+  "domain": "technical",
+  "title": "Technical Knowledge Base - Engineering Fundamentals",
+  "version": "1.0",
+  "content": [
+    {
+      "topic": "Software Development Lifecycle",
+      "phases": [
+        "Requirements gathering and analysis",
+        "Design and architecture",
+        "Implementation and coding",
+        "Testing and quality assurance",
+        "Deployment and maintenance"
+      ],
+      "methodologies": ["Waterfall", "Agile", "Scrum", "Kanban", "DevOps"]
+    },
+    {
+      "topic": "System Architecture",
+      "patterns": [
+        "Monolithic: Single unified codebase",
+        "Microservices: Independent, loosely coupled services",
+        "Service-Oriented: Services with defined interfaces",
+        "Event-Driven: Components communicate via events"
+      ],
+      "considerations": ["Scalability", "Maintainability", "Performance", "Security", "Cost"]
+    }
+  ]
+}

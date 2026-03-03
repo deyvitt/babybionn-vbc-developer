@@ -1,0 +1,28 @@
+{
+  "domain": "technical",
+  "title": "Engineering and Development Practices",
+  "version": "1.0",
+  "content": [
+    {
+      "practice": "Version Control",
+      "systems": ["Git", "Subversion", "Mercurial"],
+      "best_practices": [
+        "Commit early and often",
+        Write descriptive commit messages",
+        "Use branching strategies",
+        "Review code before merging",
+        "Keep repositories organized"
+      ]
+    },
+    {
+      "practice": "Testing Strategies",
+      "types": [
+        "Unit testing: Tests individual components",
+        "Integration testing: Tests component interactions",
+        "System testing: Tests complete system",
+        "Acceptance testing: Validates against requirements"
+      ],
+      "approaches": ["Test-Driven Development", "Behavior-Driven Development", "Continuous Testing"]
+    }
+  ]
+}

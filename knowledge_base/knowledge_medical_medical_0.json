@@ -1,0 +1,25 @@
+{
+  "domain": "medical",
+  "title": "Common Medical Symptoms Reference",
+  "version": "1.0",
+  "content": [
+    {
+      "symptom": "Chest Pain",
+      "differential_diagnosis": [
+        "Cardiac: Myocardial infarction, Angina",
+        "Pulmonary: Pulmonary embolism, Pneumonia",
+        "Gastrointestinal: GERD, Esophageal spasm",
+        "Musculoskeletal: Costochondritis"
+      ],
+      "emergency_signs": ["Radiating to arm/jaw", "Shortness of breath", "Nausea", "Sweating"]
+    },
+    {
+      "symptom": "Headache",
+      "types": [
+        "Tension: Band-like pressure, bilateral",
+        "Migraine: Unilateral, pulsating, with nausea",
+        "Cluster: Severe unilateral, with autonomic symptoms"
+      ]
+    }
+  ]
+}

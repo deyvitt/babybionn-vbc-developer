@@ -1,0 +1,34 @@
+{
+  "domain": "medical",
+  "title": "General Medical Knowledge Base",
+  "version": "1.0",
+  "description": "Comprehensive medical reference information",
+  "categories": [
+    {
+      "category": "Vital Signs",
+      "normal_ranges": {
+        "blood_pressure": "Systolic < 120, Diastolic < 80",
+        "heart_rate": "60-100 bpm",
+        "respiratory_rate": "12-20 breaths/min",
+        "temperature": "97.8-99.1°F (36.5-37.3°C)"
+      }
+    },
+    {
+      "category": "Common Conditions",
+      "conditions": [
+        {
+          "name": "Common Cold",
+          "cause": "Viral infection",
+          "symptoms": ["Runny nose", "Sore throat", "Cough"],
+          "duration": "7-10 days"
+        },
+        {
+          "name": "Influenza (Flu)",
+          "cause": "Influenza virus",
+          "symptoms": ["Fever", "Body aches", "Fatigue", "Cough"],
+          "prevention": "Annual vaccination"
+        }
+      ]
+    }
+  ]
+}

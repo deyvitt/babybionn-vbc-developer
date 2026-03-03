@@ -1,0 +1,30 @@
+{
+  "domain": "medical",
+  "title": "Emergency Medical Procedures",
+  "version": "1.0",
+  "content": [
+    {
+      "procedure": "CPR (Cardiopulmonary Resuscitation)",
+      "indications": "Cardiac arrest - unresponsive, not breathing normally",
+      "steps": [
+        "Check scene safety",
+        "Check responsiveness",
+        "Call emergency services",
+        "Open airway",
+        "Check breathing",
+        "Begin chest compressions (100-120/min)",
+        "Provide rescue breaths if trained"
+      ]
+    },
+    {
+      "procedure": "Heimlich Maneuver",
+      "indications": "Choking - cannot breathe, cough, or speak",
+      "steps": [
+        "Stand behind person",
+        "Wrap arms around waist",
+        "Make fist above navel",
+        "Perform upward thrusts"
+      ]
+    }
+  ]
+}

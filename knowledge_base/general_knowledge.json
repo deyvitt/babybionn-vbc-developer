@@ -1,0 +1,31 @@
+{
+  "domain": "general",
+  "title": "Comprehensive General Knowledge",
+  "version": "1.0",
+  "description": "Broad knowledge base for general reasoning and problem solving",
+  "sections": [
+    {
+      "section": "Communication Skills",
+      "topics": [
+        {
+          "topic": "Active Listening",
+          "techniques": ["Maintain eye contact", "Paraphrase what you heard", "Ask clarifying questions", "Avoid interrupting"]
+        },
+        {
+          "topic": "Effective Writing",
+          "principles": ["Be clear and concise", "Know your audience", "Use appropriate tone", "Proofread carefully"]
+        }
+      ]
+    },
+    {
+      "section": "Decision Making",
+      "frameworks": [
+        "Pros and Cons list",
+        "Cost-Benefit Analysis",
+        "Weighted Decision Matrix",
+        "SWOT Analysis",
+        "Six Thinking Hats"
+      ]
+    }
+  ]
+}

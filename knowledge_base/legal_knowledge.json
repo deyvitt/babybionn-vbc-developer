@@ -1,0 +1,40 @@
+{
+  "domain": "legal",
+  "title": "General Legal Reference",
+  "version": "1.0",
+  "description": "Comprehensive legal knowledge for reference",
+  "categories": [
+    {
+      "category": "Common Legal Terms",
+      "terms": [
+        {
+          "term": "Liability",
+          "definition": "Legal responsibility for one's acts or omissions"
+        },
+        {
+          "term": "Jurisdiction",
+          "definition": "Authority of a court to hear and decide cases"
+        },
+        {
+          "term": "Precedent",
+          "definition": "Court decision that serves as authority for similar cases"
+        }
+      ]
+    },
+    {
+      "category": "Legal Documents",
+      "documents": [
+        {
+          "name": "Will",
+          "purpose": "Directs distribution of property after death",
+          "requirements": ["Testator must be competent", "Must be in writing", "Witnessed appropriately"]
+        },
+        {
+          "name": "Power of Attorney",
+          "purpose": "Authorizes someone to act on your behalf",
+          "types": ["General", "Limited", "Durable", "Springing"]
+        }
+      ]
+    }
+  ]
+}

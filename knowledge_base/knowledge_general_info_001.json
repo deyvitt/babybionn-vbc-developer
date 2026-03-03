@@ -1,0 +1,29 @@
+{
+  "domain": "general",
+  "title": "General Knowledge Base",
+  "version": "1.0",
+  "content": [
+    {
+      "category": "Critical Thinking",
+      "principles": [
+        "Evaluate evidence objectively",
+        "Consider multiple perspectives",
+        "Recognize cognitive biases",
+        "Distinguish facts from opinions",
+        "Apply logical reasoning"
+      ],
+      "common_fallacies": ["Ad hominem", "Straw man", "False dichotomy", "Appeal to authority"]
+    },
+    {
+      "category": "Problem Solving",
+      "frameworks": [
+        "Define the problem clearly",
+        "Generate multiple solutions",
+        "Evaluate alternatives",
+        "Implement chosen solution",
+        "Review and adjust"
+      ],
+      "techniques": ["Brainstorming", "Root cause analysis", "SWOT analysis", "Decision matrix"]
+    }
+  ]
+}

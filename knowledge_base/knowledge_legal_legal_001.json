@@ -1,0 +1,28 @@
+{
+  "domain": "legal",
+  "title": "Legal Procedures and Court Systems",
+  "version": "1.0",
+  "content": [
+    {
+      "topic": "Civil Litigation Process",
+      "stages": [
+        "Pleadings: Complaint and answer",
+        "Discovery: Exchange of information",
+        "Pre-trial: Motions and settlement conferences",
+        "Trial: Presentation of evidence",
+        "Post-trial: Appeals and enforcement"
+      ],
+      "timeframes": "Varies by jurisdiction, typically 1-3 years for completion"
+    },
+    {
+      "topic": "Alternative Dispute Resolution",
+      "methods": [
+        "Mediation: Neutral third party facilitates negotiation",
+        "Arbitration: Neutral third party makes binding decision",
+        "Negotiation: Direct discussion between parties",
+        "Collaborative law: Each party has attorney, focus on settlement"
+      ],
+      "advantages": ["Faster resolution", "Lower costs", "Confidentiality", "Preserves relationships"]
+    }
+  ]
+}

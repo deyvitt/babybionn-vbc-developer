@@ -1,0 +1,20 @@
+{
+  "domain": "medical",
+  "title": "Medical Knowledge Base - Core Reference",
+  "version": "1.0",
+  "content": [
+    {
+      "condition": "Hypertension (High Blood Pressure)",
+      "definition": "Chronic medical condition where blood pressure in arteries is elevated",
+      "symptoms": ["Often asymptomatic", "Headaches", "Shortness of breath", "Nosebleeds"],
+      "diagnostic_criteria": "Blood pressure > 130/80 mmHg on multiple readings",
+      "treatment": ["Lifestyle modifications", "Antihypertensive medications", "Regular monitoring"]
+    },
+    {
+      "condition": "Diabetes Type 2",
+      "definition": "Metabolic disorder characterized by high blood sugar and insulin resistance",
+      "symptoms": ["Increased thirst", "Frequent urination", "Fatigue", "Blurred vision"],
+      "management": ["Diet control", "Exercise", "Blood glucose monitoring", "Medications"]
+    }
+  ]
+}
