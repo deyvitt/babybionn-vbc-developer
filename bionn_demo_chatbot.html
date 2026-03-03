@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BabyBIONN Chat Interface</title>
+        <!--meta http-equiv="Content-Security-Policy" content=" -> we removed this as there's a duplicate in main.py
+        default-src 'self';
+        script-src 'self' 'unsafe-eval' 'unsafe-inline' https:;
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: blob:;
+        font-src 'self';
+        connect-src 'self' http://localhost:8002;
+        frame-src 'none';
+        object-src 'none';
+    "-->
     <style>
         * {
             margin: 0;
@@ -229,6 +239,56 @@
             border-top: 1px solid #e1e5e9;
         }
 
+        .vni-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 0 5px;
+        }
+
+        .vni-selector label {
+            font-size: 14px;
+            color: #666;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .vni-selector select {
+            padding: 10px 15px;
+            border-radius: 25px;
+            border: 2px solid #e1e5e9;
+            background: white;
+            color: #333;
+            font-size: 14px;
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 200px;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+
+        .vni-selector select:focus {
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.2);
+        }
+
+        .vni-selector select:hover {
+            border-color: #3a9df5;
+            background-color: #f8fafc;
+        }
+
+        .vni-selector option {
+            padding: 10px;
+            font-size: 14px;
+        }
+
         .input-wrapper {
             display: flex;
             gap: 10px;
@@ -445,15 +505,15 @@
                 <div class="status-badge disconnected" id="statusBadge">
                     ⚠️ Backend Offline - Demo Mode
                 </div>
-                <button class="reconnect-btn" id="reconnectBtn" onclick="testConnection()" style="display: none; margin-top: 10px; padding: 8px 16px; background: rgba(255,255,255,0.3); color: white; border: 1px solid rgba(255,255,255,0.5); border-radius: 20px; cursor: pointer;">
+                <button class="reconnect-btn" id="reconnectBtn" data-action="testConnection" style="display: none; margin-top: 10px; padding: 8px 16px; background: rgba(255,255,255,0.3); color: white; border: 1px solid rgba(255,255,255,0.5); border-radius: 20px; cursor: pointer;">
                     🔄 Reconnect to Backend
                 </button>
             </div>
             
             <div class="tab-navigation">
-                <button class="tab-btn active" onclick="switchTab('chat')">💬 Chat</button>
-                <button class="tab-btn" onclick="switchTab('teaching')">📊 Dashboard</button>
-                <button class="tab-btn" onclick="switchTab('admin')">🔧 Admin</button>
+            <button class="tab-btn active" data-tab="chat">💬 Chat</button>
+            <button class="tab-btn" data-tab="teaching">📊 Dashboard</button>
+            <button class="tab-btn" data-tab="admin">🔧 Admin</button>
             </div>
         </div>
 
@@ -477,6 +537,25 @@
                 </div>
             </div>
 
+            <div class="llm-selector" style="margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label for="llm-provider" style="font-weight: bold; color: #333;">AI Model:</label>
+                    <select id="llm-provider" onchange="changeLLMProvider(this.value)" 
+                            style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; background: white;">
+                        <option value="mock">🤖 Mock Mode (Dev)</option>
+                        <option value="deepseek" selected>🚀 DeepSeek (Fast)</option>
+                        <option value="openai">🔷 OpenAI GPT</option>
+                        <option value="ollama">💻 Ollama (Local)</option>
+                    </select>
+                    <span id="llm-status" style="font-size: 12px; color: #666; margin-left: auto;">
+                        Currently: <span id="current-llm">DeepSeek</span>
+                    </span>
+                </div>
+                <div id="llm-info" style="margin-top: 5px; font-size: 12px; color: #777;">
+                    <small>💡 Mock: No API needed | DeepSeek: Affordable & Fast | OpenAI: Most Capable</small>
+                </div>
+            </div>
+
             <div class="chat-input-container">
                 <div class="input-wrapper">
                     <textarea 
@@ -484,22 +563,22 @@
                         placeholder="Type your message here..." 
                         rows="1"
                     ></textarea>
-                    <input type="file" id="image-upload" accept="image/*" style="display: none;">
-                    <button type="button" onclick="document.getElementById('image-upload').click()" 
+                    <input type="file" id="image-upload" accept="image/*" style="display: none;">    
+                    <button type="button" data-action="triggerImageUpload" 
                             style="background: #764ba2; color: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
                         📷
                     </button>      
-                    <button id="sendButton" onclick="sendMessage()">
+                    <button id="sendButton" data-action="sendMessage">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                         </svg>
                     </button>
                 </div>
                 <div class="suggestions">
-                    <div class="suggestion-chip" onclick="useSuggestion('Tell me about BabyBIONN')">What is BabyBIONN?</div>
-                    <div class="suggestion-chip" onclick="useSuggestion('How does the VNI system work?')">VNI System</div>
-                    <div class="suggestion-chip" onclick="useSuggestion('Show me medical capabilities')">Medical AI</div>
-                    <div class="suggestion-chip" onclick="useSuggestion('Explain technical features')">Technical AI</div>
+                    <div class="suggestion-chip" data-suggestion="Tell me about BabyBIONN">What is BabyBIONN?</div>
+                    <div class="suggestion-chip" data-suggestion="How does the VNI system work?">VNI System</div>
+                    <div class="suggestion-chip" data-suggestion="Show me medical capabilities">Medical AI</div>
+                    <div class="suggestion-chip" data-suggestion="Explain technical features">Technical AI</div>
                 </div>
             </div>
         </div>
@@ -568,7 +647,7 @@
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <input type="password" id="adminPassword" placeholder="Enter Admin Password" 
                                style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;" />
-                        <button onclick="adminLogin()" style="padding: 10px 20px; background: #4facfe; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        <button data-action="adminLogin" style="padding: 10px 20px; background: #4facfe; color: white; border: none; border-radius: 5px; cursor: pointer;">
                             Login
                         </button>
                     </div>
@@ -591,7 +670,7 @@
                         
                         <div style="margin-bottom: 15px;">
                             <input type="file" id="pretrainFile" accept=".json" />
-                            <button onclick="uploadPretrainingData()" 
+                            <button data-action="uploadPretrainingData" 
                                     style="margin-left: 10px; padding: 8px 16px; background: #764ba2; color: white; border: none; border-radius: 5px; cursor: pointer;">
                                 Upload & Initialize
                             </button>
@@ -614,7 +693,7 @@
                                 Loading knowledge bases...
                             </div>
                         </div>
-                        <button onclick="loadKnowledgeStatus()" style="margin-top: 10px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        <button data-action="loadKnowledgeStatus" style="margin-top: 10px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
                             Refresh Status
                         </button>
                     </div>
@@ -631,9 +710,9 @@ No analytics data yet. Upload pretraining data to see analytics.
                     <div class="section">
                         <h3>⚡ System Actions</h3>
                         <div class="action-buttons">
-                            <button class="action-btn btn-primary" onclick="clearChatHistory()">Clear Chat History</button>
-                            <button class="action-btn btn-secondary" onclick="exportConversation()">Export Conversation</button>
-                            <button class="action-btn btn-danger" onclick="resetSystem()">Reset System</button>
+                            <button class="action-btn btn-primary" data-action="clearChatHistory">Clear Chat History</button>
+                            <button class="action-btn btn-secondary" data-action="exportConversation">Export Conversation</button>
+                            <button class="action-btn btn-danger" data-action="resetSystem">Reset System</button>
                         </div>
                     </div>
                     <!-- Debug Tools Section -->
@@ -643,9 +722,9 @@ No analytics data yet. Upload pretraining data to see analytics.
                             Use these tools to troubleshoot the upload functionality
                         </p>
                         <div class="action-buttons">
-                            <button class="action-btn btn-primary" onclick="testPretrainEndpoint()">Test Upload Endpoint</button>
-                            <button class="action-btn btn-secondary" onclick="createTestJSON()">Create Test JSON</button>
-                            <button class="action-btn" onclick="debugBackendEndpoints()" style="background: #ffa726; color: white;">Check All Endpoints</button>
+                            <button class="action-btn btn-primary" data-action="testPretrainEndpoint">Test Upload Endpoint</button>
+                            <button class="action-btn btn-secondary" data-action="createTestJSON">Create Test JSON</button>
+                            <button class="action-btn" data-action="debugBackendEndpoints" style="background: #ffa726; color: white;">Check All Endpoints</button>
                         </div>
                     </div>
                 </div>
@@ -654,9 +733,9 @@ No analytics data yet. Upload pretraining data to see analytics.
     </div>
 
     <script>
-        // Configuration
-        const BACKEND_URL = 'http://localhost:8001';
-        const API_BASE = 'http://localhost:8001/api';
+        // Configuration - change from 8001 to back to 8002 again
+        const BACKEND_URL = 'http://localhost:8002';
+        const API_BASE = 'http://localhost:8002';
         const sessionId = 'user_' + Date.now();
         let isProcessing = false;
         let backendAvailable = false;
@@ -714,7 +793,7 @@ No analytics data yet. Upload pretraining data to see analytics.
         async function testConnection() {
             try {
                 console.log('Testing connection to:', BACKEND_URL);
-                const response = await fetch(`${BACKEND_URL}/health`, {
+                const response = await fetch(`${BACKEND_URL}/api/health`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -734,7 +813,7 @@ No analytics data yet. Upload pretraining data to see analytics.
                     updateDashboardStats();
                     return true;
                 } else {
-                    throw new Error(`HTTP ${response.status}`);
+                    throw   Error(`HTTP ${response.status}`);
                 }
             } catch (error) {
                 console.error('❌ Backend connection failed:', error);
@@ -762,19 +841,34 @@ No analytics data yet. Upload pretraining data to see analytics.
         }
 
         // Add message to chat
-        function addMessage(content, sender) {
+        function addMessage(content, sender, metadata = {}) {
             const container = document.getElementById('chatMessages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}`;
-    
+            
+            // Build metadata HTML if provided
+            let metaHtml = '';
+            if (metadata.provider) {
+                metaHtml = `
+                    <div class="message-meta">
+                        ${new Date().toLocaleTimeString()} • 
+                        Provider: ${metadata.provider} • 
+                        ${metadata.latency ? `Latency: ${metadata.latency.toFixed(2)}s` : ''}
+                        ${metadata.tokens ? `• Tokens: ${metadata.tokens}` : ''}
+                    </div>
+                `;
+            } else {
+                metaHtml = `<div class="message-meta">${new Date().toLocaleTimeString()}</div>`;
+            }
+            
             messageDiv.innerHTML = `
                 <div class="message-avatar">${sender === 'user' ? 'U' : 'B'}</div>
                 <div class="message-content">
                     ${content}
-                    <div class="message-meta">${new Date().toLocaleTimeString()}</div>
+                    ${metaHtml}
                 </div>
             `;
-    
+            
             container.appendChild(messageDiv);
             container.scrollTop = container.scrollHeight;
         }
@@ -839,8 +933,12 @@ No analytics data yet. Upload pretraining data to see analytics.
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
             const imageInput = document.getElementById('image-upload');
-            const hasImage = imageInput.files.length > 0;
-
+    
+            // FIX: Check if imageInput exists before accessing files
+            let hasImage = false;
+            if (imageInput && imageInput.files && imageInput.files.length > 0) {
+                hasImage = true;
+            }
             if ((!message && !hasImage) || isProcessing) return;
 
             // Clear input but keep image for now
@@ -870,7 +968,11 @@ No analytics data yet. Upload pretraining data to see analytics.
                     setTimeout(() => {
                         hideTyping();
                         const demoResponse = generateDemoResponse(message, hasImage);
-                        addMessage(demoResponse, 'bot');
+                        addMessage(data.response, 'bot', {
+                            provider: data.llm_gateway_insights?.provider || data.aggregator_insights?.strategy_used || 'unknown',
+                            latency: data.llm_gateway_insights?.latency || 0,
+                            tokens: data.llm_gateway_insights?.tokens_used || 0
+                        });
                         const demoVNIs = simulateVNIactivation(message);
                         updateVNIDisplay(demoVNIs);
                 
@@ -906,24 +1008,43 @@ No analytics data yet. Upload pretraining data to see analytics.
         // Send text message to backend
         async function sendTextMessage(message) {
             try {
-                const response = await fetch(`${API_BASE}/chat`, {
+                // Get selected VNI
+                const vniSelect = document.getElementById('vniSelect');
+                const vniType = vniSelect ? vniSelect.value : 'auto';
+        
+                // Only include vni_type if not auto
+                const requestBody = {
+                    message: message,
+                    session_id: sessionId
+                };
+        
+                if (vniType !== 'auto') {
+                    requestBody.vni_type = vniType;
+                }
+
+                const response = await fetch(`${BACKEND_URL}/api/chat`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        message: message,
-                        session_id: sessionId
-                    })
+                    body: JSON.stringify(requestBody)
                 });
-
+        
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-
+        
                 const data = await response.json();
                 hideTyping();
-                addMessage(data.response, 'bot');
+        
+                // Add message with metadata
+                addMessage(data.response, 'bot', {
+                    provider: data.llm_gateway_insights?.provider || data.aggregator_insights?.strategy_used || 'unknown',
+                    latency: data.llm_gateway_insights?.latency || 0,
+                    tokens: data.llm_gateway_insights?.tokens_used || 0,
+                    vni: data.llm_gateway_insights?.vni_used
+                });
+                
                 updateVNIDisplay(data.activated_vnis);
             } catch (error) {
                 console.error('Error sending message:', error);
@@ -940,7 +1061,7 @@ No analytics data yet. Upload pretraining data to see analytics.
                 formData.append('session_id', sessionId);
                 formData.append('admin_token', 'babybionn_admin_2024');
 
-                const response = await fetch(`${API_BASE}/chat-with-image`, {
+                const response = await fetch(`${BACKEND_URL}/api/chat-with-image`, {
                     method: 'POST',
                     body: formData
                 });
@@ -999,7 +1120,7 @@ No analytics data yet. Upload pretraining data to see analytics.
             const lower = message.toLowerCase();
     
             if (lower.includes('hello') || lower.includes('hi')) {
-                return "Hello! I'm BabyBIONN running in demo mode. To connect to the full backend:\n\n1. Make sure your FastAPI server is running\n2. Check that it's on port 8001\n3. The interface will automatically detect the connection!";
+                return "Hello! I'm BabyBIONN running in demo mode. To connect to the full backend:\n\n1. Make sure your FastAPI server is running\n2. Check that it's on port 8002\n3. The interface will automatically detect the connection!";
             } else if (lower.includes('babybionn') || lower.includes('what is')) {
                 return "BabyBIONN is an advanced AI system using Virtual Neural Instances (VNIs) - specialized AI modules for different domains like medical, legal, and technical tasks. Each VNI is trained for specific expertise areas.";
             } else if (lower.includes('vni') || lower.includes('virtual neural')) {
@@ -1007,7 +1128,7 @@ No analytics data yet. Upload pretraining data to see analytics.
             } else if (lower.includes('medical') || lower.includes('health')) {
                 return "In full mode, medical VNIs can help with:\n• Symptom analysis\n• Medical information\n• Healthcare guidance\n• Drug interactions\n\nCurrently running in demo mode - connect backend for medical AI capabilities.";
             } else if (lower.includes('backend') || lower.includes('connect')) {
-                return "To connect the BabyBIONN backend:\n\n1. Start your FastAPI server:\n   <code>uvicorn main:app --reload --port 8001</code>\n\n2. Ensure CORS is enabled for this interface\n3. The status badge will turn green when connected\n4. You'll get access to real VNI processing!";
+                return "To connect the BabyBIONN backend:\n\n1. Start your FastAPI server:\n   <code>uvicorn main:app --reload --port 8002</code>\n\n2. Ensure CORS is enabled for this interface\n3. The status badge will turn green when connected\n4. You'll get access to real VNI processing!";
             } else {
                 return "I'm currently in demo mode. For full BabyBIONN capabilities with real VNI processing, please start the FastAPI backend server! The demo shows how the interface works, but real AI processing requires the backend connection.";
             }
@@ -1092,11 +1213,11 @@ No analytics data yet. Upload pretraining data to see analytics.
                 formData.append('session_id', sessionId);
                 formData.append('admin_token', 'babybionn_admin_2024');
                 
-                console.log('🔄 Sending to:', `${API_BASE}/admin/pretrain`);
+                console.log('🔄 Sending to:', `${BACKEND_URL}/api/admin/pretrain`);
         
                 updateProgress('Uploading to server...', 40);
         
-                const response = await fetch(`${API_BASE}/admin/pretrain`, {
+                const response = await fetch(`${BACKEND_URL}/api/admin/pretrain`, {
                     method: 'POST',
                     body: formData  // No Content-Type header for FormData - let browser set it
                 });
@@ -1155,10 +1276,10 @@ No analytics data yet. Upload pretraining data to see analytics.
                 if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
                     userMessage = 'Cannot connect to backend server. Please check:\n\n' +
                                  '1. Is the BabyBIONN server running?\n' +
-                                 '2. Is it on port 8001?\n' +
+                                 '2. Is it on port 8002?\n' +
                                  '3. Check browser console for CORS errors';
                 } else if (error.message.includes('404')) {
-                    userMessage = 'Backend endpoint not found (404). The /api/admin/pretrain endpoint might not be implemented yet.';
+                    userMessage = 'Backend endpoint not found (404). The /admin/pretrain endpoint might not be implemented yet.';
                 } else if (error.message.includes('500')) {
                     userMessage = 'Server error (500). Check the backend server logs for details.';
                 }
@@ -1173,7 +1294,7 @@ No analytics data yet. Upload pretraining data to see analytics.
     
             try {
                 // First test if we can reach the endpoint
-                const response = await fetch(`${API_BASE}/admin/pretrain`, {
+                const response = await fetch(`${BACKEND_URL}/api/admin/pretrain`, {
                     method: 'OPTIONS' // Preflight request
                 });
                 console.log('OPTIONS request:', response.status, response.statusText);
@@ -1182,7 +1303,7 @@ No analytics data yet. Upload pretraining data to see analytics.
                 const testFormData = new FormData();
                 testFormData.append('test', 'test');
         
-                const postResponse = await fetch(`${API_BASE}/admin/pretrain`, {
+                const postResponse = await fetch(`${BACKEND_URL}/api/admin/pretrain`, {
                     method: 'POST',
                     body: testFormData
                 });
@@ -1262,7 +1383,7 @@ No analytics data yet. Upload pretraining data to see analytics.
             }
 
             // Add admin token to the request
-            fetch(`${API_BASE}/admin/knowledge-status?admin_token=babybionn_admin_2024`)
+            fetch(`${BACKEND_URL}/api/admin/knowledge-status?admin_token=babybionn_admin_2024`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -1340,41 +1461,6 @@ No analytics data yet. Upload pretraining data to see analytics.
                 alert('System reset would be performed here. In a real implementation, this would clear all knowledge bases and reset to factory settings.');
             }
         }
-        // Debug function to check if pretrain endpoint exists
-        async function testPretrainEndpoint() {
-            console.log('🔍 Testing pretrain endpoint...');
-    
-            try {
-                // First test if we can reach the endpoint
-                const response = await fetch(`${API_BASE}/admin/pretrain`, {
-                    method: 'OPTIONS' // Preflight request
-                });
-                console.log('OPTIONS request:', response.status, response.statusText);
-        
-                // Test with a simple POST to see if endpoint exists
-                const testFormData = new FormData();
-                testFormData.append('test', 'test');
-        
-                const postResponse = await fetch(`${API_BASE}/admin/pretrain`, {
-                    method: 'POST',
-                    body: testFormData
-                });
-        
-                console.log('POST request:', postResponse.status, postResponse.statusText);
-        
-                if (postResponse.status === 404) {
-                    alert('❌ Pretrain endpoint not found (404). The backend might not have this endpoint implemented yet.');
-                } else if (postResponse.status === 405) {
-                    alert('❌ Method not allowed (405). The endpoint exists but might expect different data.');
-                } else {
-                    alert(`✅ Endpoint responded with: ${postResponse.status} ${postResponse.statusText}\n\nCheck console for details.`);
-                }
-        
-            } catch (error) {
-                console.error('Endpoint test failed:', error);
-                alert('❌ Cannot test endpoint: ' + error.message);
-            }
-        }
 
         // Create a test JSON file for debugging
         function createTestJSON() {
@@ -1424,7 +1510,7 @@ No analytics data yet. Upload pretraining data to see analytics.
             console.log('🔍 Checking all backend endpoints...');
     
             const endpoints = [
-                '/health',
+                '/api/health',
                 '/api/chat',
                 '/api/admin/pretrain',
                 '/api/admin/knowledge-status'
@@ -1448,12 +1534,150 @@ No analytics data yet. Upload pretraining data to see analytics.
     
             alert('Backend Endpoint Check:\n\n' + results.join('\n'));
         }
-        // Test connection on load and every 10 seconds
-        testConnection();
-        setInterval(testConnection, 10000);
         
-        // Initialize dashboard stats
-        updateDashboardStats();
+        function changeLLMProvider(provider) {
+            console.log('Changing LLM provider to:', provider);
+            
+            // Update UI immediately
+            document.getElementById('current-llm').textContent = 
+                provider === 'mock' ? 'Mock' :
+                provider === 'deepseek' ? 'DeepSeek' :
+                provider === 'openai' ? 'OpenAI' : 'Ollama';
+            
+            // Send to backend
+            fetch('/api/config/llm-provider', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ provider: provider })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('LLM Provider changed:', data);
+                showNotification(`✅ Switched to ${provider} model`, 'success');
+                
+                // Update select to show current selection
+                document.getElementById('llm-provider').value = provider;
+            })
+            .catch(error => {
+                console.error('Error changing LLM provider:', error);
+                showNotification(`❌ Failed to switch to ${provider}`, 'error');
+                // Revert UI
+                document.getElementById('current-llm').textContent = 'DeepSeek';
+                document.getElementById('llm-provider').value = 'deepseek';
+            });
+        }
+        
+        // Load current LLM provider on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fetch current LLM provider
+            fetch('/api/config/llm-provider')
+            .then(response => response.json())
+            .then(data => {
+                const provider = data.provider || 'deepseek';
+                document.getElementById('llm-provider').value = provider;
+                document.getElementById('current-llm').textContent = 
+                    provider === 'mock' ? 'Mock' :
+                    provider === 'deepseek' ? 'DeepSeek' :
+                    provider === 'openai' ? 'OpenAI' : 'Ollama';
+            })
+            .catch(error => {
+                console.error('Error loading LLM provider:', error);
+            });
+        });
+          
+        // ===== WAIT FOR DOM TO BE READY =====
+        document.addEventListener('DOMContentLoaded', function() {
+            // ===== CSP-FIXED EVENT HANDLER =====
+            document.addEventListener('click', function(event) {
+                const target = event.target;
+                if (event.target.hasAttribute('data-action')) {
+                    const action = event.target.getAttribute('data-action');
+                    if (action === 'triggerImageUpload') {
+                        const imageInput = document.getElementById('image-upload');
+                        if (imageInput) {
+                            imageInput.click();
+                        } else {
+                            console.error('image-upload element not found!');
+                        }
+                        return;
+                    }
+                }
+                // Handle tab switching
+                if (target.hasAttribute('data-tab')) {
+                    const tab = target.getAttribute('data-tab');
+                    switchTab(tab);
+                    event.preventDefault();
+                    return;
+                }
+        
+                // Handle suggestions
+                if (target.hasAttribute('data-suggestion')) {
+                    const suggestion = target.getAttribute('data-suggestion');
+                    useSuggestion(suggestion);
+                    event.preventDefault();
+                    return;
+                }
+    
+                // Handle actions
+                if (target.hasAttribute('data-action')) {
+                    const action = target.getAttribute('data-action');
+            
+                    // Map action names to functions
+                    const actionMap = {
+                        'testConnection': testConnection,
+                        'sendMessage': sendMessage,
+                        'adminLogin': adminLogin,
+                        'uploadPretrainingData': uploadPretrainingData,
+                        'loadKnowledgeStatus': loadKnowledgeStatus,
+                        'clearChatHistory': clearChatHistory,
+                        'exportConversation': exportConversation,
+                        'resetSystem': resetSystem,
+                        'testPretrainEndpoint': testPretrainEndpoint,
+                        'createTestJSON': createTestJSON,
+                        'debugBackendEndpoints': debugBackendEndpoints,
+                        'triggerImageUpload': function() {
+                            const imageInput = document.getElementById('image-upload');
+                            if (imageInput) {
+                                imageInput.click();
+                            }
+                        }
+                    };
+        
+                    if (actionMap[action]) {
+                        actionMap[action]();
+                    } else {
+                        console.warn(`Unknown action: ${action}`);
+                    }
+            
+                    event.preventDefault();
+                    return;
+                }
+            });
+
+            // Handle Enter key in admin password field
+            const adminPasswordInput = document.getElementById('adminPassword');
+            if (adminPasswordInput) {
+                adminPasswordInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        adminLogin();
+                        e.preventDefault();
+                    }
+                });
+            }
+            // Test connection on load and every 10 seconds
+            testConnection();
+            setInterval(testConnection, 10000);
+        
+            // Initialize dashboard stats
+            updateDashboardStats();
+        });
     </script>
 </body>
-</html> 
+</html>

@@ -20,6 +20,7 @@ from neuron.smart_activation_router import SmartActivationRouter
 from ..core.base_vni import EnhancedBaseVNI
 from ..core.capabilities import VNICapabilities, VNIType
 from ..modules.classifier import DomainClassifier
+# +from llm_Gateway import LLMGateway  # ADDED: Import LLM Gateway
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,7 @@ class BiologicalDomainConfig:
     smart_routing_enabled: bool = True
     routing_experts: int = 4
     routing_expert_dim: int = 256
+    enable_llm_generation: bool = True  # ADDED: LLM generation toggle
 
 @dataclass
 class DomainEvolution:
@@ -73,11 +75,13 @@ class DomainEvolution:
     attention_patterns: List[Dict[str, Any]] = field(default_factory=list)
     routing_decisions: List[Dict[str, Any]] = field(default_factory=list)
     attention_weights_history: List[Dict[str, float]] = field(default_factory=list)
+    llm_generation_history: List[Dict[str, Any]] = field(default_factory=list)  # ADDED: Track LLM usage
     
     def add_interaction(self, query: str, confidence: float, response_success: bool, 
                        attention_metrics: Optional[Dict[str, Any]] = None,
                        routing_metrics: Optional[Dict[str, Any]] = None,
-                       biological_metrics: Optional[Dict[str, Any]] = None):
+                       biological_metrics: Optional[Dict[str, Any]] = None,
+                       llm_generation: Optional[Dict[str, Any]] = None):  # ADDED: LLM metrics
         """Full interaction tracking with 1000+ capacity"""
         self.confidence_trend.append(confidence)
         
@@ -111,6 +115,13 @@ class DomainEvolution:
                 'metrics': routing_metrics
             })
         
+        # Store LLM generation metrics
+        if llm_generation:
+            self.llm_generation_history.append({
+                'timestamp': datetime.now().isoformat(),
+                'metrics': llm_generation
+            })
+        
         # Store full adaptation history
         self.adaptation_history.append({
             'timestamp': datetime.now().isoformat(),
@@ -120,6 +131,7 @@ class DomainEvolution:
             'biological_metrics': biological_metrics,
             'attention_metrics': attention_metrics,
             'routing_metrics': routing_metrics,
+            'llm_generation': llm_generation,  # ADDED
             'word_count': len(query.split())
         })
         
@@ -132,6 +144,8 @@ class DomainEvolution:
             self.attention_patterns = self.attention_patterns[-500:]
         if len(self.routing_decisions) > 500:
             self.routing_decisions = self.routing_decisions[-500:]
+        if len(self.llm_generation_history) > 500:  # ADDED
+            self.llm_generation_history = self.llm_generation_history[-500:]
 
 @dataclass
 class DomainConfig:
@@ -303,7 +317,13 @@ class BiologicalAttentionProcessor:
             'expert_distribution': {},
             'error_count': 0
         }
-    
+
+    def _encode_query_to_features(self, query: str, context: Dict = None) -> torch.Tensor:
+        """Encode query to feature tensor for attention processing."""
+        # Placeholder: return a random tensor of the expected embedding dimension
+        embed_dim = self.domain_config.biological_config.attention_embed_dim
+        return torch.randn(1, embed_dim)
+
     def process_with_attention(self, query: str, context: Dict[str, Any] = None, 
                              memory_context: torch.Tensor = None) -> Dict[str, Any]:
         """Full attention processing"""
@@ -329,7 +349,6 @@ class BiologicalAttentionProcessor:
                         query=query_features,
                         key=query_features,
                         value=query_features,
-                        memory_context=memory_context
                     )
                     result['attention_processing'] = True
                     result['attention_weights'] = self._extract_attention_summary(attention_weights)
@@ -385,6 +404,85 @@ class BiologicalProcessor:
     def __init__(self, domain_config: DomainConfig):
         self.domain_config = domain_config
         self.attention_processor = BiologicalAttentionProcessor(domain_config)
+
+    def _calculate_activation(self, query: str, attention_result: Dict) -> float:
+        """Calculate activation level based on query and attention."""
+        # Base activation from attention confidence (if available)
+        base = attention_result.get('attention_confidence', 0.5)
+        
+        # Boost for urgency keywords
+        urgency_keywords = ['urgent', 'emergency', 'immediate', 'critical', 'asap']
+        query_lower = query.lower()
+        urgency_boost = 0.0
+        for kw in urgency_keywords:
+            if kw in query_lower:
+                urgency_boost = 0.3
+                break
+        
+        # Boost for question complexity (e.g., longer queries)
+        word_count = len(query.split())
+        if word_count > 10:
+            complexity_boost = 0.1
+        elif word_count > 5:
+            complexity_boost = 0.05
+        else:
+            complexity_boost = 0.0
+        
+        # Combine and cap at 1.0
+        activation = base + urgency_boost + complexity_boost
+        return min(activation, 1.0)
+    
+    def _identify_pathways(self, query: str, attention_result: Dict) -> List[str]:
+        """Identify neural pathways based on the query and attention result.
+        Returns a list of pathway names."""
+        pathways = []
+        base_pathway = f"{self.domain_config.name}_pathway"
+        pathways.append(base_pathway)
+    
+        # Add pathways based on activated experts from attention
+        if attention_result.get('activated_experts'):
+            for expert_idx in attention_result['activated_experts']:
+                pathways.append(f"expert_{expert_idx}_pathway")
+    
+        # Add pathways based on keywords in query
+        query_lower = query.lower()
+        keyword_pathways = {
+            'urgent': 'emergency_pathway',
+            'emergency': 'emergency_pathway',
+            'technical': 'technical_pathway',
+            'medical': 'medical_pathway',
+            'legal': 'legal_pathway',
+        }
+        for keyword, pathway in keyword_pathways.items():
+            if keyword in query_lower and pathway not in pathways:
+                pathways.append(pathway)
+    
+        # Remove duplicates and return
+        return list(set(pathways))
+    
+    def _calculate_resonance(self, query: str, context: Dict, attention_result: Dict) -> float:
+        """Calculate synaptic resonance based on query, context, and attention.
+        Returns a float between 0 and 1."""
+        base_resonance = attention_result.get('attention_confidence', 0.5)
+    
+        # Boost if multiple experts are activated
+        expert_count = len(attention_result.get('activated_experts', []))
+        if expert_count > 0:
+            base_resonance += 0.1 * min(expert_count, 3)  # cap at +0.3
+    
+        # Boost if there are memory hits in context (if context contains memory info)
+        memory_hits = context.get('memory_retrieval', {}).get('memory_hits', 0)
+        if memory_hits > 0:
+            base_resonance += 0.05 * min(memory_hits, 2)  # +0.1 max
+    
+        # Urgency boost
+        urgency_keywords = ['urgent', 'emergency', 'immediate', 'critical', 'asap']
+        query_lower = query.lower()
+        if any(kw in query_lower for kw in urgency_keywords):
+            base_resonance += 0.2
+    
+        # Cap at 1.0
+        return min(base_resonance, 1.0)
     
     async def process_with_biological_systems_async(self, query: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
         """Async biological processing"""
@@ -420,7 +518,6 @@ class BiologicalProcessor:
             'attention_results': attention_result if attention_result['attention_processing'] else None,
             'activated_experts': attention_result.get('activated_experts', [])
         }
-    
     # ... (keep all original helper methods)
 
 # ========== STANDARDIZED MAIN VNI CLASS WITH ALL FEATURES ==========
@@ -432,6 +529,7 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
                  domain_config: DomainConfig = None,
                  enable_learning: bool = True,
                  biological_mode: BiologicalMode = None):
+                 #llm_gateway: LLMGateway = None):  # ADDED: LLM Gateway parameter
         
         """Standardized initialization with all features"""
         # Handle domain config
@@ -455,30 +553,40 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
             domain_hash = hashlib.md5(domain_config.name.encode()).hexdigest()[:8]
             vni_id = f"dynamic_{domain_config.name}_{domain_hash}_{timestamp}"
         
+        print(f"🔍 DEBUG: vni_id = {vni_id}, type = {type(vni_id)}")
+
         # Initialize base classes
         BaseKnowledgeLoader.__init__(self)
         
         # Set up capabilities following technical.py pattern
-        dynamic_capabilities = VNICapabilities(
-            can_process_text=True,
-            can_generate_text=True,
+        capabilities = VNICapabilities(
+            domains=[domain_config.name],  # ← Use domains parameter
+            can_search=True,
             can_learn=True,
-            has_knowledge_base=True,
-            dynamic_domains=True,
-            has_hybrid_attention=domain_config.biological_config.hybrid_attention_enabled,
-            has_smart_routing=domain_config.biological_config.smart_routing_enabled,
-            has_biological_systems=True,
-            max_context_length=8192
+            can_collaborate=True,
+            max_context_length=8192,
+            special_abilities=[
+                'dynamic_domain',
+                'biological_systems_integration'
+            ] + (['has_hybrid_attention'] if domain_config.biological_config.hybrid_attention_enabled else [])
+              + (['has_smart_routing'] if domain_config.biological_config.smart_routing_enabled else []),
+            vni_type='dynamic'
         )
-        
+
         # 1. Initialize memory toolkit (you have this)
         self.memory_toolkit = memory_toolkit or VNIMemory(
-            retention_days=30,
+            vni_id=vni_id,
             domain=domain_config.name,
-            vni_id=vni_id
+            memory_type="episodic",
+            embedding_dim=256,
+            auto_save=True,
+            max_memories=1000        
         )
         
-        # 2. Initialize activation_router LIKE technical.py
+        # 2. Initialize LLM Gateway (ADDED)
+        # self.llm_gateway = llm_gateway or LLMGateway()
+        
+        # 3. Initialize activation_router LIKE technical.py
         if domain_config.biological_config.smart_routing_enabled:
             try:
                 self.activation_router = SmartActivationRouter(
@@ -493,21 +601,21 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
                 logger.error(f"❌ Failed to initialize Activation Router: {e}")
                 self.activation_router = None
         
-        # 3. Initialize knowledge manager (you have this)
+        # 4. Initialize knowledge manager (you have this)
         self.knowledge_manager = DynamicKnowledgeManager(domain_config)
         
-        # 4. Initialize biological processor (you have this)
+        # 5. Initialize biological processor (you have this)
         self.biological_processor = BiologicalProcessor(domain_config)
         
-        # 5. Initialize evolution tracking (you have this)
+        # 6. Initialize evolution tracking (you have this)
         self.evolution = DomainEvolution()
         self.interaction_count = 0
         self.enable_learning = enable_learning
         
-        # 6. REGISTER FUNCTIONS with activation_router LIKE technical.py
+        # 7. REGISTER FUNCTIONS with activation_router LIKE technical.py
         self._register_dynamic_functions()
         
-        # 7. Performance metrics (following technical.py pattern)
+        # 8. Performance metrics (following technical.py pattern)
         self.performance_metrics = {
             'total_queries': 0,
             'successful_responses': 0,
@@ -516,7 +624,9 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
             'attention_usage': 0,
             'routing_usage': 0,
             'knowledge_base_usage': 0,
-            'pipeline_executions': 0
+            'pipeline_executions': 0,
+            'llm_generation_count': 0,  # ADDED
+            'fallback_generation_count': 0  # ADDED
         }
         self.domain = "dynamic"  # or self.domain_config.name
         self.vni_type = "dynamic"
@@ -525,20 +635,29 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
 
         # Initialize EnhancedBaseVNI
         super().__init__(
-            vni_id=vni_id,
+            instance_id=vni_id,
             name=name or f"Dynamic VNI - {domain_config.name}",
-            capabilities=dynamic_capabilities
+            capabilities=capabilities
         )
+        print(f"🔍 DEBUG AFTER SUPER: self.instance_id = {self.instance_id}, type = {type(self.instance_id)}")
         
+        # ← THEN set it again if needed
+        if not isinstance(self.instance_id, str):
+            self.instance_id = vni_id
+            print(f"🔍 DEBUG FORCED: self.instance_id = {self.instance_id}")
+
         # Initialize knowledge management system
         self.knowledge_manager = DynamicKnowledgeManager(domain_config)
         
         # Initialize memory system
-        self.memory_toolkit = memory_toolkit or VNIMemory(
-            retention_days=30,
-            domain=domain_config.name,
-            vni_id=vni_id
-        )
+        #self.memory_toolkit = memory_toolkit or VNIMemory(
+        #    vni_id=vni_id,
+        #    domain=domain_config.name,
+        #    memory_type="episodic",
+        #    embedding_dim=256,
+        #    auto_save=True,
+        #    max_memories=1000,
+        #)
         
         # Initialize biological processor
         self.biological_processor = BiologicalProcessor(domain_config)
@@ -563,7 +682,9 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
             'attention_usage': 0,
             'routing_usage': 0,
             'knowledge_base_usage': 0,
-            'pipeline_executions': 0
+            'pipeline_executions': 0,
+            'llm_generation_count': 0,  # ADDED
+            'fallback_generation_count': 0  # ADDED
         }
         
         # Load domain knowledge
@@ -575,6 +696,7 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
         logger.info(f"   Knowledge System: Enabled")
         logger.info(f"   Async Support: Enabled")
         logger.info(f"   Learning: {enable_learning}")
+        #logger.info(f"   LLM Gateway: {'Enabled' if self.llm_gateway else 'Disabled'}")  # ADDED
         
     def _register_dynamic_functions(self):
         """Register functions with activation router - LIKE technical.py"""
@@ -604,39 +726,94 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
             domain=self.domain_config.name,
             priority=2
         )
+        
+        # Register LLM generation function (ADDED)
+        #self.activation_router.register_function(
+        #    function_name="generate_with_llm",
+        #    function=self._generate_response_with_llm,
+        #    domain=self.domain_config.name,
+        #    priority=2
+        #)
+        
         logger.info(f"Registered {len(self.activation_router.get_registered_functions())} dynamic functions")
 
     def _initialize_pipeline_steps(self) -> Dict[str, PipelineStep]:
-        """Initialize pipeline steps"""
+        """Initialize pipeline steps with proper concrete classes"""
         steps = {}
         
-        # Classification step
-        steps['classify'] = PipelineStep(
-            name="classify",
-            function=self._classify_query,
-            description="Classify query domain"
-        )
+        # Define concrete step classes inside the method
+        class DynamicClassifyStep(PipelineStep):
+            def __init__(self, vni):
+                self.vni = vni
+                
+            def execute(self, query: str, data: Dict[str, Any], context: Dict[str, Any] = None) -> Dict[str, Any]:
+                # Call the VNI's classification method
+                result = self.vni._classify_query(query, context or {})
+                data['classification'] = result
+                return data
+
+            async def execute_async(self, query: str, data: Dict[str, Any], context: Dict[str, Any] = None) -> Dict[str, Any]:
+                """Async wrapper for execute"""
+                return await asyncio.to_thread(self.execute, query, data, context)
+
+        class DynamicKnowledgeLookupStep(PipelineStep):
+            def __init__(self, vni):
+                self.vni = vni
+                
+            def execute(self, query: str, data: Dict[str, Any], context: Dict[str, Any] = None) -> Dict[str, Any]:
+                result = self.vni._knowledge_lookup(query, context or {})
+                data['knowledge'] = result
+                return data
+
+            async def execute_async(self, query: str, data: Dict[str, Any], context: Dict[str, Any] = None) -> Dict[str, Any]:
+                """Async wrapper for execute"""
+                return await asyncio.to_thread(self.execute, query, data, context)
         
-        # Knowledge lookup step
-        steps['knowledge_lookup'] = PipelineStep(
-            name="knowledge_lookup",
-            function=self._knowledge_lookup,
-            description="Look up relevant knowledge"
-        )
+        class DynamicBiologicalAttentionStep(PipelineStep):
+            def __init__(self, vni):
+                self.vni = vni
+                
+            def execute(self, query: str, data: Dict[str, Any], context: Dict[str, Any] = None) -> Dict[str, Any]:
+                result = self.vni._apply_biological_attention(query, context or {})
+                data['biological'] = result
+                return data
+
+            async def execute_async(self, query: str, data: Dict[str, Any], context: Dict[str, Any] = None) -> Dict[str, Any]:
+                """Async wrapper for execute"""
+                return await asyncio.to_thread(self.execute, query, data, context)
         
-        # Biological attention step
-        steps['biological_attention'] = PipelineStep(
-            name="biological_attention",
-            function=self._apply_biological_attention,
-            description="Apply biological attention systems"
-        )
+        class DynamicMemoryRetrievalStep(PipelineStep):
+            def __init__(self, vni):
+                self.vni = vni
+                
+            def execute(self, query: str, data: Dict[str, Any], context: Dict[str, Any] = None) -> Dict[str, Any]:
+                result = self.vni._memory_retrieval(query, context or {})
+                data['memory'] = result
+                return data
+    
+            async def execute_async(self, query: str, data: Dict[str, Any], context: Dict[str, Any] = None) -> Dict[str, Any]:
+                """Async wrapper for execute"""
+                return await asyncio.to_thread(self.execute, query, data, context)
+
+        class DynamicGenerateResponseStep(PipelineStep):
+            def __init__(self, vni):
+                self.vni = vni
+                
+            def execute(self, query: str, data: Dict[str, Any], context: Dict[str, Any] = None) -> Dict[str, Any]:
+                result = self.vni._generate_response(query, context or {})
+                data['response_data'] = result
+                return data
+
+            async def execute_async(self, query: str, data: Dict[str, Any], context: Dict[str, Any] = None) -> Dict[str, Any]:
+                """Async wrapper for execute"""
+                return await asyncio.to_thread(self.execute, query, data, context)
         
-        # Memory retrieval step
-        steps['memory_retrieval'] = PipelineStep(
-            name="memory_retrieval",
-            function=self._memory_retrieval,
-            description="Retrieve from memory"
-        )
+        # Instantiate the steps with a reference to 'self' (the VNI)
+        steps['classify'] = DynamicClassifyStep(self)
+        steps['knowledge_lookup'] = DynamicKnowledgeLookupStep(self)
+        steps['biological_attention'] = DynamicBiologicalAttentionStep(self)
+        steps['memory_retrieval'] = DynamicMemoryRetrievalStep(self)
+        steps['generate_response'] = DynamicGenerateResponseStep(self)
         
         return steps
     
@@ -654,7 +831,7 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
         classification = self.classifier.classify(query)
         return {
             'classification': classification,
-            'confidence': classification.get('confidence', 0.5)
+            'confidence': classification.confidence if hasattr(classification, 'confidence') else 0.5
         }
     
     def _knowledge_lookup(self, query: str, context: Dict) -> Dict:
@@ -693,10 +870,11 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
             return {'memory_hits': 0}
         
         try:
-            similar = self.memory_toolkit.retrieve_similar(
+            similar = self.memory_toolkit.retrieve_relevant_memory(
                 query=query,
-                category='interactions',
-                max_results=3
+                limit=3
+                #category='interactions',
+                #max_results=3
             )
             hits = len(similar) if similar else 0
             if hits > 0:
@@ -704,11 +882,121 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
             
             return {
                 'memory_hits': hits,
-                'similar_queries': [s.get('query', '')[:50] for s in similar[:2]] if similar else []
+                'similar_queries': [s.get('content', '')[:50] for s in similar[:2]] if similar else []
             }
         except Exception as e:
             logger.warning(f"Memory retrieval failed: {e}")
             return {'memory_hits': 0, 'error': str(e)}
+    
+    def _generate_response(self, query: str, context: Dict) -> Dict:
+        """Generate response data for aggregator - NO LLM calls here"""
+        classification = context.get('classify', {}).get('classification', {})
+        domain = classification.get('primary_domain', 'general')
+        
+        # Extract concepts and patterns for context
+        concepts = context.get('knowledge_lookup', {}).get('concepts', [])
+        patterns = context.get('knowledge_lookup', {}).get('patterns', [])
+        
+        # Determine generation style (but don't generate)
+        generation_style = self._determine_generation_style(query, context)
+        
+        # Prepare data for aggregator
+        response_data = {
+            'query': query,
+            'domain': domain,
+            'confidence': context.get('classify', {}).get('confidence', 0.5),
+            'generation_data': {
+                'needs_generation': True,
+                'generation_style': generation_style,
+                'domain': domain,
+                'temperature': self.domain_config.generation_temperature,
+                'context': {
+                    'classification': classification,
+                    'concepts': concepts[:10],  # Limit to top 10 concepts
+                    'patterns': patterns,
+                    'biological_context': context.get('biological_attention', {}),
+                    'memory_hits': context.get('memory_retrieval', {}).get('memory_hits', 0),
+                    'synaptic_strength': self.domain_config.biological_config.synaptic_strength
+                },
+                'priority_keywords': self.domain_config.priority_keywords,
+                'max_tokens': 500,
+                'requires_safety_check': domain in ['medical', 'legal'],
+                'requires_disclaimer': domain in ['medical', 'legal']
+            },
+            'analysis_metrics': {
+                'biological_activation': context.get('biological_attention', {}).get('activation_level', 0.5),
+                'concept_coverage': len(concepts),
+                'pattern_match': len(patterns),
+                'confidence_score': context.get('classify', {}).get('confidence', 0.5)
+            }
+        }
+        # Track generation metrics
+        if self.domain_config.biological_config.enable_llm_generation:
+            self.performance_metrics['llm_generation_count'] += 1
+            generation_type = 'llm_gateway'
+        else:
+            self.performance_metrics['fallback_generation_count'] += 1
+            generation_type = 'fallback'
+        
+        return {
+            'response_data': response_data,
+            'generated_by': generation_type,
+            'generation_style': generation_style,
+            'confidence': context.get('classify', {}).get('confidence', 0.5)
+        }
+    
+    def _generate_fallback_response(self, query: str, context: Dict) -> Dict:
+        """Generate fallback response data for aggregator"""
+        classification = context.get('classify', {}).get('classification', {})
+        domain = classification.get('primary_domain', 'general')
+        
+        # Prepare minimal data for aggregator
+        response_data = {
+            'query': query,
+            'domain': domain,
+            'confidence': context.get('classify', {}).get('confidence', 0.5) * 0.8,
+            'generation_data': {
+                'needs_generation': True,
+                'generation_style': 'concise',
+                'domain': domain,
+                'temperature': 0.7,
+                'context': {
+                    'classification': classification,
+                    'fallback_mode': True,
+                    'note': 'Using fallback generation mode'
+                },
+                'priority_keywords': [],
+                'max_tokens': 300
+            }
+        }
+        
+        return {
+            'response_data': response_data,
+            'generated_by': 'fallback',
+            'confidence': context.get('classify', {}).get('confidence', 0.5) * 0.8
+        }
+    
+    def _determine_generation_style(self, query: str, context: Dict) -> str:
+        """Determine the appropriate generation style"""
+        classification = context.get('classify', {}).get('classification', {})
+        domain = classification.get('primary_domain', 'general')
+        
+        # Map domains to generation styles
+        style_mapping = {
+            'medical': GenerationStyle.FORMAL.value,
+            'legal': GenerationStyle.FORMAL.value,
+            'technical': GenerationStyle.TECHNICAL.value,
+            'creative': GenerationStyle.CREATIVE.value,
+            'emergency': GenerationStyle.EMERGENCY.value,
+            'general': GenerationStyle.CONCISE.value
+        }
+        
+        # Check for urgency signals
+        urgency_keywords = ['urgent', 'emergency', 'immediately', 'critical', 'now']
+        if any(keyword in query.lower() for keyword in urgency_keywords):
+            return GenerationStyle.EMERGENCY.value
+        
+        return style_mapping.get(domain, GenerationStyle.CONCISE.value)
     
     # ========== MAIN PROCESSING METHODS ==========
     def process(self, input_text: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
@@ -746,24 +1034,47 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
         # Calculate overall confidence
         confidence = self._calculate_overall_confidence(results)
         
-        # Update evolution
-        self._update_evolution(input_text, confidence, results)
+        # Get response from results
+        generate_response_result = results.get('generate_response', {})
+        response_data = generate_response_result.get('response_data', {})
+        generated_by = generate_response_result.get('generated_by', 'unknown')
         
-        # Store in memory
+        # Update evolution with LLM metrics
+        llm_generation_metrics = None
+        if 'generate_response' in results:
+            llm_generation_metrics = {
+                'generated_by': results['generate_response'].get('generated_by'),
+                'generation_style': results['generate_response'].get('generation_style'),
+                'response_data_present': bool(response_data)
+            }
+        
+        self._update_evolution(input_text, confidence, results, llm_generation_metrics)
+        
+        # Store in memory - use text from response_data if available
+        response_text = response_data.get('query', input_text)[:200]  # Fallback to query
         if confidence > self.domain_config.confidence_threshold:
-            await self._store_in_memory_async(input_text, confidence, results)
+            await self._store_in_memory_async(input_text, confidence, results, response_text)
         
         # Adaptive learning
         if self.enable_learning:
             self._adaptive_learning(confidence, results)
         
         processing_time = (datetime.now() - start_time).total_seconds()
-        
+
+        if response_data:
+            domain_str = response_data.get('domain', self.domain_config.name)
+            style = response_data.get('generation_data', {}).get('generation_style', 'general')
+            opinion_text = f"Dynamic {domain_str} query. Style: {style}. Confidence: {confidence:.0%}."
+        else:
+            opinion_text = f"Dynamic {self.domain_config.name} query processed. Confidence: {confidence:.0%}."
+
         # Return standardized result (technical.py pattern)
         return {
             'vni_id': self.vni_id,
             'query': input_text,
             'domain': self.domain_config.name,
+            'response_data': response_data,  # CHANGED: Now returns structured data
+            'generated_by': generated_by,  # CHANGED: Renamed field
             'confidence': confidence,
             'processing_steps': pipeline,
             'step_results': {k: v for k, v in results.items() if not isinstance(v, dict) or 'error' not in v},
@@ -771,8 +1082,15 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
             'biological_mode': self.domain_config.biological_mode.value,
             'uses_hybrid_attention': self.domain_config.biological_config.hybrid_attention_enabled,
             'uses_smart_routing': self.domain_config.biological_config.smart_routing_enabled,
+            'provides_generation_data': True,  # CHANGED: Always provides data for aggregator
             'performance_metrics': self._get_current_metrics(),
-            'pipeline_executed': True
+            'pipeline_executed': True,
+            'vni_metadata': {
+                'vni_id': self.vni_id,
+                'success': True,  # ← CRITICAL!
+                'processing_time': processing_time,
+                'timestamp': datetime.now().isoformat()
+            }      
         }
     
     def get_biological_pipeline(self) -> List[str]:
@@ -782,7 +1100,7 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
         if self.domain_config.biological_mode != BiologicalMode.OFF:
             base_pipeline.insert(1, "biological_attention")
         
-        base_pipeline.append("memory_retrieval")
+        base_pipeline.extend(["memory_retrieval", "generate_response"])
         
         # Add domain-specific steps
         if self.domain_config.name == "medical":
@@ -819,9 +1137,19 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
             memory_hits = results['memory_retrieval'].get('memory_hits', 0)
             if memory_hits > 0:
                 confidence = min(1.0, confidence + 0.05 * memory_hits)
+        
+        # Adjust based on generation method
+        if 'generate_response' in results:
+            gen_result = results['generate_response']
+            if gen_result.get('generated_by') == 'llm_gateway':
+                confidence = min(1.0, confidence * 1.1)  # Boost for LLM generation
+            elif gen_result.get('generated_by') == 'fallback':
+                confidence = confidence * 0.9  # Reduce for fallback
+        
         return min(confidence, 1.0)
     
-    def _update_evolution(self, query: str, confidence: float, results: Dict):
+    def _update_evolution(self, query: str, confidence: float, results: Dict, 
+                         llm_generation_metrics: Dict = None):
         """Update evolution tracking"""
         attention_metrics = None
         routing_metrics = None
@@ -845,10 +1173,11 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
             query, confidence, confidence > self.domain_config.confidence_threshold,
             attention_metrics=attention_metrics,
             routing_metrics=routing_metrics,
-            biological_metrics=biological_metrics
+            biological_metrics=biological_metrics,
+            llm_generation=llm_generation_metrics
         )
     
-    async def _store_in_memory_async(self, query: str, confidence: float, results: Dict):
+    async def _store_in_memory_async(self, query: str, confidence: float, results: Dict, response: str):
         """Async memory storage"""
         if not self.memory_toolkit:
             return
@@ -856,21 +1185,24 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
         try:
             memory_data = {
                 'query': query[:200],
+                'response': response[:200],
                 'confidence': confidence,
                 'domain': self.domain_config.name,
                 'biological_mode': self.domain_config.biological_mode.value,
                 'pipeline_steps': list(results.keys()),
+                'generated_by': results.get('generate_response', {}).get('generated_by', 'unknown'),
                 'timestamp': datetime.now().isoformat()
             }
             
             await self.memory_toolkit.store_interaction_async(
                 query=query,
-                response=f"Processed with confidence: {confidence:.2f}",
+                response=response,
                 context=memory_data,
                 metadata={
                     'vni_id': self.vni_id,
                     'interaction_id': self.interaction_count,
-                    'synaptic_strength': self.domain_config.biological_config.synaptic_strength
+                    'synaptic_strength': self.domain_config.biological_config.synaptic_strength,
+                    'llm_used': results.get('generate_response', {}).get('generated_by') == 'llm_gateway'
                 }
             )
         except Exception as e:
@@ -897,6 +1229,11 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
             # Weaken for poor performance
             new_strength = max(0.1, current_strength * 0.95)
             self.domain_config.biological_config.synaptic_strength = new_strength
+            
+            # Adjust LLM usage based on performance
+            if results.get('generate_response', {}).get('generated_by') == 'llm_gateway':
+                # If LLM performed poorly, consider reducing usage
+                self.domain_config.biological_config.enable_llm_generation = False
     
     def _get_current_metrics(self) -> Dict[str, Any]:
         """Get current performance metrics"""
@@ -910,6 +1247,8 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
             'attention_usage': self.performance_metrics['attention_usage'] / total,
             'routing_usage': self.performance_metrics['routing_usage'] / total,
             'knowledge_base_usage': self.performance_metrics['knowledge_base_usage'] / total,
+            'llm_generation_rate': self.performance_metrics['llm_generation_count'] / total,
+            'fallback_generation_rate': self.performance_metrics['fallback_generation_count'] / total,
             'pipeline_executions': self.performance_metrics['pipeline_executions']
         }
     
@@ -923,6 +1262,7 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
                 'confidence_threshold': self.domain_config.confidence_threshold,
                 'hybrid_attention': self.domain_config.biological_config.hybrid_attention_enabled,
                 'smart_routing': self.domain_config.biological_config.smart_routing_enabled,
+                'llm_generation': self.domain_config.biological_config.enable_llm_generation,
                 'synaptic_strength': self.domain_config.biological_config.synaptic_strength,
                 'neural_pathways': self.domain_config.biological_config.neural_pathways
             },
@@ -935,9 +1275,11 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
                 'interaction_count': self.interaction_count,
                 'learned_keywords_count': len(self.evolution.learned_keywords),
                 'adaptation_history_count': len(self.evolution.adaptation_history),
-                'attention_patterns_count': len(self.evolution.attention_patterns)
+                'attention_patterns_count': len(self.evolution.attention_patterns),
+                'llm_generation_count': len(self.evolution.llm_generation_history)
             },
-            'memory_stats': self.memory_toolkit.get_stats() if self.memory_toolkit else {'available': False}
+            'memory_stats': self.memory_toolkit.get_stats() if self.memory_toolkit else {'available': False},
+            'llm_gateway_available': hasattr(self, 'llm_gateway') and self.llm_gateway is not None
         }
     
     # ========== COMPATIBILITY METHODS ==========
@@ -952,7 +1294,8 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
             'plasticity_enabled': self.domain_config.biological_config.plasticity_enabled,
             'cross_domain_resonance': self.domain_config.biological_config.cross_domain_resonance,
             'attention_patterns_count': len(self.evolution.attention_patterns),
-            'routing_decisions_count': len(self.evolution.routing_decisions)
+            'routing_decisions_count': len(self.evolution.routing_decisions),
+            'llm_generation_count': len(self.evolution.llm_generation_history)
         }
     
     def export_biological_config(self, include_memory: bool = True) -> Dict[str, Any]:
@@ -963,6 +1306,7 @@ class DynamicVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
             'learned_keywords': list(self.evolution.learned_keywords),
             'synaptic_strength_history': self.evolution.synaptic_strength_history,
             'confidence_trend': self.evolution.confidence_trend[-20:],
+            'llm_generation_history': self.evolution.llm_generation_history[-10:],
             'exported_at': datetime.now().isoformat()
         }
         if include_memory and self.memory_toolkit:
@@ -978,7 +1322,8 @@ class EnhancedDomainFactory:
     """Keep original factory with all methods"""
     @staticmethod
     def create_medical_vni(instance_id: str = None, 
-                          biological_mode: BiologicalMode = BiologicalMode.FULL) -> DynamicVNI:
+                          biological_mode: BiologicalMode = BiologicalMode.FULL) -> DynamicVNI: #,
+                          #llm_gateway: LLMGateway = None) -> DynamicVNI:  
         config = DomainConfig(
             name='medical',
             description='Medical domain with full biological integration',
@@ -987,7 +1332,8 @@ class EnhancedDomainFactory:
             biological_config=BiologicalDomainConfig(
                 neural_pathways=['medical_pathway', 'emergency_pathway', 'safety_pathway'],
                 synaptic_strength=0.8,
-                cross_domain_resonance=True
+                cross_domain_resonance=True,
+                enable_llm_generation=True  # Enable LLM for medical domain
             ),
             biological_mode=biological_mode,
             confidence_threshold=0.4,
@@ -997,12 +1343,90 @@ class EnhancedDomainFactory:
             vni_id=instance_id,
             name="Medical Dynamic VNI",
             domain_config=config,
+            biological_mode=biological_mode#,
+            #llm_gateway=llm_gateway  # ADDED: Pass LLM Gateway
+        )
+    
+    @staticmethod
+    def create_legal_vni(instance_id: str = None,
+                        biological_mode: BiologicalMode = BiologicalMode.FULL) -> DynamicVNI:
+        config = DomainConfig(
+            name='legal',
+            description='Legal domain with full biological integration',
+            keywords=['legal', 'law', 'contract', 'court', 'agreement', 'rights', 'dispute', 'liability'],
+            priority_keywords=['urgent', 'contract', 'agreement', 'liability'],
+            biological_config=BiologicalDomainConfig(
+                neural_pathways=['legal_pathway', 'document_pathway', 'compliance_pathway'],
+                synaptic_strength=0.7,
+                cross_domain_resonance=True,
+                enable_llm_generation=True
+            ),
+            biological_mode=biological_mode,
+            confidence_threshold=0.5,
+            generation_temperature=0.5
+        )
+        return DynamicVNI(
+            vni_id=instance_id,
+            name="Legal Dynamic VNI",
+            domain_config=config,
             biological_mode=biological_mode
         )
     
+    @staticmethod
+    def create_creative_vni(instance_id: str = None,
+                           biological_mode: BiologicalMode = BiologicalMode.FULL) -> DynamicVNI:
+        config = DomainConfig(
+            name='creative',
+            description='Creative domain with full biological integration',
+            keywords=['creative', 'art', 'design', 'story', 'poem', 'music', 'painting', 'writing', 'inspiration'],
+            priority_keywords=['creative', 'design', 'story', 'art'],
+            biological_config=BiologicalDomainConfig(
+                neural_pathways=['creative_pathway', 'associative_pathway', 'inspiration_pathway'],
+                synaptic_strength=0.9,
+                cross_domain_resonance=True,
+                enable_llm_generation=True
+            ),
+            biological_mode=biological_mode,
+            confidence_threshold=0.3,
+            generation_temperature=0.8
+        )
+        return DynamicVNI(
+            vni_id=instance_id,
+            name="Creative Dynamic VNI",
+            domain_config=config,
+            biological_mode=biological_mode
+        )
+    
+    @staticmethod
+    def create_custom_vni(name: str,
+                         keywords: List[str],
+                         biological_mode: BiologicalMode = BiologicalMode.HYBRID,
+                         instance_id: str = None) -> DynamicVNI:
+        config = DomainConfig(
+            name=name,
+            description=f'Custom {name} domain with biological integration',
+            keywords=keywords,
+            priority_keywords=keywords[:3] if len(keywords) > 3 else keywords,
+            biological_config=BiologicalDomainConfig(
+                neural_pathways=[f'{name}_pathway', 'general_pathway'],
+                synaptic_strength=0.6,
+                cross_domain_resonance=False,
+                enable_llm_generation=True
+            ),
+            biological_mode=biological_mode,
+            confidence_threshold=0.3,
+            generation_temperature=0.7
+        )
+        return DynamicVNI(
+            vni_id=instance_id,
+            name=f"Custom {name} VNI",
+            domain_config=config,
+            biological_mode=biological_mode
+        )    
 def create_superior_vni(domain_name: str, 
                        biological_mode: str = "hybrid",
-                       enable_learning: bool = True) -> DynamicVNI:
+                       enable_learning: bool = True) -> DynamicVNI:#,
+                       #llm_gateway: LLMGateway = None) -> DynamicVNI:
     """Original quick access function"""
     mode_map = {
         'full': BiologicalMode.FULL,
@@ -1013,16 +1437,26 @@ def create_superior_vni(domain_name: str,
     biological_mode_enum = mode_map.get(biological_mode.lower(), BiologicalMode.HYBRID)
     
     if domain_name == 'medical':
-        return EnhancedDomainFactory.create_medical_vni(biological_mode=biological_mode_enum)
+        return EnhancedDomainFactory.create_medical_vni(
+            biological_mode=biological_mode_enum#,
+            #llm_gateway=llm_gateway
+        )
     elif domain_name == 'legal':
-        return EnhancedDomainFactory.create_legal_vni(biological_mode=biological_mode_enum)
+        return EnhancedDomainFactory.create_legal_vni(
+            biological_mode=biological_mode_enum#,
+            #llm_gateway=llm_gateway
+        )
     elif domain_name == 'creative':
-        return EnhancedDomainFactory.create_creative_vni(biological_mode=biological_mode_enum)
+        return EnhancedDomainFactory.create_creative_vni(
+            biological_mode=biological_mode_enum#,
+            #llm_gateway=llm_gateway
+        )
     else:
         return EnhancedDomainFactory.create_custom_vni(
             name=domain_name,
             keywords=[domain_name, 'information', 'help', 'assistance'],
-            biological_mode=biological_mode_enum
+            biological_mode=biological_mode_enum#,
+            #llm_gateway=llm_gateway
         )
 
 # ========== TEST ==========
@@ -1033,8 +1467,8 @@ if __name__ == "__main__":
     print("🧬 Testing Full-Featured DynamicVNI (with Knowledge & Async)")
     print("=" * 50)
     
-    # Test creation
-    medical_vni = create_superior_vni("medical", biological_mode="full")
+    # Test creation with LLM Gateway
+    medical_vni = create_superior_vni("medical", biological_mode="full")#, llm_gateway=LLMGateway())
     
     # Async test
     async def test_async():
@@ -1044,8 +1478,19 @@ if __name__ == "__main__":
         result = await medical_vni.process_async(query)
         print(f"✅ Confidence: {result.get('confidence', 0):.2f}")
         print(f"🧠 Biological Mode: {result.get('biological_mode')}")
+        print(f"🤖 Generated by: {result.get('generated_by', 'unknown')}")  # FIXED: Use 'generated_by'
         print(f"🔧 Processing Steps: {result.get('processing_steps', [])}")
-        print(f"⏱️  Processing Time: {result.get('processing_time', 0):.2f}s")
+        
+        # Check response data
+        response_data = result.get('response_data', {})
+        print(f"📊 Response Data Keys: {list(response_data.keys())}")
+        
+        if response_data:
+            generation_data = response_data.get('generation_data', {})
+            print(f"📝 Generation Style: {generation_data.get('generation_style')}")
+            print(f"🌡️ Temperature: {generation_data.get('temperature')}")
+            print(f"🏷️ Domain: {response_data.get('domain')}")
+            print(f"⚠️ Safety Check: {generation_data.get('requires_safety_check', False)}")
         
         # Get insights
         insights = medical_vni.get_insights()
@@ -1055,6 +1500,7 @@ if __name__ == "__main__":
         print(f"📈 Performance:")
         print(f"   - Total Queries: {insights.get('performance', {}).get('total_queries', 0)}")
         print(f"   - Memory Hit Rate: {insights.get('performance', {}).get('memory_hit_rate', 0):.2f}")
-    
+        print(f"   - LLM Generation Rate: {insights.get('performance', {}).get('llm_generation_rate', 0):.2f}")
+        
     asyncio.run(test_async())
-    print(f"\n✅ Full-featured DynamicVNI test complete!") 
+    print(f"\n✅ Full-featured DynamicVNI test complete!")

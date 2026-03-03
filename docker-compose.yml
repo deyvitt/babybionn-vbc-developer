@@ -44,19 +44,10 @@ services:
     cpus: 4.0
     networks:
       - babybionn-network
-    command: >
-      sh -c "
-        echo '🚀 Starting BabyBIONN initialization...' &&
-        exec uvicorn main:app --host 0.0.0.0 --port 8001 --workers 2
-       # python /app/initialize_orchestrator.py &&
-        echo '✅ BabyBIONN initialized. Starting FastAPI server...' &&
-        exec uvicorn main:app --host 0.0.0.0 --port 8001 --workers 2
-      "
-
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --workers 1  # FIXED: Single command, no shell script
 networks:
   babybionn-network:
     driver: bridge
-
 volumes:
   babybionn_knowledge:
   babybionn_models:

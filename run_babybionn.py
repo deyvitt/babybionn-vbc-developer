@@ -59,7 +59,7 @@ def verify_enhanced_dependencies():
         dependencies_ok = False
 
     try:
-        from enhanced_vni_classes import EnhancedMedicalVNI
+        from enhanced_vni_classes.domains.medical import MedicalVNI
         medical_vni = EnhancedMedicalVNI("test_instance")
         print("✅ Enhanced VNI classes loaded successfully")
     except Exception as e:

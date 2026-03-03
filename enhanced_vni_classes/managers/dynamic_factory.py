@@ -105,11 +105,15 @@ class DynamicVNIFactory:
         self.domain_cache[cache_key] = domain_config
         
         # Create and return the VNI
-        vni = DynamicVNI(domain_config, instance_id)
+        vni = DynamicVNI(
+            domain_config=domain_config,
+            vni_id=instance_id,
+            name=f"Dynamic VNI - {domain_config.name}"
+        )
         logger.info(f"✅ Created dynamic VNI '{instance_id}' for topic: '{topic}'")
         
         return vni
-    
+
     def _create_dynamic_config(self, topic: str, context: Dict[str, Any] = None) -> DomainConfig:
         """Create a dynamic configuration based on web research."""
         

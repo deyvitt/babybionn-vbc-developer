@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from collections import defaultdict
 from typing import Dict, List, Optional, Any, Tuple
 from sklearn.metrics.pairwise import cosine_similarity
-from enhanced_vni_classes import VNIManager, EnhancedBaseVNI
+from enhanced_vni_classes.managers.vni_manager import VNIManager, EnhancedBaseVNI
 
 logger = logging.getLogger("transVNI_compare_segregate")
 

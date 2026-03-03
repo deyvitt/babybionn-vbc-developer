@@ -1,9 +1,13 @@
 # neuron/demoHybridAttention.py - Simplified hybrid attention for BabyBIONN demo
 import torch
 import math
+import logging
 import torch.nn as nn
+from datetime import datetime
 from typing import List, Optional, Tuple, Dict, Any, Union
 # from neurosynaptic_tensor_encoder import NeurosynapticEventEncoder
+
+logger = logging.getLogger(__name__)
 
 class DemoHybridAttention(nn.Module):
     """Simplified hybrid attention for BabyBIONN demo
@@ -12,6 +16,7 @@ class DemoHybridAttention(nn.Module):
     def __init__(
         self,
         dim: int,
+        config=None,
         num_heads: int = 8,
         window_size: int = 256,
         use_sliding: bool = True,
@@ -21,6 +26,8 @@ class DemoHybridAttention(nn.Module):
         memory_tokens: int = 16,
         multi_modal: bool = True,
     ):
+        self.config = config
+
         super().__init__()
         # Validate parameters
         if dim % num_heads != 0:
@@ -56,6 +63,92 @@ class DemoHybridAttention(nn.Module):
         if multi_modal:
             self.modal_gate = nn.Linear(dim, 1)
             self.modal_projection = nn.Linear(dim * 2, dim)
+
+    def learn_from_interaction(self, vni_sequence: List[str], 
+                              attention_patterns: Dict[str, Any],
+                              outcome_quality: float,
+                              query_context: Dict[str, Any]) -> None:
+        """Learn from interaction patterns to improve attention mechanisms.
+        This method is called by the aggregator during biological learning.    
+        Args:
+            vni_sequence: List of VNIs that were activated in sequence
+            attention_patterns: Dictionary of attention patterns from each VNI
+            outcome_quality: How successful the interaction was (0.0 to 1.0)
+            query_context: Context of the query"""
+        logger = logging.getLogger(__name__)
+        try:
+            logger.debug(f"DemoHybridAttention learning from interaction with {len(vni_sequence)} VNIs, quality: {outcome_quality:.2f}")
+            
+            # Initialize learning history if not exists
+            if not hasattr(self, 'learning_history'):
+                self.learning_history = []
+            
+            # Store interaction for future learning
+            self.learning_history.append({
+                'timestamp': datetime.now().isoformat(),
+                'vni_sequence': vni_sequence,
+                'outcome_quality': outcome_quality,
+                'pattern_count': len(attention_patterns),
+                'context': str(query_context)[:100]
+            })
+            
+            # Keep only recent history
+            if len(self.learning_history) > 100:
+                self.learning_history = self.learning_history[-100:]
+            
+            # If outcome is good, strengthen attention patterns for this sequence
+            if outcome_quality > 0.7:
+                self._strengthen_attention_patterns(vni_sequence, attention_patterns, outcome_quality)
+            
+            # If outcome is poor, learn to avoid these patterns
+            elif outcome_quality < 0.3:
+                self._weaken_attention_patterns(vni_sequence, attention_patterns, outcome_quality)
+                
+        except Exception as e:
+            logger.error(f"Error in learn_from_interaction: {e}")
+    
+    def _strengthen_attention_patterns(self, vni_sequence: List[str],
+                                       attention_patterns: Dict[str, Any],
+                                       outcome_quality: float) -> None:
+        """Strengthen attention patterns that led to successful outcomes"""
+        logger = logging.getLogger(__name__)
+        
+        if not hasattr(self, 'successful_patterns'):
+            self.successful_patterns = {}
+        
+        pattern_key = "->".join(vni_sequence)
+        if pattern_key not in self.successful_patterns:
+            self.successful_patterns[pattern_key] = {
+                'count': 0,
+                'avg_quality': 0.0,
+                'attention_patterns': attention_patterns
+            }
+        pattern = self.successful_patterns[pattern_key]
+        pattern['count'] += 1
+        # Update running average
+        pattern['avg_quality'] = (pattern['avg_quality'] * (pattern['count'] - 1) + outcome_quality) / pattern['count']
+        logger.debug(f"Strengthened pattern {pattern_key}, avg quality: {pattern['avg_quality']:.2f}")
+
+    def _weaken_attention_patterns(self, vni_sequence: List[str],
+                                   attention_patterns: Dict[str, Any],
+                                   outcome_quality: float) -> None:
+        """Weaken attention patterns that led to poor outcomes"""
+        logger = logging.getLogger(__name__)
+        
+        if not hasattr(self, 'failed_patterns'):
+            self.failed_patterns = {}
+        
+        pattern_key = "->".join(vni_sequence)
+        if pattern_key not in self.failed_patterns:
+            self.failed_patterns[pattern_key] = {
+                'count': 0,
+                'avg_quality': 0.0,
+                'attention_patterns': attention_patterns
+            }
+        pattern = self.failed_patterns[pattern_key]
+        pattern['count'] += 1
+        pattern['avg_quality'] = (pattern['avg_quality'] * (pattern['count'] - 1) + outcome_quality) / pattern['count']
+        logger.debug(f"Weakened pattern {pattern_key}, avg quality: {pattern['avg_quality']:.2f}")
 
     def _create_sliding_window_mask(self, seq_len: int, device: torch.device) -> torch.Tensor:
         """Create sliding window attention mask with memory tokens"""
@@ -335,58 +428,6 @@ class DemoHybridAttention(nn.Module):
             "use_sliding": self.use_sliding,
             "multi_modal": self.multi_modal
         }
-
-class DemoHybridAttention(nn.Module):
-    """Simplified hybrid attention for BabyBIONN demo
-    - Keeps: hierarchical, sliding window, memory tokens, multi-modal fusion
-    - Removes: quantum components, content-aware selection, C++ extensions"""
-    def __init__(
-        self,
-        dim: int,
-        num_heads: int = 8,
-        window_size: int = 256,
-        use_sliding: bool = True,
-        use_global: bool = True,
-        use_hierarchical: bool = True,
-        global_token_ratio: float = 0.05,
-        memory_tokens: int = 16,
-        multi_modal: bool = True,
-    ):
-        super().__init__()
-        # Validate parameters
-        if dim % num_heads != 0:
-            raise ValueError(f"dim ({dim}) must be divisible by num_heads ({num_heads})")
-        
-        self.dim = dim
-        self.num_heads = num_heads
-        self.head_dim = dim // num_heads
-        self.window_size = window_size
-        self.scale = self.head_dim ** -0.5
-        
-        # Feature flags
-        self.use_sliding = use_sliding
-        self.use_global = use_global
-        self.use_hierarchical = use_hierarchical
-        self.multi_modal = multi_modal
-        
-        # Configuration parameters
-        self.global_token_ratio = global_token_ratio
-        self.memory_tokens = memory_tokens
-        
-        # Persistent memory (simplified)
-        self.persistent_memory = nn.Parameter(torch.zeros(1, memory_tokens, dim))
-        nn.init.normal_(self.persistent_memory, mean=0.0, std=0.02)
-        
-        # Projections
-        self.q_proj = nn.Linear(dim, dim)
-        self.k_proj = nn.Linear(dim, dim)
-        self.v_proj = nn.Linear(dim, dim)
-        self.out_proj = nn.Linear(dim, dim)
-        
-        # Multi-modal support (keep for demo)
-        if multi_modal:
-            self.modal_gate = nn.Linear(dim, 1)
-            self.modal_projection = nn.Linear(dim * 2, dim)
             
 # ============ NEW CLASS - ADD THIS ============
 class HybridAttentionEngine:
@@ -395,9 +436,83 @@ class HybridAttentionEngine:
     - Evaluates VNI collaboration potential
     - Used by orchestrator for intelligent routing"""
     
-    def __init__(self):
-        self.vni_history = {}  # Track VNI performance
-        self.collaboration_patterns = {}  # Learn which VNIs work well together
+    def __init__(self, config=None):
+        self.config = config
+    
+    def update_attention_patterns(self, pattern_sequence=None, success_metric=0.5, **kwargs):
+        """Update attention patterns based on interaction results
+        This method is called by the aggregator with various parameter names.
+        It accepts any keyword arguments to be flexible.
+        Args:
+            pattern_sequence: List of VNI IDs in the activation sequence (may be called 'patterns' or other names)
+            success_metric: Quality score (0-1) of the interaction
+            **kwargs: Any other parameters (vni_ids, patterns, etc.)"""
+        logger.debug(f"DemoHybridAttention learning from interaction")
+        
+        # Extract pattern sequence from whatever parameter name was used
+        if pattern_sequence is None:
+            # Try to get from kwargs with different possible names
+            if 'patterns' in kwargs:
+                pattern_sequence = kwargs['patterns']
+            elif 'vni_ids' in kwargs:
+                pattern_sequence = kwargs['vni_ids']
+            elif 'pattern' in kwargs:
+                pattern_sequence = kwargs['pattern']
+            elif 'activation_sequence' in kwargs:
+                pattern_sequence = kwargs['activation_sequence']
+            else:
+                # If no pattern sequence found, check if we're getting a dictionary of VNI outputs
+                logger.debug(f"No pattern sequence found, kwargs keys: {list(kwargs.keys())}")
+                pattern_sequence = []
+        
+        # If pattern_sequence is a dictionary (like VNI outputs), convert to list of keys
+        if isinstance(pattern_sequence, dict):
+            pattern_sequence = list(pattern_sequence.keys())
+            logger.debug(f"Converted dict to pattern sequence: {pattern_sequence}")
+        
+        # If we still don't have a pattern sequence, nothing to do
+        if not pattern_sequence:
+            logger.debug("No pattern sequence to update")
+            return True
+        
+        # Create a pattern key from the sequence
+        if isinstance(pattern_sequence, list):
+            pattern_key = "->".join(str(p) for p in pattern_sequence)
+        else:
+            pattern_key = str(pattern_sequence)
+        
+        # Initialize patterns dict if it doesn't exist
+        if not hasattr(self, 'attention_patterns'):
+            self.attention_patterns = {}
+        
+        # Strengthen or weaken based on success
+        if success_metric > 0.6:
+            # Strengthen successful patterns
+            current = self.attention_patterns.get(pattern_key, 0.5)
+            self.attention_patterns[pattern_key] = min(1.0, current + 0.05)
+            logger.debug(f"✅ Strengthened pattern: {pattern_key} -> {self.attention_patterns[pattern_key]:.2f}")
+        else:
+            # Weaken unsuccessful patterns
+            current = self.attention_patterns.get(pattern_key, 0.5)
+            self.attention_patterns[pattern_key] = max(0.1, current - 0.02)
+            logger.debug(f"❌ Weakened pattern: {pattern_key} -> {self.attention_patterns[pattern_key]:.2f}")
+        
+        # Also track VNI relationships if we have vni_ids in kwargs
+        if 'vni_ids' in kwargs and isinstance(kwargs['vni_ids'], list):
+            vni_ids = kwargs['vni_ids']
+            if not hasattr(self, 'vni_relationships'):
+                self.vni_relationships = {}
+            
+            for i, vni1 in enumerate(vni_ids):
+                for vni2 in vni_ids[i+1:]:
+                    rel_key = f"{vni1}<->{vni2}"
+                    current = self.vni_relationships.get(rel_key, 0.5)
+                    if success_metric > 0.6:
+                        self.vni_relationships[rel_key] = min(1.0, current + 0.02)
+                    else:
+                        self.vni_relationships[rel_key] = max(0.1, current - 0.01)
+        
+        return True
     
     def compute_vni_attention(self, query: str, vni_descriptors: List[Dict], 
                              context: Dict = None) -> List[float]:
@@ -639,10 +754,11 @@ class NeurosynapticEventEncoder(nn.Module):
         num_heads: int = 8,
         max_sequence_length: int = 1024,
         temporal_window: int = 100,  # ms window for event grouping
+        config=None,        
         use_relative_position: bool = True
     ):
         super().__init__()
-        
+        self.config = config        
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
@@ -912,26 +1028,41 @@ class NeurosynapticHybridAttention(nn.Module):
     """
     Complete system: Event encoding + Hybrid Attention + Activation Routing
     """
-    
     def __init__(
         self,
-        event_input_dim: int = 256,
-        hidden_dim: int = 512,
-        num_heads: int = 8,
-        **attention_kwargs
+        event_input_dim: int = 256,      # Changed from 256 to 1024 if desired
+        hidden_dim: int = 256,           # Could change to 1024 if needed
+        num_heads: int = 8,              # Should be divisible by hidden_dim
+        window_size: int = 128,          # ← ADDED: Missing parameter
+        config=None,
+        use_hierarchical: bool = True,   # ← ADDED: Missing parameter
+        use_sliding: bool = True,        # ← ADDED: Missing parameter
+        use_global: bool = True,         # ← ADDED: Missing parameter
+        multi_modal: bool = True,        # ← ADDED: Missing parameter
+        global_token_ratio: float = 0.05,# ← ADDED: Missing parameter
+        memory_tokens: int = 8,         # ← ADDED: Missing parameter
+        **attention_kwargs               # For any remaining DemoHybridAttention params
     ):
         super().__init__()
-        
+        self.config = config        
         self.event_encoder = NeurosynapticEventEncoder(
             input_dim=event_input_dim,
             hidden_dim=hidden_dim,
             num_heads=num_heads
         )
         
+        # Now passing ALL required parameters to DemoHybridAttention
         self.hybrid_attention = DemoHybridAttention(
             dim=hidden_dim,
             num_heads=num_heads,
-            **attention_kwargs
+            window_size=window_size,
+            use_sliding=use_sliding,
+            use_global=use_global,
+            use_hierarchical=use_hierarchical,
+            global_token_ratio=global_token_ratio,
+            memory_tokens=memory_tokens,
+            multi_modal=multi_modal,
+            **attention_kwargs  # For any other DemoHybridAttention parameters
         )
         
         # Optional: Connect to your activation router
@@ -989,7 +1120,7 @@ class NeurosynapticHybridAttention(nn.Module):
             },
             'primary_topic': 'neurosynaptic'
         }
-
+    
 # Usage Example
 def demonstrate_neurosynaptic_processing():
     """Show how to use the neurosynaptic event encoder"""
@@ -1070,3 +1201,4 @@ What's Removed:
 ❌ C++ extensions and complex dependencies
 
 ❌ Global token selection complexity""" 
+

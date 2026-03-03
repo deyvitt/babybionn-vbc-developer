@@ -28,6 +28,7 @@ class TechnicalOperActionConfig:
     memory_retention_days: int = 30
     enable_hybrid_attention: bool = True  # NEW: Hybrid attention toggle
     enable_smart_routing: bool = True  # NEW: Smart routing toggle
+    enable_llm_generation: bool = True  # ADDED: LLM generation toggle
     
     def __post_init__(self):
         if self.technical_knowledge_base is None:
@@ -303,12 +304,13 @@ class TechnicalKnowledgeGraph:
 class TechnicalReasoningEngine(nn.Module):
     """Enhanced technical reasoning engine with memory integration"""
     
-    def __init__(self, config: TechnicalOperActionConfig, memory_toolkit=None):
+    def __init__(self, config: TechnicalOperActionConfig, memory_toolkit=None, vni_id: str = None):
         super().__init__()
         self.config = config
         self.knowledge_graph = TechnicalKnowledgeGraph(config)
         self.memory_toolkit = memory_toolkit
-        
+        self.vni_id = vni_id or "technical_vni_enhanced"  
+
         # Initialize hybrid attention router
         if config.enable_hybrid_attention:
             self.hybrid_attention = DemoHybridAttention(
@@ -323,42 +325,12 @@ class TechnicalReasoningEngine(nn.Module):
         # Initialize smart activation router
         if config.enable_smart_routing:
             self.activation_router = SmartActivationRouter(
-                vni_id=self.vni_id or "technical_vni_enhanced",  # ADD vni_id
-                domain="technical",  # ADD domain
+                vni_id=self.vni_id,
+                domain="technical",
                 input_dim=512,
                 num_experts=4,
                 expert_dim=256
             )
-
-    def _register_technical_functions(self):
-        """Register technical-specific functions with activation router"""
-        if not hasattr(self, 'activation_router'):
-            return
-        
-        # Register technical analysis function
-        self.activation_router.register_function(
-            function_name="analyze_technical_problem",
-            function=self.reasoning_engine.analyze_technical_problem,
-            domain=self.domain,
-            priority=1
-        )
-        
-        # Register solution generation function
-        self.activation_router.register_function(
-            function_name="generate_technical_solutions",
-            function=self.reasoning_engine.generate_solutions,
-            domain="technical",
-            priority=2
-        )
-        
-        # Register complexity assessment function
-        self.activation_router.register_function(
-            function_name="assess_technical_complexity",
-            function=self.reasoning_engine._assess_enhanced_complexity,
-            domain="technical",
-            priority=1
-        )    
-        logger.info(f"Registered {len(self.activation_router.get_registered_functions())} technical functions")        
 
         # Enhanced neural networks with attention mechanisms
         self.technical_concept_encoder = nn.Sequential(
@@ -386,24 +358,6 @@ class TechnicalReasoningEngine(nn.Module):
             nn.Linear(64, 32),
             nn.Softmax(dim=-1)
         )
-        
-        # Solution generator with residual connections
-        self.solution_generator = nn.ModuleList([
-            nn.Sequential(
-                nn.Linear(96, 64),
-                nn.ReLU(),
-                nn.LayerNorm(64)
-            ),
-            nn.Sequential(
-                nn.Linear(64, 48),
-                nn.ReLU(),
-                nn.LayerNorm(48)
-            ),
-            nn.Sequential(
-                nn.Linear(48, 32),
-                nn.Sigmoid()
-            )
-        ])
         
         # Complexity assessor with multi-dimensional output
         self.complexity_assessor = nn.Sequential(
@@ -454,6 +408,44 @@ class TechnicalReasoningEngine(nn.Module):
         # Cache for frequently used patterns
         self.pattern_cache = {}
         
+        # Register functions if activation router exists
+        if hasattr(self, 'activation_router') and self.activation_router:
+            self._register_technical_functions()
+
+    def _register_technical_functions(self):
+        """Register technical-specific functions with activation router"""
+        if not hasattr(self, 'activation_router') or self.activation_router is None:
+            return
+        
+        try:
+            # Register technical analysis function
+            self.activation_router.register_function(
+                function_name="analyze_technical_problem",
+                function=self.analyze_technical_problem,
+                domain="technical",
+                priority=1
+            )
+            
+            # Register complexity assessment function
+            self.activation_router.register_function(
+                function_name="assess_technical_complexity",
+                function=self._assess_enhanced_complexity,
+                domain="technical",
+                priority=1
+            )
+            
+            # Register analysis for aggregator function
+            self.activation_router.register_function(
+                function_name="analyze_for_aggregator",
+                function=self._analyze_for_aggregator,
+                domain="technical",
+                priority=2
+            )
+            
+            logger.info(f"Registered {len(self.activation_router.get_registered_functions())} technical functions")
+        except Exception as e:
+            logger.warning(f"Failed to register technical functions: {e}")
+      
     def extract_technical_concepts(self, text: str, abstraction_data: Dict = None) -> Dict[str, Any]:
         """Extract technical concepts with enhanced pattern recognition"""
         technical_concepts = {
@@ -591,7 +583,7 @@ class TechnicalReasoningEngine(nn.Module):
                 technical_concepts['similar_past_cases'] = similar_past_queries[:3]
         
         return technical_concepts
-    
+
     def analyze_technical_problem(self, concepts: Dict, features: torch.Tensor) -> List[Dict]:
         """Analyze technical problems with memory-enhanced reasoning"""
         problems = []
@@ -837,221 +829,480 @@ class TechnicalReasoningEngine(nn.Module):
                     technologies.append(tech)
         
         return list(set(technologies))  # Remove duplicates
-    
-    def generate_solutions(self, problems: List[Dict], concepts: Dict, 
-                         features: torch.Tensor) -> List[Dict]:
-        """Generate technical solutions with hybrid attention routing"""
-        solutions = []
+
+    def _assess_error_severity(self, error_type: str) -> str:
+        """Assess severity of error type"""
+        severity_map = {
+            'crash': 'critical',
+            'deadlock': 'critical',
+            'memory_leak': 'high',
+            'timeout': 'high',
+            'exception': 'medium',
+            'failure': 'medium',
+            'inability': 'medium',
+            'general_error': 'low'
+        }
+        return severity_map.get(error_type, 'medium')
+
+    def _analyze_for_aggregator(self, problems: List[Dict], concepts: Dict, 
+                               features: torch.Tensor) -> List[Dict]:
+        """Analyze technical problems for aggregator - NO SOLUTION GENERATION"""
+        analyses = []
         
-        # Apply smart routing for solution generation
-        if hasattr(self, 'smart_router') and features is not None:
-            solution_features, _ = self.smart_router(features, task='solution_generation')
-        else:
-            solution_features = features
-        
-        for problem in problems[:3]:
-            # Check cache first
-            cache_key = f"{problem['domain']}_{problem['issue']}_{problem['complexity']}"
-            if cache_key in self.pattern_cache:
-                cached_solution = self.pattern_cache[cache_key].copy()
-                cached_solution['confidence'] *= 0.9  # Slight decay for cached solutions
-                solutions.append(cached_solution)
-                continue
-            
-            # Generate new solution
-            solution = {
-                'problem': problem['issue'],
+        for problem in problems[:3]:  # Analyze top 3 problems
+            analysis = {
+                'problem_type': problem['issue'],
                 'domain': problem['domain'],
                 'complexity': problem['complexity'],
-                'confidence': problem['confidence'] * 0.8,  # Solution confidence is typically lower
-                'steps': [],
-                'estimated_time': self._estimate_solution_time(problem),
-                'resources_needed': [],
-                'validation_steps': [],
-                'memory_context': problem.get('similar_past_issues', [])
+                'confidence': problem['confidence'],
+                'urgency': problem.get('urgency', 'medium'),
+                'similar_past_issues': problem.get('similar_past_issues', []),
+                'technology_context': {
+                    'technologies': self._extract_technologies(concepts),
+                    'stack_patterns': self._identify_stack_patterns(concepts)
+                },
+                'key_technical_factors': self._extract_key_factors(problem, concepts),
+                'recommended_approach_style': self._get_recommended_style(problem),
+                'estimated_time_frame': self._estimate_analysis_time(problem),
+                'risk_assessment': self._assess_technical_risks(problem, concepts),
+                'validation_requirements': self._get_validation_requirements(problem['domain']),
+                'domain_insights': self._get_domain_insights(problem['domain'], concepts),
+                'complexity_guidance': self._get_complexity_guidance(problem['complexity'])
             }
             
-            # Generate solution steps based on complexity
-            if solution_features is not None:
-                step_embeddings = self.solution_generator[0](solution_features[:96])
-                num_steps = self._get_step_count(problem['complexity'])
-                
-                for i in range(num_steps):
-                    step = {
-                        'id': i + 1,
-                        'action': f"Step {i + 1}: Implement solution component {i + 1}",
-                        'details': self._get_step_details(i, problem['domain']),
-                        'estimated_duration': f"{10 * (i + 1)} minutes"
-                    }
-                    solution['steps'].append(step)
-            
-            # Add resources based on technology stack
-            technologies = self._extract_technologies(concepts)
-            solution['resources_needed'] = self._get_solution_resources(problem['domain'], technologies)
-            
-            # Add validation steps
-            solution['validation_steps'] = self._get_validation_steps(problem['domain'])
-            
-            # Cache the solution
-            self.pattern_cache[cache_key] = solution.copy()
-            
-            solutions.append(solution)
+            analyses.append(analysis)
         
-        # Store successful solutions in memory
-        if self.memory_toolkit and solutions:
-            for solution in solutions[:2]:
-                if solution['confidence'] > 0.7:
-                    self.memory_toolkit.store_solution(
-                        problem_type=solution['problem'],
-                        domain=solution['domain'],
-                        solution_steps=solution['steps'],
-                        effectiveness=0.8  # Initial effectiveness score
-                    )
+        return analyses
+
+    def _identify_stack_patterns(self, concepts: Dict) -> List[str]:
+        """Identify technology stack patterns"""
+        patterns = []
+        found_techs = []
         
-        return solutions
-    
-    def _estimate_solution_time(self, problem: Dict) -> str:
-        """Estimate solution time based on complexity"""
-        time_estimates = {
-            'beginner': '1-2 hours',
-            'intermediate': '4-8 hours',
-            'advanced': '1-3 days',
-            'expert': '1-2 weeks'
+        # Extract all technologies from concepts
+        tech_categories = ['programming_languages', 'frameworks', 'databases', 'cloud_platforms']
+        for category in tech_categories:
+            category_techs = concepts.get('technology_stack', {}).get(category, [])
+            if isinstance(category_techs, list):
+                for tech in category_techs:
+                    if isinstance(tech, dict):
+                        tech_name = tech.get('technology', '')
+                    else:
+                        tech_name = str(tech)
+                    if tech_name:
+                        found_techs.append(tech_name.lower())
+        
+        # Check for common stack patterns
+        stack_patterns = {
+            'python_django_stack': ['python', 'django'],
+            'python_flask_stack': ['python', 'flask'],
+            'javascript_react_stack': ['javascript', 'react'],
+            'javascript_node_stack': ['javascript', 'nodejs', 'node.js'],
+            'java_spring_stack': ['java', 'spring'],
+            'dotnet_stack': ['c#', '.net', 'asp.net'],
+            'mean_stack': ['mongodb', 'express', 'angular', 'nodejs'],
+            'mern_stack': ['mongodb', 'express', 'react', 'nodejs'],
+            'lamp_stack': ['linux', 'apache', 'mysql', 'php'],
+            'python_data_stack': ['python', 'pandas', 'numpy', 'jupyter']
         }
-        return time_estimates.get(problem['complexity'], 'Unknown')
-    
-    def _get_step_count(self, complexity: str) -> int:
-        """Get number of solution steps based on complexity"""
-        step_counts = {
-            'beginner': 3,
-            'intermediate': 5,
-            'advanced': 7,
-            'expert': 10
+        
+        for pattern_name, required_techs in stack_patterns.items():
+            matches = sum(1 for tech in required_techs if tech in found_techs)
+            if matches >= 2:  # At least 2 technologies from the stack
+                patterns.append(pattern_name)
+        
+        return patterns
+
+    def _extract_key_factors(self, problem: Dict, concepts: Dict) -> List[str]:
+        """Extract key technical factors affecting the problem"""
+        factors = []
+        
+        # Complexity factor
+        factors.append(f"Complexity level: {problem['complexity']}")
+        
+        # Technology factor
+        tech_count = len(self._extract_technologies(concepts))
+        if tech_count > 3:
+            factors.append(f"Multi-technology integration ({tech_count} technologies)")
+        elif tech_count == 0:
+            factors.append("Technology context not specified")
+        
+        # Domain-specific factors
+        domain = problem['domain']
+        if domain in ['software_development', 'data_science_ai']:
+            factors.append("Requires specialized algorithmic/analytical knowledge")
+        elif domain in ['cybersecurity']:
+            factors.append("Security, compliance, and risk management considerations")
+        elif domain in ['devops_infrastructure']:
+            factors.append("System reliability, scalability, and operational requirements")
+        elif domain in ['cloud_computing']:
+            factors.append("Cloud architecture, cost optimization, and vendor considerations")
+        
+        # Urgency factor
+        urgency = problem.get('urgency', 'medium')
+        if urgency in ['critical', 'high']:
+            factors.append(f"High urgency level: requires {urgency} priority attention")
+        
+        # Similar past issues factor
+        if problem.get('similar_past_issues'):
+            factors.append("Historical patterns available for reference")
+        
+        # Error patterns factor
+        error_patterns = concepts.get('error_patterns', [])
+        if error_patterns:
+            error_types = set(e['type'] for e in error_patterns)
+            if len(error_types) > 1:
+                factors.append(f"Multiple error types detected: {', '.join(list(error_types)[:3])}")
+        
+        return factors
+
+    def _get_recommended_style(self, problem: Dict) -> Dict[str, str]:
+        """Get recommended response style for aggregator"""
+        styles = {
+            'beginner': {
+                'tone': 'educational',
+                'detail_level': 'step_by_step',
+                'assume_knowledge': 'basic',
+                'include_examples': True,
+                'include_diagrams': False,
+                'technical_depth': 'introductory',
+                'pacing': 'slow',
+                'focus': 'fundamentals'
+            },
+            'intermediate': {
+                'tone': 'collaborative',
+                'detail_level': 'conceptual',
+                'assume_knowledge': 'intermediate',
+                'include_examples': True,
+                'include_diagrams': True,
+                'technical_depth': 'practical',
+                'pacing': 'moderate',
+                'focus': 'best_practices'
+            },
+            'advanced': {
+                'tone': 'expert',
+                'detail_level': 'architectural',
+                'assume_knowledge': 'advanced',
+                'include_examples': False,
+                'include_diagrams': True,
+                'technical_depth': 'detailed',
+                'pacing': 'efficient',
+                'focus': 'system_design'
+            },
+            'expert': {
+                'tone': 'technical_lead',
+                'detail_level': 'strategic',
+                'assume_knowledge': 'expert',
+                'include_examples': False,
+                'include_diagrams': True,
+                'technical_depth': 'comprehensive',
+                'pacing': 'direct',
+                'focus': 'innovation'
+            }
         }
-        return step_counts.get(complexity, 5)
+        
+        return styles.get(problem['complexity'], styles['intermediate'])
+
+    def _assess_technical_risks(self, problem: Dict, concepts: Dict) -> Dict[str, Any]:
+        """Assess technical risks for the problem"""
+        risks = {
+            'implementation_risk': 'medium',
+            'time_risk': 'medium',
+            'quality_risk': 'medium',
+            'security_risk': 'low',
+            'dependencies': []
+        }
+        
+        # Adjust based on complexity
+        complexity = problem['complexity']
+        if complexity in ['advanced', 'expert']:
+            risks['implementation_risk'] = 'high'
+            risks['time_risk'] = 'high'
+        
+        # Adjust based on urgency
+        urgency = problem.get('urgency', 'medium')
+        if urgency in ['critical', 'high']:
+            risks['time_risk'] = 'high'
+            risks['quality_risk'] = 'high'  # Rushed work may compromise quality
+        
+        # Adjust based on domain
+        domain = problem['domain']
+        if domain in ['cybersecurity', 'devops_infrastructure']:
+            risks['security_risk'] = 'medium'
+        if domain == 'cybersecurity' and urgency == 'critical':
+            risks['security_risk'] = 'high'
+        
+        # Check technology dependencies
+        technologies = self._extract_technologies(concepts)
+        tech_count = len(technologies)
+        
+        if tech_count > 3:
+            risks['dependencies'].append('Multiple technology integration complexity')
+            risks['implementation_risk'] = 'high' if risks['implementation_risk'] == 'medium' else risks['implementation_risk']
+        
+        if any(tech in ['kubernetes', 'docker', 'aws', 'azure', 'gcp'] for tech in technologies):
+            risks['dependencies'].append('Infrastructure/platform dependencies')
+        
+        # Check for similar past issues
+        if problem.get('similar_past_issues'):
+            similar_issues = problem['similar_past_issues']
+            effectiveness_scores = [issue.get('effectiveness', 0.5) for issue in similar_issues]
+            avg_effectiveness = sum(effectiveness_scores) / len(effectiveness_scores) if effectiveness_scores else 0.5
+            
+            if avg_effectiveness < 0.6:
+                risks['dependencies'].append('Historical solutions had limited effectiveness')
+                risks['quality_risk'] = 'high' if risks['quality_risk'] == 'medium' else risks['quality_risk']
+        
+        return risks
     
-    def _get_step_details(self, step_num: int, domain: str) -> str:
-        """Get detailed description for each step"""
+    def _get_validation_requirements(self, domain: str) -> List[str]:
+        """Get validation requirements for the domain"""
+        requirements = {
+            'software_development': [
+                'Unit testing coverage',
+                'Code review process',
+                'Integration testing',
+                'Performance benchmarking',
+                'Security scanning'
+            ],
+            'data_science_ai': [
+                'Model validation metrics (accuracy, precision, recall)',
+                'Data quality verification',
+                'Cross-validation results',
+                'Bias and fairness assessment',
+                'Explainability analysis'
+            ],
+            'cybersecurity': [
+                'Security vulnerability scanning',
+                'Penetration testing results',
+                'Compliance verification',
+                'Risk assessment report',
+                'Incident response testing'
+            ],
+            'devops_infrastructure': [
+                'Performance load testing',
+                'Disaster recovery testing',
+                'High availability verification',
+                'Monitoring and alerting validation',
+                'Automation reliability testing'
+            ],
+            'cloud_computing': [
+                'Cost optimization analysis',
+                'Performance benchmarking',
+                'Security compliance check',
+                'Multi-region failover testing',
+                'Resource utilization optimization'
+            ]
+        }
+        
+        return requirements.get(domain, [
+            'Functional testing',
+            'Performance validation',
+            'Security assessment',
+            'User acceptance verification'
+        ])   
+
+    def _get_complexity_guidance(self, complexity: str) -> Dict[str, str]:
+        """Get guidance based on complexity level"""
+        guidance = {
+            'beginner': {
+                'focus': 'Fundamental understanding, clear examples, basic troubleshooting',
+                'avoid': 'Advanced optimization, premature abstraction, complex architectures',
+                'suggest': 'Start with simple working solution, document each step, validate understanding',
+                'resources': 'Official documentation, beginner tutorials, example projects',
+                'success_indicators': 'Working solution, clear understanding, ability to explain'
+            },
+            'intermediate': {
+                'focus': 'Best practices, patterns, optimization, maintainability',
+                'avoid': 'Over-engineering, ignoring edge cases, skipping documentation',
+                'suggest': 'Balance simplicity with scalability, include testing, consider maintenance',
+                'resources': 'Advanced tutorials, design patterns, performance guides',
+                'success_indicators': 'Efficient solution, good architecture, comprehensive testing'
+            },
+            'advanced': {
+                'focus': 'System architecture, performance optimization, scalability, reliability',
+                'avoid': 'Assumptions about constraints, ignoring failure modes, tight coupling',
+                'suggest': 'Consider all edge cases, design for failure, implement monitoring',
+                'resources': 'System design patterns, advanced architecture, performance tuning',
+                'success_indicators': 'Scalable architecture, robust error handling, optimal performance'
+            },
+            'expert': {
+                'focus': 'Strategic approach, innovation, research, cutting-edge solutions',
+                'avoid': 'Conventional solutions without evaluation, ignoring emerging technologies',
+                'suggest': 'Consider multiple innovative approaches, evaluate trade-offs thoroughly',
+                'resources': 'Research papers, cutting-edge frameworks, expert communities',
+                'success_indicators': 'Innovative solution, comprehensive evaluation, future-proof design'
+            }
+        }
+        
+        return guidance.get(complexity, guidance['intermediate'])
+
+    def _get_domain_insights(self, domain: str, concepts: Dict) -> List[str]:
+        """Get domain-specific insights"""
+        insights = []
+        
         if domain == 'software_development':
-            details = [
-                'Analyze the code and understand the issue',
-                'Write or modify the necessary code',
-                'Test the changes locally',
-                'Run unit tests',
-                'Submit for code review'
-            ]
+            insights.append("Code maintainability and readability are critical for long-term success")
+            insights.append("Follow SOLID principles and design patterns where applicable")
+            insights.append("Test-driven development improves code quality and reduces bugs")
+            insights.append("Consider technical debt implications of implementation choices")
+            insights.append("Documentation should explain both 'how' and 'why'")
+        
         elif domain == 'data_science_ai':
-            details = [
-                'Prepare and clean the data',
-                'Select appropriate model architecture',
-                'Train the model with proper parameters',
-                'Validate model performance',
-                'Deploy and monitor the model'
-            ]
+            insights.append("Data quality is often more important than model complexity")
+            insights.append("Consider model explainability, bias, and fairness implications")
+            insights.append("Proper validation prevents overfitting and ensures generalization")
+            insights.append("Feature engineering can have greater impact than algorithm choice")
+            insights.append("MLOps practices ensure model reliability in production")
+        
+        elif domain == 'cybersecurity':
+            insights.append("Security should be integrated throughout the development lifecycle")
+            insights.append("Regular audits, updates, and monitoring are crucial")
+            insights.append("Defense in depth approach provides multiple security layers")
+            insights.append("Consider both technical and human factors in security")
+            insights.append("Incident response planning is as important as prevention")
+        
+        elif domain == 'devops_infrastructure':
+            insights.append("Automation reduces human error and improves consistency")
+            insights.append("Monitoring should be proactive rather than reactive")
+            insights.append("Infrastructure as code improves reproducibility and version control")
+            insights.append("Consider both scalability and cost optimization")
+            insights.append("Disaster recovery planning is essential for critical systems")
+        
+        elif domain == 'cloud_computing':
+            insights.append("Cost optimization requires continuous monitoring and adjustment")
+            insights.append("Multi-cloud strategies reduce vendor lock-in but increase complexity")
+            insights.append("Security responsibilities are shared between cloud provider and user")
+            insights.append("Consider data gravity and latency implications")
+            insights.append("Serverless architectures change traditional operational models")
+        
         else:
-            details = [
-                'Analyze the problem',
-                'Design solution approach',
-                'Implement the solution',
-                'Test thoroughly',
-                'Deploy and monitor'
-            ]
+            insights.append("Apply systematic problem-solving approach")
+            insights.append("Consider both technical and non-technical factors")
+            insights.append("Validate assumptions through testing and measurement")
+            insights.append("Document decisions and rationale for future reference")
         
-        return details[step_num % len(details)] if details else f"Step {step_num + 1}"
-    
-    def _get_solution_resources(self, domain: str, technologies: List[str]) -> List[str]:
-        """Get resources needed for solution"""
-        resources = []
-        
-        # Domain-specific resources
-        if domain == 'software_development':
-            resources.extend(['Code editor/IDE', 'Version control system', 'Testing framework'])
-        elif domain == 'data_science_ai':
-            resources.extend(['Jupyter notebook', 'Data visualization tools', 'Model training environment'])
-        elif domain == 'cybersecurity':
-            resources.extend(['Security scanning tools', 'Log analysis tools', 'Monitoring systems'])
-        
-        # Technology-specific resources
-        tech_resources = {
-            'python': ['Python interpreter', 'pip package manager'],
-            'javascript': ['Node.js', 'npm/yarn'],
-            'docker': ['Docker CLI', 'Docker Compose'],
-            'aws': ['AWS CLI', 'AWS Console access']
+        return insights[:3]  # Return top 3 most relevant insights
+
+    def _estimate_analysis_time(self, problem: Dict) -> Dict[str, Any]:  # CHANGED NAME AND RETURN TYPE
+        """Estimate analysis time needed based on complexity"""
+        time_estimates = {
+            'beginner': {
+                'min': '15-30 minutes',
+                'max': '1-2 hours',
+                'typical': '45 minutes',
+                'note': 'Straightforward technical analysis',
+                'analysis_depth': 'basic'
+            },
+            'intermediate': {
+                'min': '30-60 minutes',
+                'max': '2-4 hours',
+                'typical': '1.5 hours',
+                'note': 'Moderate complexity technical analysis',
+                'analysis_depth': 'detailed'
+            },
+            'advanced': {
+                'min': '1-2 hours',
+                'max': '4-8 hours',
+                'typical': '3 hours',
+                'note': 'Complex technical analysis with multiple factors',
+                'analysis_depth': 'comprehensive'
+            },
+            'expert': {
+                'min': '2-4 hours',
+                'max': '1-2 days',
+                'typical': '6 hours',
+                'note': 'In-depth expert technical analysis',
+                'analysis_depth': 'exhaustive'
+            }
         }
+        estimate = time_estimates.get(problem['complexity'], time_estimates['intermediate']).copy()
         
-        for tech in technologies[:3]:
-            if tech.lower() in tech_resources:
-                resources.extend(tech_resources[tech.lower()])
+        # Add urgency adjustments
+        urgency = problem.get('urgency', 'medium')
+        if urgency == 'critical':
+            estimate['priority_adjustment'] = 'critical_priority'
+            estimate['adjusted_min'] = estimate['min'].split('-')[0]  # Take the lower bound
+            estimate['priority_note'] = 'Critical priority - expedited analysis required'
+        elif urgency == 'high':
+            estimate['priority_adjustment'] = 'high_priority'
+            estimate['priority_note'] = 'High priority - focused analysis'
+        else:
+            estimate['priority_adjustment'] = 'standard_priority'
+            estimate['priority_note'] = 'Standard priority analysis'
         
-        return list(set(resources))  # Remove duplicates
-    
-    def _get_validation_steps(self, domain: str) -> List[str]:
-        """Get validation steps for solution"""
-        validation_steps = [
-            'Test basic functionality',
-            'Verify edge cases',
-            'Check performance metrics',
-            'Review code/implementation quality'
-        ]
+        # Add complexity note
+        estimate['complexity_level'] = problem['complexity']
         
-        if domain == 'software_development':
-            validation_steps.extend(['Run unit tests', 'Integration testing', 'Code review'])
-        elif domain == 'data_science_ai':
-            validation_steps.extend(['Model validation metrics', 'Data quality checks', 
-                                   'Prediction accuracy testing'])
-        elif domain == 'cybersecurity':
-            validation_steps.extend(['Security scanning', 'Vulnerability assessment', 
-                                   'Penetration testing'])
+        # Format for display
+        if urgency == 'critical':
+            estimate['display_time'] = f"{estimate['adjusted_min']} (critical)"
+        elif urgency == 'high':
+            estimate['display_time'] = f"{estimate['min']} to {estimate['typical']}"
+        else:
+            estimate['display_time'] = f"{estimate['typical']} to {estimate['max']}"
         
-        return validation_steps
+        return estimate
 
 from ..core.base_vni import EnhancedBaseVNI
 from ..core.capabilities import VNICapabilities, VNIType
-
 class TechnicalVNI(EnhancedBaseVNI):
-    """Enhanced Technical VNI with memory integration and hybrid attention"""
-    
+    """Enhanced Technical VNI with memory integration and hybrid attention - ANALYSIS ONLY"""
     def __init__(self, vni_id: str = None, name: str = None, 
                  capabilities: VNICapabilities = None,
                  memory_toolkit: VNIMemory = None):
+        
         # Use technical-specific capabilities
-        tech_capabilities = VNICapabilities(
+        capabilities = VNICapabilities(
             can_process_text=True,
-            can_generate_text=True,
+            can_generate_text=False,  # CHANGED: Cannot generate text
             can_learn=True,
             has_knowledge_base=True,
             technical_expertise=True,
-            has_hybrid_attention=True,  # NEW: Hybrid attention capability
-            has_smart_routing=True,  # NEW: Smart routing capability
+            has_hybrid_attention=True,
+            has_smart_routing=True,
             max_context_length=8192
         )
+        
         self.domain = "technical"
         self.vni_type = "technical"
         self.name = name or "Enhanced Technical VNI"
-        self.description = "Enhanced Technical VNI with memory integration and hybrid attention"
+        self.description = "Enhanced Technical VNI with memory integration and hybrid attention - Analysis Only"
         
         super().__init__(
             vni_id=vni_id or "technical_vni_enhanced",
             name=name or "Enhanced Technical VNI",
-            capabilities=tech_capabilities
+            capabilities=capabilities
         )
         
         # Initialize technical components
         self.config = TechnicalOperActionConfig()
+        self.config.enable_llm_generation = False  # Ensure disabled
+        
         self.knowledge_graph = TechnicalKnowledgeGraph(self.config)
         self.memory_toolkit = memory_toolkit or VNIMemory(retention_days=self.config.memory_retention_days)
         
-        # Initialize reasoning engine with memory and hybrid components
-        self.reasoning_engine = TechnicalReasoningEngine(self.config, self.memory_toolkit)
+        # Initialize reasoning engine with vni_id
+        self.reasoning_engine = TechnicalReasoningEngine(
+            self.config, 
+            self.memory_toolkit,
+            vni_id=self.vni_id  # PASS vni_id to reasoning engine
+        )
         
         # Track performance
         self.performance_metrics = {
             'total_queries': 0,
-            'successful_resolutions': 0,
+            'successful_analyses': 0,
             'avg_confidence': 0,
             'memory_hit_rate': 0,
-            'attention_patterns': []
+            'attention_patterns': [],
         }
+
+    async def process_query(self, query: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Alias for process method to maintain compatibility with mesh_core.
+        This allows the VNI to be called with either process or process_query."""
+        logger.debug(f"TechnicalVNI.process_query called - forwarding to process()")
+        return await self.process(query, context)
 
     def process(self, input_text: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
         """Process technical queries with enhanced reasoning"""
@@ -1066,8 +1317,18 @@ class TechnicalVNI(EnhancedBaseVNI):
         # Analyze problems with hybrid attention
         problems = self.reasoning_engine.analyze_technical_problem(concepts, features)
         
-        # Generate solutions with smart routing
-        solutions = self.reasoning_engine.generate_solutions(problems, concepts, features)
+        # Generate solutions using LLM Gateway if enabled
+        if self.config.enable_llm_generation and hasattr(self, 'llm_gateway') and self.llm_gateway:
+            try:
+                solutions = self.reasoning_engine._generate_solutions_with_llm(problems, concepts, features)
+                self.performance_metrics['llm_generation_count'] += 1
+            except Exception as e:
+                logger.error(f"LLM generation failed: {e}, using fallback")
+                solutions = self.reasoning_engine._generate_fallback_solutions(problems, concepts, features)
+                self.performance_metrics['fallback_generation_count'] += 1
+        else:
+            solutions = self.reasoning_engine._generate_fallback_solutions(problems, concepts, features)
+            self.performance_metrics['fallback_generation_count'] += 1
         
         # Update performance metrics
         if problems and solutions:
@@ -1085,7 +1346,7 @@ class TechnicalVNI(EnhancedBaseVNI):
         if self.config.enable_memory_integration and solutions:
             self._store_in_memory(input_text, concepts, problems, solutions)
         
-        return {
+        result = {
             'query': input_text,
             'technical_domains': [d['domain'] for d in concepts.get('technical_domains', [])],
             'problems_identified': len(problems),
@@ -1095,14 +1356,48 @@ class TechnicalVNI(EnhancedBaseVNI):
             'confidence': problems[0]['confidence'] if problems else 0.0,
             'uses_hybrid_attention': self.config.enable_hybrid_attention,
             'uses_smart_routing': self.config.enable_smart_routing,
+            'uses_llm_generation': self.config.enable_llm_generation and hasattr(self, 'llm_gateway') and self.llm_gateway,
             'memory_context_used': bool(problems and problems[0].get('similar_past_issues')),
             'performance_metrics': {
                 'query_count': self.performance_metrics['total_queries'],
                 'resolution_rate': self.performance_metrics['successful_resolutions'] / max(self.performance_metrics['total_queries'], 1),
                 'avg_confidence': self.performance_metrics['avg_confidence'],
-                'memory_hit_rate': self.performance_metrics['memory_hit_rate'] / max(self.performance_metrics['total_queries'], 1)
+                'memory_hit_rate': self.performance_metrics['memory_hit_rate'] / max(self.performance_metrics['total_queries'], 1),
+                'llm_generation_rate': self.performance_metrics['llm_generation_count'] / max(self.performance_metrics['total_queries'], 1),
+                'fallback_generation_rate': self.performance_metrics['fallback_generation_count'] / max(self.performance_metrics['total_queries'], 1)
+            },
+            'vni_metadata': {
+                'vni_id': self.vni_id,
+                'success': True,  # ← CRITICAL!
+                'processing_time': 0.01,
+                'timestamp': datetime.now().isoformat()
             }
         }
+        result['vni_id'] = self.vni_id
+        result['domain'] = 'technical'
+              
+        # Build a concise opinion_text from the analysis
+        if problems:
+            # Take the first problem as representative
+            primary = problems[0]
+            domain = primary.get('domain', 'technical')
+            confidence = primary.get('confidence', 0.0)
+            complexity = primary.get('complexity', 'unknown')
+            # Summarize
+            opinion_parts = [
+                f"Technical problem in {domain} domain.",
+                f"Complexity: {complexity}.",
+                f"Confidence: {confidence:.0%}.",
+                f"Generated {len(solutions)} solution(s)."
+            ]
+            if primary.get('similar_past_issues'):
+                opinion_parts.append("Used memory of similar past issues.")
+        else:
+            opinion_parts = ["Technical query processed, but no specific problem identified."]
+        
+        result['opinion_text'] = ' '.join(opinion_parts)
+
+        return result
     
     def _encode_to_features(self, text: str, concepts: Dict) -> torch.Tensor:
         """Encode text and concepts to feature tensor"""
@@ -1143,7 +1438,8 @@ class TechnicalVNI(EnhancedBaseVNI):
                     'problem': solution['problem'],
                     'domain': solution['domain'],
                     'complexity': solution['complexity'],
-                    'steps': solution['steps'],
+                    'solution_text': solution.get('solution_text', solution.get('steps', [])),
+                    'generated_by': solution.get('generated_by', 'unknown'),
                     'effectiveness': solution['confidence']
                 }
                 self.memory_toolkit.store_solution_pattern(solution_data)
@@ -1169,6 +1465,8 @@ class TechnicalVNI(EnhancedBaseVNI):
                 'enable_memory': self.config.enable_memory_integration,
                 'enable_hybrid_attention': self.config.enable_hybrid_attention,
                 'enable_smart_routing': self.config.enable_smart_routing,
+                'enable_llm_generation': self.config.enable_llm_generation,  # ADDED
                 'confidence_threshold': self.config.confidence_threshold
-            }
-        }
+            },
+            'llm_gateway_available': hasattr(self, 'llm_gateway') and self.llm_gateway is not None  # ADDED
+        } 

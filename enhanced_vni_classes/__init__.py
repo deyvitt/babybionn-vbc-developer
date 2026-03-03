@@ -24,7 +24,8 @@ from .core.registry import VNIRegistry
 
 from .modules.knowledge_base import KnowledgeBase, KnowledgeEntry
 from .modules.learning_system import LearningSystem, LearningExperience
-from .modules.generation import EnhancedGenerationModule, GenerationStyle # TextGenerator
+# REMOVED: from .modules.generation import EnhancedGenerationModule, GenerationStyle
+# REMOVED: from .domains.general import EnhancedGenerationModule, GenerationStyle
 from .modules.web_search import WebSearch
 from .modules.attention import AttentionMechanism, AttentionType, AttentionWeight
 from .modules.classifier import (
@@ -40,8 +41,14 @@ from .managers.session_manager import SessionManager, Session
 
 from .domains.medical import MedicalVNI
 from .domains.legal import LegalVNI
-from .domains.general import GeneralVNI
+from .domains.general import GeneralVNI  # ← Only GeneralVNI, not EnhancedGenerationModule
 from .domains.dynamic_vni import DynamicVNI
+from .domains.technical import (
+    TechnicalVNI,
+    TechnicalOperActionConfig,
+    TechnicalKnowledgeGraph,
+    TechnicalReasoningEngine
+)
 
 from .utils.vni_config import VNIConfig, ConfigManager, LogLevel
 from .utils.logger import get_logger, VNILogger
@@ -53,12 +60,7 @@ from .utils.imports import (
     DependencyManager,
     Dependency
 )
-from .domains.technical import (
-    TechnicalVNI,
-    TechnicalOperActionConfig,
-    TechnicalKnowledgeGraph,
-    TechnicalReasoningEngine
-)
+
 # Version information
 __version__ = "2.0.0"
 __author__ = "VNI Development Team"
@@ -89,8 +91,8 @@ __all__ = [
     "KnowledgeEntry",
     "LearningSystem",
     "LearningExperience",
-    "EnhancedGenerationModule",
-    "GenerationStyle",
+    # REMOVED: "EnhancedGenerationModule",
+    # REMOVED: "GenerationStyle",
     "WebSearch",
     "AttentionMechanism",
     "AttentionType",
@@ -111,6 +113,10 @@ __all__ = [
     "LegalVNI",
     "GeneralVNI",
     "DynamicVNI",
+    "TechnicalVNI",
+    "TechnicalOperActionConfig",
+    "TechnicalKnowledgeGraph",
+    "TechnicalReasoningEngine",
     
     # === BACKWARD COMPATIBILITY ALIASES ===
     "EnhancedMedicalVNI",
@@ -173,7 +179,7 @@ def check_system_health() -> dict:
         "module_status": {
             "core": "EnhancedBaseVNI" in globals(),
             "managers": "VNIManager" in globals() and "SessionManager" in globals(),
-            "modules": all(m in globals() for m in ["KnowledgeBase", "LearningSystem", "EnhancedGenerationModule"]),
+            "modules": all(m in globals() for m in ["KnowledgeBase", "LearningSystem"]),  # REMOVED EnhancedGenerationModule
             "domains": all(d in globals() for d in ["MedicalVNI", "LegalVNI", "GeneralVNI"]),
             "utils": all(u in globals() for u in ["VNIConfig", "get_logger", "get_dependency_manager"]),
         },

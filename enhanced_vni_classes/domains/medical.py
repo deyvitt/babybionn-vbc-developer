@@ -15,7 +15,7 @@ from ..core.base_vni import EnhancedBaseVNI
 from ..core.capabilities import VNICapabilities, VNIType
 from ..modules.knowledge_base import KnowledgeBase, KnowledgeEntry
 from ..modules.learning_system import LearningSystem, LearningExperience
-from ..modules.generation import EnhancedGenerationModule, GenerationStyle # TextGenerator
+# from ..modules.generation import EnhancedGenerationModule, GenerationStyle # TextGenerator
 from ..modules.web_search import WebSearch
 # from ..modules.attention import AttentionMechanism, AttentionType, AttentionWeight
 from ..modules.classifier import DomainClassifier, ClassificationResult, Domain
@@ -35,7 +35,7 @@ class MedicalVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
                  vni_config: Optional[Dict[str, Any]] = None,
                  auto_load_knowledge: bool = True,
                  enable_biological_systems: bool = True):  # ADDED: biological systems flag
-        
+        self.vni_id = vni_id  # Store the VNI ID        
         # Set up capabilities
         capabilities = VNICapabilities(
             domains=["medical", "health", "wellness", "biology"],
@@ -130,6 +130,147 @@ class MedicalVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
             capabilities=capabilities,
             vni_config=vni_config or {}
         )
+
+    def _check_safety(self, query: str) -> Dict[str, Any]:
+        """Check medical query safety"""
+        import re
+        from typing import Dict, Any
+        
+        query_lower = query.lower()
+        
+        # Medical emergency keywords - highest priority
+        emergency_keywords = [
+            "heart attack", "stroke", "bleeding", "unconscious", 
+            "can't breathe", "chest pain", "severe pain", "emergency",
+            "911", "ambulance", "urgent", "critical", "dying", 
+            "not breathing", "choking", "overdose", "suicide",
+            "allergic reaction", "anaphylaxis", "seizure"
+        ]
+        
+        for keyword in emergency_keywords:
+            if keyword in query_lower:
+                return {
+                    'requires_caution': True,  # ← ADD THIS
+                    'is_safe': False,
+                    'message': f"🚨 MEDICAL EMERGENCY DETECTED: '{keyword}'. " +
+                              "PLEASE CALL EMERGENCY SERVICES IMMEDIATELY: 911 (US) or your local emergency number. " +
+                              "Do not wait for a response from this system.",
+                    'confidence': 1.0,
+                    'emergency': True,
+                    'risk_level': 'critical'
+                }
+        
+        # High-risk conditions
+        high_risk_keywords = [
+            "pregnant", "child", "baby", "infant", "elderly", 
+            "diabetes", "cancer", "hiv", "aids", "transplant",
+            "pregnancy", "newborn", "toddler"
+        ]
+        
+        for keyword in high_risk_keywords:
+            if keyword in query_lower:
+                return {
+                    'is_safe': True,  # Still safe to answer, but with strong warning
+                    'message': f"⚠️ HIGH-RISK CONTEXT DETECTED: '{keyword}'. " +
+                              "This information is for educational purposes only. " +
+                              "CONSULT A HEALTHCARE PROFESSIONAL IMMEDIATELY for medical advice. " +
+                              "Do not delay seeking professional medical care.",
+                    'confidence': 0.9,
+                    'emergency': False,
+                    'risk_level': 'high'
+                }
+        
+        # Medication/dosage questions
+        medication_patterns = [
+            r"how much.*(take|dosage|dose|mg|ml)",
+            r"(take|use).*\d+.*(mg|ml|pill|tablet)",
+            r"prescription.*(drug|medicine|medication)",
+            r"side effect.*(of|from)",
+            r"should i take.*(medicine|medication|drug)",
+            r"what.*dose.*of.*",
+            r"how many.*(pills|tablets|capsules)"
+        ]
+        
+        for pattern in medication_patterns:
+            if re.search(pattern, query_lower, re.IGNORECASE):
+                return {
+                    'is_safe': True,
+                    'message': "⚠️ MEDICATION/DOSAGE QUESTION DETECTED. " +
+                              "IMPORTANT: Do not change or start medication without consulting a doctor. " +
+                              "This information is for educational purposes only. " +
+                              "Always follow your healthcare provider's instructions.",
+                    'confidence': 0.8,
+                    'emergency': False,
+                    'risk_level': 'medium'
+                }
+        
+        # Self-diagnosis/treatment questions
+        diagnosis_patterns = [
+            r"do i have.*",
+            r"what.*disease.*i have",
+            r"self.*treat.*",
+            r"home remedy.*",
+            r"should i.*(go to|see).*doctor"
+        ]
+        
+        for pattern in diagnosis_patterns:
+            if re.search(pattern, query_lower, re.IGNORECASE):
+                return {
+                    'requires_caution': True,
+                    'is_safe': True,
+                    'message': "⚠️ MEDICAL DIAGNOSIS/TREATMENT QUESTION. " +
+                              "This system cannot diagnose medical conditions. " +
+                              "Please consult a qualified healthcare professional for diagnosis and treatment.",
+                    'confidence': 0.7,
+                    'emergency': False,
+                    'risk_level': 'medium'
+                }
+        
+        # General medical question - standard disclaimer
+        medical_terms = ["pain", "symptom", "fever", "headache", "nausea", "virus", "infection"]
+        is_medical = any(term in query_lower for term in medical_terms)
+        
+        if is_medical:
+            return {
+                'requires_caution': True,
+                'is_safe': True,
+                'message': "General medical information request. " +
+                          "DISCLAIMER: This is not medical advice. For diagnosis and treatment, " +
+                          "consult a qualified healthcare professional.",
+                'confidence': 0.6,
+                'emergency': False,
+                'risk_level': 'low'
+            }
+        
+        # Non-medical or very general question
+        return {
+            'requires_caution': False,
+            'is_safe': True,
+            'message': "General information request. Always consult professionals for medical concerns.",
+            'confidence': 0.5,
+            'emergency': False,
+            'risk_level': 'none'
+        }
+
+    def _generate_safety_response(self, query: str, safety_result: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate response when safety check requires caution."""
+        # If safety_result already has a message, use it
+        if 'message' in safety_result:
+            response_text = safety_result['message']
+        else:
+            # Fallback response
+            response_text = (
+                "⚠️ **SAFETY NOTICE** ⚠️\n\n"
+                "This medical query requires professional consultation. "
+                "Please consult with a qualified healthcare professional."
+            )
+        
+        return {
+            "response": response_text,
+            "domain": "medical",
+            "confidence": safety_result.get('confidence', 0.5),
+            "safety_check": safety_result,
+        }
 
     def _is_relevant_medical_query(self, query: str) -> bool:
         """Determine if a query is relevant to the medical domain.
@@ -401,18 +542,7 @@ class MedicalVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
 
     def process(self, query: str, pipeline: Optional[List[str]] = None, 
                 context: Dict[str, Any] = None) -> Dict[str, Any]:
-        """
-        Implement abstract method from EnhancedBaseVNI.
-        Required because EnhancedBaseVNI has @abstractmethod process()
-        
-        Args:
-            query: Input query
-            pipeline: Optional pipeline steps (not used here, using default)
-            context: Additional context
-            
-        Returns:
-            Processing result
-        """
+        """Implement abstract method from EnhancedBaseVNI."""
         # Use the existing process_query method
         return self.process_query(query, context)       
     
@@ -564,37 +694,48 @@ class MedicalVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
     # ============ END OF BIOLOGICAL SYSTEMS METHODS ============
 
     # ============ UPDATED METHODS FOR BIOLOGICAL INTEGRATION ============
+
     def process_query(self, 
                       query: str, 
                       context: Optional[Dict[str, Any]] = None,
                       patient_context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """
-        Process medical query with comprehensive safety checks and biological systems.
-        
-        Args:
-            query: The medical query to process
-            context: Optional conversation context
-            patient_context: Optional patient-specific information (age, symptoms, etc.)
-            
-        Returns:
-            Dictionary with response and metadata
-        """
+        """Process medical query with comprehensive safety checks and biological system"""
         logger.info(f"Processing medical query: {query[:100]}...")
         
         # Check relevance first (from V1)
         if not self._is_relevant_medical_query(query):
-            return {
+            result = {
                 "response": "This appears to be outside my medical expertise.",
                 "confidence": 0.1,
                 "vni_instance": self.vni_id,
                 "suggestion": "Try asking about symptoms, treatments, health advice, or medical conditions.",
-                "response_type": "medical_out_of_scope"
+                "response_type": "medical_out_of_scope",
+                'vni_metadata': {
+                    'vni_id': self.vni_id,
+                    'success': True,
+                    'processing_time': 0.01,
+                    'timestamp': datetime.now().isoformat()
+                }
             }
+            result['vni_id'] = self.vni_id
+            result['domain'] = 'medical'
+            result['opinion_text'] = result['response']
+            return result
         
         # Safety check (from V2)
         safety_result = self._check_safety(query)
         if safety_result["requires_caution"]:
-            return self._generate_safety_response(query, safety_result)
+            safety_response = self._generate_safety_response(query, safety_result)
+            safety_response['vni_metadata'] = {
+                'vni_id': self.vni_id,
+                'success': True,
+                'processing_time': 0.01,
+                'timestamp': datetime.now().isoformat()
+            }
+            safety_response['vni_id'] = self.vni_id
+            safety_response['domain'] = 'medical'
+            safety_response['opinion_text'] = safety_response.get('response', 'Safety warning')           
+            return safety_response
         
         # Classify query type
         classification = self._safe_classify(query)
@@ -612,114 +753,239 @@ class MedicalVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
                 "source": knowledge_results.get("source", "medical_knowledge_base"),
                 "query_type": query_type,
                 "response_type": "medical_knowledge",
-                "safety_checked": True
+                "safety_checked": True,
+                'vni_metadata': {
+                    'vni_id': self.vni_id,
+                    'success': True,
+                    'processing_time': 0.01,
+                    'timestamp': datetime.now().isoformat()
+                }                
             }
             
             # Enhance with biological systems if enabled
             if self.enable_biological_systems:
                 biological_result = self.process_with_biological_systems(query, context)
                 result = self._enhance_medical_response(result, query, context, biological_result)
-            
+            result['vni_id'] = self.vni_id
+            result['domain'] = 'medical'
+            result['opinion_text'] = result['response']
             return result
         
         # Use enhanced processing for complex queries
-        return self._process_complex_medical_query(query, classification, patient_context)
-    
+        complex_result = self._process_complex_medical_query(query, classification, patient_context)
+        # === ADD THIS to the complex result if it doesn't have vni_metadata ===
+        if 'vni_metadata' not in complex_result:
+            complex_result['vni_metadata'] = {
+                'vni_id': self.vni_id,
+                'success': True,
+                'processing_time': 0.01,
+                'timestamp': datetime.now().isoformat()
+            }
+        complex_result['vni_id'] = self.vni_id
+        complex_result['domain'] = 'medical'
+        complex_result['opinion_text'] = complex_result.get('response', 'Complex medical analysis performed')
+        return complex_result
+        
     async def process_medical_query_async(self,
-                                         query: str,
-                                         patient_context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Async version of medical query processing with web search, context building, and biological systems."""
-        # Safety check
+                                     query: str,
+                                     patient_context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Async version - returns comprehensive medical insights for aggregator to process."""
+        logger.info(f"Async medical analysis for aggregator: {query[:100]}...")
+        
+        # 1. SAFETY CHECK (Critical - must run first)
         safety_result = self._check_safety(query)
         if safety_result["requires_caution"]:
-            return self._generate_safety_response(query, safety_result)
+            # Return safety insights for aggregator (not final response)
+            return {
+                "status": "medical_safety_check_triggered",
+                "processing_complete": True,
+                "medical_insights": {
+                    "safety_assessment": safety_result,
+                    "is_emergency": safety_result.get("emergency", False),
+                    "risk_level": safety_result.get("risk_level", "none"),
+                    "immediate_action_required": safety_result.get("emergency", False),
+                    "query_blocked": True,
+                    "block_reason": "safety_protocols"
+                },
+                "aggregator_instructions": {
+                    "handle_emergency": safety_result.get("emergency", False),
+                    "priority": "critical" if safety_result.get("emergency") else "high",
+                    "suggested_response_template": "safety_warning"
+                },
+                "raw_data": {
+                    "query": query,
+                    "safety_result": safety_result
+                }
+            }
         
-        # Classify query
+        # 2. CLASSIFY QUERY
         classification = self._safe_classify(query)
         
-        # Build medical context
+        # 3. BUILD MEDICAL CONTEXT (async)
         context = await self._build_medical_context(query, patient_context)
         
-        # BIOLOGICAL SYSTEMS INTEGRATION ADDED
+        # 4. BIOLOGICAL SYSTEMS ANALYSIS
         biological_result = None
         if self.enable_biological_systems:
             biological_result = self.process_with_biological_systems(query, context)
-            if biological_result.get("biological_processing"):
-                # Add biological insights to context
-                context["biological_insights"] = biological_result.get("biological_insights", {})
-                context["activation_result"] = biological_result.get("activation_result", {})
-
-        # Retrieve relevant memory before computing attention
-        if hasattr(self, 'memory'):
-            memory_context = await self.memory.retrieve_relevant_memory(
-                query=query,
-                patient_context=patient_context
-            )
-            if memory_context:
-                context["memory_context"] = memory_context
-
-        # Compute attention (from V2)
-        attention = self.attention.compute_attention(query, context)
         
-        # Generate response with medical style
-        response = self.generator.generate_response(
-            query=query,
-            context=context,
-            style=GenerationStyle.TECHNICAL.value,
-            #temperature=0.6  # Lower temperature for medical accuracy
+        # 5. RETRIEVE RELEVANT MEMORY (async)
+        memory_insights = {}
+        if hasattr(self, 'memory'):
+            try:
+                memory_context = await self.memory.retrieve_relevant_memory(
+                    query=query,
+                    patient_context=patient_context
+                )
+                if memory_context:
+                    memory_insights = {
+                        "has_relevant_memory": True,
+                        "memory_context": memory_context,
+                        "memory_retrieval_success": True
+                    }
+            except Exception as e:
+                logger.warning(f"Memory retrieval failed: {e}")
+                memory_insights = {"has_relevant_memory": False, "error": str(e)}
+        
+        # 6. COMPUTE ATTENTION FOCUS
+        attention_focus = self.attention.compute_attention(query, context)
+        
+        # 7. EXTRACT MEDICAL COMPONENTS
+        query_type = self._classify_medical_query_type(query)
+        symptoms = self._extract_symptoms(query)
+        urgency_level = self._determine_urgency_level(
+            query, 
+            symptoms,
+            biological_result.get("biological_insights", {}) if biological_result else {}
         )
         
-        # Add medical disclaimers
-        response["response"] = self._add_medical_disclaimers(response["response"])
-        
-        # Enhance with biological systems if enabled
-        if self.enable_biological_systems and biological_result:
-            response = self._enhance_medical_response(response, query, context, biological_result)
-        
-        # Record learning
-        self._record_medical_interaction(query, response, classification)
-        
-        # Store interaction in memory
-        if hasattr(self, 'memory'):
-            memory_id = await self.memory.store_interaction(
-                query=query,
-                response=response["response"],
-                context=context,
-                metadata={
-                    "query_type": self._classify_medical_query_type(query),
-                    "safety_checked": True,
-                    "patient_info_used": bool(patient_context),
-                    "biological_processing": biological_result.get("biological_processing", False) if biological_result else False
-                }
-            )
-            response["memory_id"] = memory_id
-        
-        # Build final response with biological data
-        final_response = {
-            "response": response["response"],
-            "domain": classification.primary_domain,
-            "confidence": classification.confidence,
-            "safety_check": safety_result,
-            "attention_focus": attention["primary_focus"],
-            "medical_context": {
-                "has_patient_info": bool(patient_context),
-                "query_type": self._classify_medical_query_type(query),
-                "patient_age": patient_context.get("age") if patient_context else None
+        # 8. BUILD COMPREHENSIVE MEDICAL INSIGHTS
+        medical_insights = {
+            # Core analysis
+            "safety_assessment": safety_result,
+            "classification": {
+                "primary_domain": classification.primary_domain,
+                "confidence": classification.confidence,
+                "subdomains": classification.subdomains if hasattr(classification, 'subdomains') else []
             },
-            "disclaimers": self.safety_protocols["disclaimers"][:2],  # First 2 disclaimers
-            "quality_score": response.get("quality_score", 0.7),
-            "generation_metadata": response.get("generation_metadata", {})
+            "query_type": query_type,
+            
+            # Biological systems
+            "biological_processing": biological_result.get("biological_processing") if biological_result else False,
+            "biological_insights": biological_result.get("biological_insights", {}) if biological_result else {},
+            "activation_result": biological_result.get("activation_result", {}) if biological_result else {},
+            
+            # Symptoms & urgency
+            "symptoms_detected": symptoms,
+            "symptom_count": len(symptoms),
+            "urgency_level": urgency_level,
+            "requires_professional_review": urgency_level in ["high", "critical"],
+            
+            # Patient context
+            "patient_context_used": bool(patient_context),
+            "patient_info": {
+                "has_patient_id": "patient_id" in (patient_context or {}),
+                "age": patient_context.get("age") if patient_context else None,
+                "gender": patient_context.get("gender") if patient_context else None
+            },
+            
+            # Attention & focus
+            "attention_focus": attention_focus.get("primary_focus", "general"),
+            "attention_weights": attention_focus.get("weights", {}),
+            
+            # Memory insights
+            "memory_insights": memory_insights,
+            
+            # Metadata
+            "processing_timestamp": datetime.now().isoformat(),
+            "vni_instance": self.vni_id,
+            "confidence_score": self._calculate_medical_confidence(query, symptoms, biological_result)
         }
         
-        # Add biological data if available
-        if biological_result and biological_result.get("biological_processing"):
-            final_response["biological_analysis"] = response.get("biological_analysis", {})
-            final_response["requires_professional_review"] = response.get("biological_analysis", {}).get(
-                "requires_professional_review", False
-            )
+        # 9. PREPARE INSTRUCTIONS FOR AGGREGATOR
+        aggregator_instructions = {
+            "style_suggestions": {
+                "primary_style": "technical_precise",
+                "alternative_styles": ["formal", "empathetic"],
+                "temperature": 0.3,  # Low for medical accuracy
+                "max_tokens": 500
+            },
+            "content_requirements": {
+                "include_safety_disclaimers": True,
+                "include_urgency_notice": medical_insights["requires_professional_review"],
+                "reference_biological_insights": medical_insights["biological_processing"],
+                "prioritize_accuracy": True
+            },
+            "formatting": {
+                "include_bullet_points": len(symptoms) > 1,
+                "include_urgency_banner": medical_insights["requires_professional_review"],
+                "structure": ["summary", "analysis", "recommendations", "disclaimers"]
+            },
+            "priority_level": "high" if medical_insights["requires_professional_review"] else "normal"
+        }
         
-        return final_response
-    
+        # 10. BUILD FINAL OUTPUT FOR AGGREGATOR
+        return {
+            "status": "medical_analysis_complete",
+            "processing_method": "async",
+            "processing_time": datetime.now().isoformat(),
+            
+            # The main payload for aggregator
+            "medical_insights": medical_insights,
+            
+            # How aggregator should use these insights
+            "aggregator_instructions": aggregator_instructions,
+            
+            # Raw data if aggregator needs it
+            "raw_context": {
+                "query": query,
+                "built_context": context,
+                "patient_context": patient_context or {}
+            },
+            
+            # Metadata
+            "vni_metadata": {
+                "vni_id": self.vni_id,
+                "vni_type": self.vni_type,
+                "name": self.name,
+                "biological_systems_enabled": self.enable_biological_systems,
+                "capabilities": [cap for cap in self.capabilities.special_abilities] if hasattr(self, 'capabilities') else [],
+                "success": True,
+                "processing_time": 0.01,
+                "timestamp": datetime.now().isoformat()        
+            },
+            
+            # Next steps
+            "next_step": "aggregator_combine_and_generate",
+            "expected_output_format": "final_response_with_medical_context"
+        }
+
+    def _record_medical_interaction_insights(self,
+                                            query: str,
+                                            medical_insights: Dict[str, Any],
+                                            classification,
+                                            patient_context: Optional[Dict[str, Any]] = None):
+        """Record medical interaction insights for learning (without final response)."""
+        if hasattr(self, 'learning'):
+            try:
+                self.learning.record_interaction(
+                    interaction_id=hashlib.md5(query.encode()).hexdigest()[:16],
+                    prompt=query,
+                    response="[Medical insights for aggregator]",
+                    domain="medical",
+                    metadata={
+                        "query_type": medical_insights.get("query_type", "general_inquiry"),
+                        "patient_context_used": bool(patient_context),
+                        "confidence": classification.confidence if hasattr(classification, 'confidence') else 0.7,
+                        "safety_checked": True,
+                        "biological_processing": medical_insights.get("biological_processing", False),
+                        "urgency_level": medical_insights.get("urgency_level", "unknown"),
+                        "processed_for_aggregator": True
+                    }
+                )
+            except Exception as e:
+                logger.error(f"Failed to record medical interaction insights: {e}")
+
     def get_medical_stats(self) -> Dict[str, Any]:
         """
         Get medical-specific statistics including memory stats and biological systems.
@@ -791,6 +1057,56 @@ class MedicalVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
             return "prevention_advice"
         else:
             return "general_inquiry"
-
+        
+    def _safe_classify(self, query: str) -> Any:
+        """Safely classify the medical query with fallback.
+        Returns a classification result (could be a dict or SimpleNamespace)."""
+        try:
+            # Try to use the classifier if available
+            if hasattr(self, 'classifier') and self.classifier:
+                result = self.classifier.classify(query)
+                if result:
+                    return result
+            
+            # Fallback to simple classification
+            from ..modules.classifier import ClassificationResult, Domain
+            
+            # Simple classification based on keywords
+            query_lower = query.lower()
+            
+            # Determine primary domain
+            if any(word in query_lower for word in ['emergency', 'urgent', '911', 'immediate']):
+                primary_domain = Domain.EMERGENCY
+                confidence = 0.9
+            elif any(word in query_lower for word in ['symptom', 'pain', 'fever', 'headache', 'cough']):
+                primary_domain = Domain.SYMPTOM
+                confidence = 0.8
+            elif any(word in query_lower for word in ['treatment', 'medicine', 'drug', 'prescription']):
+                primary_domain = Domain.TREATMENT
+                confidence = 0.8
+            elif any(word in query_lower for word in ['diagnosis', 'condition', 'disease', 'illness']):
+                primary_domain = Domain.DIAGNOSIS
+                confidence = 0.7
+            else:
+                primary_domain = Domain.GENERAL
+                confidence = 0.6
+            
+            # Create a simple result object
+            result = SimpleNamespace(
+                primary_domain=primary_domain,
+                confidence=confidence,
+                subdomains=[]
+            )
+            return result
+        except Exception as e:
+            logger.error(f"Error in _safe_classify: {e}")
+            # Return a minimal default
+            from ..modules.classifier import Domain
+            return SimpleNamespace(
+                primary_domain=Domain.GENERAL,
+                confidence=0.5,
+                subdomains=[]
+            )
+       
 # Backward compatibility alias
 EnhancedMedicalVNI = MedicalVNI

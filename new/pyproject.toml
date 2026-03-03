@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel", "torch>=2.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "babybionn"
+version = "2.0.0"
+description = "Enhanced BabyBIONN with Real Learning and Dynamic VNI Networking"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "BabyBIONN Team", email = "contact@babybionn.ai"}
+]
+keywords = ["ai", "neural-networks", "cognitive-architecture", "multi-agent", "vni"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.urls]
+Documentation = "https://docs.babybionn.ai"
+Source = "https://github.com/yourusername/babybionn"
+Tracker = "https://github.com/yourusername/babybionn/issues"
+
+[tool.setuptools]
+packages = ["babybionn"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"babybionn" = ["static/*", "models/*.json", "config/*.yaml"]
+
+[project.scripts]
+babybionn = "babybionn.main:main"
+babybionn-api = "babybionn.main:main"
+babybionn-cli = "babybionn.cli:main" 

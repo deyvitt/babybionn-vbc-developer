@@ -8,10 +8,65 @@ import concurrent.futures
 import torch.nn.functional as F
 from dataclasses import dataclass
 from collections import defaultdict
-from enhanced_vni_classes import EnhancedBaseVNI
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from enhanced_vni_classes.core.base_vni import EnhancedBaseVNI
+
 from typing import Dict, List, Optional, Any, Tuple
 
 logger = logging.getLogger("smart_activation_router")
+
+# ============ ADD THIS CLASS HERE ============
+class FunctionRegistry:
+    """Registry for managing and routing functions to appropriate VNIs"""
+    
+    def __init__(self):
+        self.registry = {}  # function_name -> VNI_id mapping
+        self.function_descriptions = {}  # function_name -> description
+        self.vni_capabilities = {}  # VNI_id -> [functions]
+        
+    def register_function(self, function_name: str, vni_id: str, description: str = ""):
+        """Register a function with a specific VNI"""
+        self.registry[function_name] = vni_id
+        self.function_descriptions[function_name] = description
+        
+        if vni_id not in self.vni_capabilities:
+            self.vni_capabilities[vni_id] = []
+        self.vni_capabilities[vni_id].append(function_name)
+        
+    def get_vni_for_function(self, function_name: str) -> str:
+        """Get the VNI ID that handles a specific function"""
+        return self.registry.get(function_name)
+        
+    def get_functions_for_vni(self, vni_id: str) -> list:
+        """Get all functions handled by a specific VNI"""
+        return self.vni_capabilities.get(vni_id, [])
+        
+    def list_all_functions(self) -> dict:
+        """List all registered functions with their VNIs"""
+        return {
+            func: {
+                "vni": vni_id,
+                "description": self.function_descriptions.get(func, "")
+            }
+            for func, vni_id in self.registry.items()
+        }
+        
+    def function_exists(self, function_name: str) -> bool:
+        """Check if a function is registered"""
+        return function_name in self.registry
+        
+    def remove_function(self, function_name: str):
+        """Remove a function from the registry"""
+        if function_name in self.registry:
+            vni_id = self.registry[function_name]
+            del self.registry[function_name]
+            if function_name in self.function_descriptions:
+                del self.function_descriptions[function_name]
+            if vni_id in self.vni_capabilities and function_name in self.vni_capabilities[vni_id]:
+                self.vni_capabilities[vni_id].remove(function_name)
+# ============ END OF ADDED CLASS ============
 
 @dataclass
 class RouterConfig:
@@ -379,10 +434,23 @@ class ActivationScorer(nn.Module):
 
 class SmartActivationRouter(nn.Module):
     """Main smart activation router class"""
-    
-    def __init__(self, config: RouterConfig = None):
+    def __init__(self, vni_id: str = None, domain: str = None,
+                 input_dim: int = 512, num_experts: int = 4, 
+                 expert_dim: int = 256, config: RouterConfig = None):
         super().__init__()
+        
+        # Store all parameters
+        self.vni_id = vni_id or "unknown_vni"
+        self.domain = domain or "general"
+        self.input_dim = input_dim
+        self.num_experts = num_experts
+        self.expert_dim = expert_dim
         self.config = config or RouterConfig()
+        
+        # Update config with vni_id for logging
+        if vni_id:
+            self.config.router_id = f"{vni_id}_router"
+        
         self.vni_registry = VNIRegistry()
         self.activation_scorer = ActivationScorer(self.config)
         
@@ -391,13 +459,159 @@ class SmartActivationRouter(nn.Module):
             max_workers=self.config.max_parallel_vnis
         )
         
-        logger.info(f"Smart Activation Router initialized with ID: {self.config.router_id}")
+        logger.info(f"Smart Activation Router initialized for VNI: {self.vni_id}, domain: {self.domain}")
+    
+    def update_activation_patterns(self, vni_ids=None, activation_levels=None, outcome=None, **kwargs):
+        """Update activation patterns based on interaction results
+        Args:
+            vni_ids: List of VNI IDs that were activated (called by aggregator)
+            activation_levels: Dictionary of activation levels for each VNI
+            outcome: Quality score (0-1) of the interaction 
+            **kwargs: Any other parameters that might be passed"""
+        logger = logging.getLogger(__name__)
+        logger.debug(f"SmartActivationRouter updating patterns with {len(vni_ids) if vni_ids else 0} VNIs, outcome: {outcome}")
+        
+        # Initialize patterns dict if it doesn't exist
+        if not hasattr(self, 'activation_patterns'):
+            self.activation_patterns = {}
+        
+        # Create a pattern key from the vni_ids
+        if vni_ids and isinstance(vni_ids, list):
+            pattern_key = "->".join(str(p) for p in vni_ids)
+        else:
+            pattern_key = str(vni_ids) if vni_ids else "unknown"
+        
+        # Use outcome as success_metric
+        success_metric = outcome if outcome is not None else 0.5
+        
+        # Strengthen or weaken based on success
+        if success_metric > 0.6:
+            current = self.activation_patterns.get(pattern_key, 0.5)
+            self.activation_patterns[pattern_key] = min(1.0, current + 0.05)
+            logger.debug(f"✅ Strengthened activation pattern: {pattern_key} -> {self.activation_patterns[pattern_key]:.2f}")
+        else:
+            current = self.activation_patterns.get(pattern_key, 0.5)
+            self.activation_patterns[pattern_key] = max(0.1, current - 0.02)
+            logger.debug(f"❌ Weakened activation pattern: {pattern_key} -> {self.activation_patterns[pattern_key]:.2f}")
+
+        return True
+
+    def calculate_vni_activation(self, vni_id: str, output: Dict[str, Any], 
+                               confidence: float) -> Dict[str, Any]:
+        """Calculate activation level for a VNI based on its output and confidence.
+        This method is called by the aggregator to get biological activation states.
+        Args:
+            vni_id: The ID of the VNI
+            output: The output dictionary from the VNI
+            confidence: The confidence score of the VNI output
+        Returns:
+            Dict with activation metrics including 'current', 'decay_rate', 
+            'response_energy', and 'sustained_focus'"""
+        # Base activation from confidence
+        base_activation = confidence * 0.8
+        
+        # Check if this VNI has performance history
+        avg_performance = self.vni_registry.get_average_performance(vni_id) if hasattr(self, 'vni_registry') else 0.5
+        
+        # Adjust activation based on performance history
+        performance_factor = 0.8 + (avg_performance * 0.4)  # 0.8 to 1.2 range
+        
+        # Calculate final activation
+        activation_level = min(base_activation * performance_factor, 1.0)
+        
+        # Check for response energy in the output
+        response_text = ""
+        for field in ['medical_advice', 'legal_advice', 'technical_advice', 'general_advice', 'response']:
+            if field in output and output[field]:
+                response_text = str(output[field])
+                break
+        
+        # Calculate response energy based on text characteristics
+        if response_text:
+            # More detailed responses get higher energy
+            word_count = len(response_text.split())
+            energy_boost = min(0.3, word_count / 200)  # Up to 0.3 boost for long responses
+            response_energy = min(confidence + energy_boost, 1.0)
+        else:
+            response_energy = confidence
+        
+        return {
+            'current': activation_level,
+            'decay_rate': 0.01 + (1 - activation_level) * 0.02,  # Higher activation = slower decay
+            'response_energy': response_energy,
+            'sustained_focus': activation_level > 0.7
+        }
+
+    def get_registered_functions(self):
+        """
+        Get all registered functions for this router.
+        Returns a dictionary of function_name -> function.
+        """
+        # Check where functions are actually stored
+        if hasattr(self, 'registered_functions'):
+            return self.registered_functions
+        elif hasattr(self, 'functions'):
+            return self.functions
+        elif hasattr(self, '_registered_functions'):
+            return self._registered_functions
+        elif hasattr(self, '_functions'):
+            return self._functions
+        else:
+            # Try to find the functions attribute
+            import inspect
+            attributes = inspect.getmembers(self)
+            for name, attr in attributes:
+                if isinstance(attr, dict) and 'function' in name.lower():
+                    return attr
+            # Return empty dict if not found
+            return {}
     
     def register_vni(self, vni_id: str, vni_instance: nn.Module, 
                     specializations: List[str], capabilities: Dict[str, Any]):
         """Register a VNI with the router"""
         self.vni_registry.register_vni(vni_id, vni_instance, specializations, capabilities)
     
+    def register_function(self, function_name: str, function: callable, 
+                         domain: str = None, priority: int = 1):
+        """Register a function for activation routing"""
+        if not hasattr(self, 'registered_functions'):
+            self.registered_functions = {}
+        
+        self.registered_functions[function_name] = {
+            'function': function,
+            'domain': domain or self.domain,
+            'priority': priority,
+            'usage_count': 0
+        }
+        
+        logger.info(f"Registered function '{function_name}' for VNI: {self.vni_id}")
+        return True
+    
+    def route(self, input_text: str, attention_weights: Dict[str, float] = None, 
+              domain: str = None) -> Dict[str, Any]:
+        """Route processing based on input text and attention weights"""
+        # Simple routing logic for domain VNIs
+        activation_level = 0.5  # Default
+        
+        if attention_weights:
+            # Calculate activation based on attention weights
+            activation_level = sum(attention_weights.values()) / len(attention_weights) if attention_weights else 0.5
+        
+        # Adjust based on domain
+        current_domain = domain or self.domain
+        if hasattr(self, 'registered_functions'):
+            domain_functions = [f for f, data in self.registered_functions.items() 
+                              if data.get('domain') == current_domain]
+            if domain_functions:
+                activation_level = min(activation_level + 0.2, 1.0)
+        
+        return {
+            'activation_level': activation_level,
+            'activated_functions': list(self.registered_functions.keys()) if hasattr(self, 'registered_functions') else [],
+            'vni_id': self.vni_id,
+            'domain': current_domain
+        }
+  
     def forward(self, baseVNI_output: Dict[str, Any]) -> Dict[str, Any]:
         """Main routing function - determine which VNIs to activate"""
         
@@ -449,7 +663,7 @@ class SmartActivationRouter(nn.Module):
             logger.error(f"Smart activation routing failed: {str(e)}")
             return self._generate_error_output(str(e))
     
-    def create_vni_pathway(self, vnis: List[EnhancedBaseVNI], query: str, 
+    def create_vni_pathway(self, vnis: List['EnhancedBaseVNI'], query: str, 
                           context: Dict) -> List[Dict]:
         """Create optimal processing pathway for VNIs"""
         
@@ -466,7 +680,7 @@ class SmartActivationRouter(nn.Module):
         
         return pathway
     
-    def _create_cascade_pathway(self, vnis: List[EnhancedBaseVNI], analysis: Dict) -> List[Dict]:
+    def _create_cascade_pathway(self, vnis: List['EnhancedBaseVNI'], analysis: Dict) -> List[Dict]:
         """Create sequential processing pathway"""
         pathway = []
         
@@ -486,8 +700,8 @@ class SmartActivationRouter(nn.Module):
         
         return pathway
     
-    def route_between_vnis(self, source_vni: EnhancedBaseVNI, 
-                          target_vnis: List[EnhancedBaseVNI],
+    def route_between_vnis(self, source_vni: 'EnhancedBaseVNI', 
+                          target_vnis: List['EnhancedBaseVNI'],
                           data: Dict) -> Dict:
         """Route data between VNIs intelligently"""
         

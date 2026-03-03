@@ -4,21 +4,17 @@ from .base_knowledge_loader import BaseKnowledgeLoader
 from typing import Dict, Any, Optional, List
 from ..core.base_vni import EnhancedBaseVNI
 from ..core.capabilities import VNICapabilities, VNIType
-from ..modules.generation import EnhancedGenerationModule, GenerationStyle # TextGenerator, GenerationModule
 from ..modules.classifier import DomainClassifier
 from ..modules.web_search import WebSearch
-# from ..modules.attention import AttentionMechanism
 from ..modules.learning_system import LearningSystem
 from ..modules.knowledge_base import KnowledgeBase
 from ..utils.logger import get_logger
 import hashlib
-# Import VNIMemory
 from neuron.vni_memory import VNIMemory
 from neuron.demoHybridAttention import DemoHybridAttention
 from neuron.smart_activation_router import SmartActivationRouter, FunctionRegistry
 
 logger = get_logger(__name__)
-
 
 class LegalVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
     """Legal domain VNI with biological systems integration"""
@@ -593,107 +589,278 @@ class LegalVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
     async def process_legal_query(self, 
                                  query: str,
                                  jurisdiction: Optional[str] = None) -> Dict[str, Any]:
-        """Process a legal query with appropriate disclaimers and biological systems."""
+        """Process a legal query and return insights for aggregator."""
+        
+        logger.info(f"Legal VNI processing query for aggregator: {query[:100]}...")
         
         # Check for emergency topics
         emergency_check = self._check_emergency_topics(query)
         if emergency_check["is_emergency"]:
-            response = self._generate_emergency_response(query, emergency_check)
-            # Enhance with biological systems
-            if self.enable_biological_systems:
-                biological_result = self.process_with_biological_systems(query, {"jurisdiction": jurisdiction})
-                response = self._enhance_legal_response(response, query, {"jurisdiction": jurisdiction}, biological_result)
-            return response
-        
+            result = {
+            "status": "legal_emergency_detected",
+            "processing_complete": True,
+            "legal_insights": {
+                "emergency_assessment": emergency_check,
+                "is_emergency": True,
+                "emergency_flags": emergency_check.get("flags", []),
+                "immediate_action_required": True,
+                "jurisdiction": jurisdiction,
+                "recommended_response_type": "emergency_legal_alert"
+            },
+            "aggregator_instructions": {
+                "handle_emergency": True,
+                "priority": "critical",
+                "style_suggestion": "urgent_formal",
+                "include_disclaimers": True,
+                "recommended_structure": ["emergency_alert", "immediate_actions", "professional_referrals", "disclaimers"]
+            },
+            "raw_data": {
+                "query": query,
+                "emergency_check": emergency_check
+            }
+        }
+        result['vni_id'] = self.vni_id
+        result['domain'] = 'legal'
+        result['opinion_text'] = "Emergency legal situation detected. Immediate consultation with an attorney recommended."
+            
         # Check if query asks for specific legal advice
         advice_check = self._check_specific_legal_advice(query)
         if advice_check["requires_caution"]:
-            response = self._generate_caution_response(query, advice_check)
-            # Enhance with biological systems
-            if self.enable_biological_systems:
-                biological_result = self.process_with_biological_systems(query, {"jurisdiction": jurisdiction})
-                response = self._enhance_legal_response(response, query, {"jurisdiction": jurisdiction}, biological_result)
-            return response
-        
+            # Return caution insights for aggregator
+            result = {
+                "status": "specific_advice_request_detected",
+                "processing_complete": True,
+                "legal_insights": {
+                    "advice_assessment": advice_check,
+                    "requires_caution": True,
+                    "caution_indicators": advice_check.get("indicators", []),
+                    "jurisdiction": jurisdiction,
+                    "recommended_response_type": "cautionary_guidance"
+                },
+                "aggregator_instructions": {
+                    "handle_with_caution": True,
+                    "priority": "high",
+                    "style_suggestion": "formal_cautious",
+                    "include_disclaimers": True,
+                    "temper_advice_statements": True
+                },
+                "raw_data": {
+                    "query": query,
+                    "advice_check": advice_check
+                }
+            }
+            result['vni_id'] = self.vni_id
+            result['domain'] = 'legal'
+            result['opinion_text'] = "Query appears to request specific legal advice. Providing general legal information only."
+
         # Classify query
         classification = self.classifier.classify(query)
         
         # Build context
         context = await self._build_legal_context(query, jurisdiction)
         
-        # BIOLOGICAL SYSTEMS INTEGRATION ADDED
+        # BIOLOGICAL SYSTEMS INTEGRATION
         biological_result = None
         if self.enable_biological_systems:
             biological_result = self.process_with_biological_systems(query, context)
-            if biological_result.get("biological_processing"):
-                # Add biological insights to context
-                context["biological_insights"] = biological_result.get("biological_insights", {})
-                context["activation_result"] = biological_result.get("activation_result", {})
-       
-        # Retrieve relevant memory before computing attention
+        
+        # Retrieve relevant memory
+        memory_insights = {}
         if hasattr(self, 'memory'):
-            memory_context = await self.memory.retrieve_relevant_memory(
-                query=query,
-                additional_context={"jurisdiction": jurisdiction} if jurisdiction else None
-            )
-            if memory_context:
-                context["memory_context"] = memory_context
-                
+            try:
+                memory_context = await self.memory.retrieve_relevant_memory(
+                    query=query,
+                    additional_context={"jurisdiction": jurisdiction} if jurisdiction else None
+                )
+                if memory_context:
+                    memory_insights = {
+                        "has_relevant_memory": True,
+                        "memory_context": memory_context,
+                        "memory_retrieval_success": True
+                    }
+            except Exception as e:
+                logger.warning(f"Memory retrieval failed: {e}")
+                memory_insights = {"has_relevant_memory": False, "error": str(e)}
+        
         # Compute attention
-        attention = self.attention.compute_attention(query, context)
+        attention_focus = self.attention.compute_attention(query, context)
         
-        # Generate response using generation module
-        response_text = self.generation_module.generate(
-            query=query,
-            context=context,
-            style=GenerationStyle.FORMAL.value,
-            #temperature=0.3,
-            max_length=400
-        )
+        # Extract legal components
+        query_type = self._classify_legal_query_type(query)
+        legal_area = self._identify_legal_area(query)
+        legal_terms = self._extract_legal_terms(query)
         
-        # Add legal disclaimers
-        response_text = self._add_legal_disclaimers(response_text, jurisdiction)
+        # Get legal information from knowledge base
+        legal_info = self._get_legal_information(query)
         
-        # Record learning
-        self._record_legal_interaction(query, response_text, classification, jurisdiction)
+        # Build comprehensive legal insights
+        legal_insights = {
+            # Core analysis
+            "classification": {
+                "primary_domain": classification.primary_domain,
+                "confidence": classification.confidence,
+                "subdomains": classification.subdomains if hasattr(classification, 'subdomains') else []
+            },
+            "query_type": query_type,
+            "legal_area": legal_area,
+            
+            # Jurisdiction
+            "jurisdiction_specified": bool(jurisdiction),
+            "jurisdiction": jurisdiction,
+            
+            # Safety checks
+            "emergency_assessment": emergency_check,
+            "advice_assessment": advice_check,
+            "requires_professional_counsel": advice_check["requires_caution"] or emergency_check["is_emergency"],
+            
+            # Biological systems
+            "biological_processing": biological_result.get("biological_processing") if biological_result else False,
+            "biological_insights": biological_result.get("biological_insights", {}) if biological_result else {},
+            "activation_result": biological_result.get("activation_result", {}) if biological_result else {},
+            
+            # Content analysis
+            "legal_terms_found": legal_terms,
+            "legal_terms_count": len(legal_terms),
+            "knowledge_base_info": legal_info,
+            
+            # Attention & memory
+            "attention_focus": attention_focus.get("primary_focus", "general"),
+            "attention_weights": attention_focus.get("weights", {}),
+            "memory_insights": memory_insights,
+            
+            # Web references
+            "web_references": context.get("web_results", [])[:2],
+            
+            # Metadata
+            "processing_timestamp": datetime.now().isoformat(),
+            "vni_instance": self.vni_id,
+            "confidence_score": classification.confidence * 0.9  # Adjusted for legal domain
+        }
+        
+        # Prepare instructions for aggregator
+        aggregator_instructions = {
+            "style_suggestions": {
+                "primary_style": "formal",
+                "alternative_styles": ["technical", "cautious"],
+                "temperature": 0.3,  # Low for legal precision
+                "max_tokens": 450
+            },
+            "content_requirements": {
+                "include_legal_disclaimers": True,
+                "include_jurisdiction_note": bool(jurisdiction),
+                "reference_knowledge_base": bool(legal_info),
+                "prioritize_accuracy": True,
+                "avoid_specific_advice": advice_check["requires_caution"]
+            },
+            "formatting": {
+                "include_bullet_points": len(legal_terms) > 2,
+                "include_caution_banner": advice_check["requires_caution"] or emergency_check["is_emergency"],
+                "structure": ["summary", "general_information", "recommended_actions", "disclaimers"]
+            },
+            "priority_level": "critical" if emergency_check["is_emergency"] else "high" if advice_check["requires_caution"] else "normal"
+        }
+        
+        # Record learning (without final response)
+        self._record_legal_interaction_insights(query, legal_insights, classification, jurisdiction)
         
         # Store interaction in memory
         if hasattr(self, 'memory'):
-            memory_id = await self.memory.store_interaction(
-                query=query,
-                response=response_text,
-                context=context,
-                metadata={
-                    "jurisdiction": jurisdiction,
-                    "query_type": self._classify_legal_query_type(query),
-                    "legal_area": self._identify_legal_area(query),
-                    "emergency": emergency_check["is_emergency"],
-                    "biological_processing": biological_result.get("biological_processing", False) if biological_result else False
-                }
-            )
-
-        # Build response
-        response = {
-            "response": response_text,
-            "domain": classification.primary_domain,
-            "confidence": classification.confidence,
-            "emergency_check": emergency_check,
-            "advice_check": advice_check,
-            "attention_focus": attention.get("primary_focus", "general"),
-            "legal_context": {
-                "jurisdiction_specified": bool(jurisdiction),
-                "query_type": self._classify_legal_query_type(query),
-                "legal_area": self._identify_legal_area(query)
+            try:
+                await self.memory.store_interaction(
+                    query=query,
+                    response="[Legal insights prepared for aggregator]",
+                    context=context,
+                    metadata={
+                        "jurisdiction": jurisdiction,
+                        "query_type": query_type,
+                        "legal_area": legal_area,
+                        "emergency": emergency_check["is_emergency"],
+                        "biological_processing": biological_result.get("biological_processing", False) if biological_result else False,
+                        "processed_for_aggregator": True
+                    }
+                )
+            except Exception as e:
+                logger.warning(f"Memory storage failed: {e}")
+        
+        # Build final output for aggregator
+        result = {
+            "status": "legal_analysis_complete",
+            "processing_method": "async",
+            "processing_time": datetime.now().isoformat(),
+            
+            # The main payload for aggregator
+            "legal_insights": legal_insights,
+            
+            # How aggregator should use these insights
+            "aggregator_instructions": aggregator_instructions,
+            
+            # Raw data if aggregator needs it
+            "raw_context": {
+                "query": query,
+                "built_context": context,
+                "jurisdiction": jurisdiction
             },
-            "disclaimers": self.legal_disclaimers["disclaimers"]
+            
+            # Metadata
+            "vni_metadata": {
+                "vni_id": self.vni_id,
+                "vni_type": self.vni_type,
+                "biological_systems_enabled": self.enable_biological_systems,
+                "domain": "legal",
+                "success": True            
+            },
+            
+            # Next steps
+            "next_step": "aggregator_combine_and_generate",
+            "expected_output_format": "final_response_with_legal_context"
         }
+        result['vni_id'] = self.vni_id
+        result['domain'] = 'legal'
         
-        # Enhance with biological systems if enabled
-        if self.enable_biological_systems and biological_result:
-            response = self._enhance_legal_response(response, query, {"jurisdiction": jurisdiction}, biological_result)
+        # Build a concise opinion_text from the legal_insights
+        opinion_parts = []
+        if legal_insights.get('knowledge_base_info'):
+            # Use the first 200 characters of the knowledge info
+            kb_info = legal_insights['knowledge_base_info']
+            opinion_parts.append(kb_info[:200] + ("..." if len(kb_info) > 200 else ""))
+        else:
+            legal_area = legal_insights.get('legal_area', 'general')
+            term_count = legal_insights.get('legal_terms_count', 0)
+            opinion_parts.append(f"Legal query about {legal_area}. Found {term_count} legal terms.")
         
-        return response
-    
+        confidence = legal_insights.get('confidence_score', 0.5)
+        opinion_parts.append(f"Confidence: {confidence:.0%}.")
+        
+        result['opinion_text'] = ' '.join(opinion_parts)
+        
+        return result
+
+    def _record_legal_interaction_insights(self, 
+                                         query: str, 
+                                         legal_insights: Dict[str, Any],
+                                         classification,
+                                         jurisdiction: Optional[str] = None):
+        """Record legal interaction insights for learning (without final response)."""
+        if hasattr(self, 'learning'):
+            try:
+                self.learning.record_interaction(
+                    interaction_id=hashlib.md5(query.encode()).hexdigest()[:16],
+                    prompt=query,
+                    response="[Legal insights for aggregator]",
+                    domain="legal",
+                    metadata={
+                        "query_type": legal_insights.get("query_type"),
+                        "jurisdiction": jurisdiction,
+                        "confidence": classification.confidence if hasattr(classification, 'confidence') else 0.7,
+                        "legal_area": legal_insights.get("legal_area"),
+                        "emergency": legal_insights.get("emergency_assessment", {}).get("is_emergency", False),
+                        "advice_caution": legal_insights.get("advice_assessment", {}).get("requires_caution", False),
+                        "processed_for_aggregator": True
+                    }
+                )
+            except Exception as e:
+                logger.error(f"Failed to record legal interaction insights: {e}")
+
     async def _build_legal_context(self, 
                                   query: str,
                                   jurisdiction: Optional[str] = None) -> Dict[str, Any]:
@@ -895,7 +1062,32 @@ class LegalVNI(EnhancedBaseVNI, BaseKnowledgeLoader):
             "indicators": indicators_found,
             "note": "This query appears to request specific legal advice which I cannot provide."
         }
-    
+
+    def _classify_legal_query_type(self, query: str) -> str:
+        """Classify the type of legal query."""
+        query_lower = query.lower()
+        
+        # Define legal categories
+        categories = {
+            'contract': ['contract', 'agreement', 'terms', 'breach', 'clause'],
+            'litigation': ['court', 'lawsuit', 'sue', 'litigation', 'plaintiff', 'defendant', 'trial'],
+            'rights': ['rights', 'constitutional', 'civil rights', 'human rights', 'freedom'],
+            'compliance': ['compliance', 'regulation', 'regulatory', 'law', 'legal requirement'],
+            'intellectual_property': ['patent', 'trademark', 'copyright', 'intellectual property', 'ip'],
+            'employment': ['employment', 'employee', 'employer', 'labor', 'workplace', 'termination'],
+            'family': ['divorce', 'custody', 'child support', 'marriage', 'prenuptial'],
+            'criminal': ['criminal', 'crime', 'arrest', 'charge', 'defense', 'prosecution'],
+            'real_estate': ['property', 'real estate', 'lease', 'rental', 'landlord', 'tenant'],
+            'general': []
+        }
+        
+        # Find matching category
+        for category, keywords in categories.items():
+            if any(keyword in query_lower for keyword in keywords):
+                return category
+        
+        return 'general'
+
     def _generate_emergency_response(self, 
                                     query: str, 
                                     emergency_check: Dict[str, Any]) -> Dict[str, Any]:

@@ -1,23 +1,77 @@
-"""
-Hybrid storage system: In-memory with thumbdrive persistence
-"""
+"""Hybrid storage system: In-memory with thumbdrive persistence"""
 import os
 import json
+import time
 import pickle
 import shutil
 import hashlib
-from typing import Dict, List, Any, Optional
-from pathlib import Path
 import logging
-import time
+import threading
+from pathlib import Path
+from typing import Dict, List, Any, Optional
 
 logger = logging.getLogger("vni_storage")
 
-class StorageManager:
-    """
-    Manages hybrid storage: RAM for speed, thumbdrive for persistence
-    """
+class ThumbdriveMonitor:
+    """Continuously monitors for thumbdrive connection/disconnection. Auto-migrates data when thumbdrive is detected"""
+    def __init__(self, storage_manager, check_interval=5):
+        self.storage = storage_manager
+        self.check_interval = check_interval
+        self.mounted = False
+        self.monitoring = True
+        self.thread = threading.Thread(target=self._monitor, daemon=True)
+        self.thread.start()
+        logger.info("🔍 ThumbdriveMonitor started")
     
+    def _monitor(self):
+        """Background thread that checks for thumbdrive"""
+        while self.monitoring:
+            try:
+                # Check if thumbdrive is mounted
+                current_mount = self._check_mount()
+                
+                if current_mount and not self.mounted:
+                    # Just connected!
+                    logger.info(f"✅ Thumbdrive detected at {current_mount}")
+                    self.mounted = True
+                    self.storage.base_path = current_mount
+                    self.storage._ensure_directories()
+                    
+                elif not current_mount and self.mounted:
+                    # Just disconnected!
+                    logger.warning("⚠️ Thumbdrive disconnected - falling back to local storage")
+                    self.mounted = False
+                    self.storage.base_path = Path.cwd() / "vni_data"
+                    self.storage._ensure_directories()
+                    
+            except Exception as e:
+                logger.error(f"Monitor error: {e}")
+            time.sleep(self.check_interval)
+    
+    def _check_mount(self):
+        """Check if thumbdrive is mounted"""
+        # Common thumbdrive mount points
+        possible_paths = [
+            Path("/Volumes/THUMBDRIVE"),   # macOS
+            Path("/mnt/THUMBDRIVE"),       # Linux
+            Path("/media/THUMBDRIVE"),     # Linux alternative
+            Path("/media/babybionn_brain"), # Custom
+            Path("D:/vni_data"),           # Windows
+            Path("E:/vni_data"),           # Windows alternative
+        ]
+        
+        for path in possible_paths:
+            if path.exists() and os.access(path, os.W_OK):
+                return path
+        return None
+    
+    def stop(self):
+        """Stop monitoring"""
+        self.monitoring = False
+        logger.info("🛑 ThumbdriveMonitor stopped")
+
+class StorageManager:
+    """Manages hybrid storage: RAM for speed, thumbdrive for persistence"""
     def __init__(self, 
                  base_path: str = None,
                  use_external: bool = True,

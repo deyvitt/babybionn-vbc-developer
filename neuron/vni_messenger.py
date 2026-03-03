@@ -9,7 +9,7 @@ from dataclasses import dataclass, asdict
 from collections import defaultdict
 import logging
 
-from vni_storage import StorageManager
+from neuron.vni_storage import StorageManager
 
 logger = logging.getLogger("vni_messenger")
 

@@ -1,0 +1,370 @@
+{
+  "vocabulary": {
+    "symptom": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "medical": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269619",
+          "domain": "medical"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269256",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269611"
+    },
+    "treatment": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "medical": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269639",
+          "domain": "medical"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269628",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269635"
+    },
+    "health": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "medical": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269654",
+          "domain": "medical"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269645",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269650"
+    },
+    "doctor": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "medical": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269667",
+          "domain": "medical"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269659",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269664"
+    },
+    "medicine": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "medical": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269679",
+          "domain": "medical"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269671",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269676"
+    },
+    "pain": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "medical": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269692",
+          "domain": "medical"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269684",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269689"
+    },
+    "care": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "medical": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269705",
+          "domain": "medical"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269697",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269702"
+    },
+    "law": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "legal": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269717",
+          "domain": "legal"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269709",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269714"
+    },
+    "contract": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "legal": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269729",
+          "domain": "legal"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269721",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269726"
+    },
+    "rights": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "legal": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269741",
+          "domain": "legal"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269734",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269738"
+    },
+    "legal": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "legal": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269754",
+          "domain": "legal"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269745",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269751"
+    },
+    "agreement": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "legal": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269766",
+          "domain": "legal"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269758",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269763"
+    },
+    "court": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "legal": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269778",
+          "domain": "legal"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269770",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269775"
+    },
+    "lawyer": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "legal": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269790",
+          "domain": "legal"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269782",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269787"
+    },
+    "code": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "technical": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269802",
+          "domain": "technical"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269795",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269800"
+    },
+    "system": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "technical": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269815",
+          "domain": "technical"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269807",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269812"
+    },
+    "technical": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "technical": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269827",
+          "domain": "technical"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269819",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269824"
+    },
+    "program": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "technical": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269839",
+          "domain": "technical"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269831",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269836"
+    },
+    "algorithm": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "technical": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269851",
+          "domain": "technical"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269843",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269848"
+    },
+    "software": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "technical": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269863",
+          "domain": "technical"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269855",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269860"
+    },
+    "data": {
+      "neural_strength": 0.11,
+      "domain_associations": {
+        "technical": 0.13
+      },
+      "context_patterns": [
+        {
+          "context": "initialization",
+          "timestamp": "2025-12-14T06:13:44.269875",
+          "domain": "technical"
+        }
+      ],
+      "cooccurrence_network": {},
+      "first_encountered": "2025-12-14T06:13:44.269867",
+      "usage_count": 1,
+      "last_used": "2025-12-14T06:13:44.269872"
+    }
+  },
+  "transition_probs": {},
+  "domain_networks": {},
+  "learning_metrics": {
+    "total_interactions": 21,
+    "successful_predictions": 0,
+    "vocabulary_growth": [],
+    "domain_specialization": {}
+  },
+  "last_updated": "2025-12-14T06:13:44.269956"
+}

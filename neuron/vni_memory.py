@@ -257,6 +257,53 @@ class VniMemory:
         
         logger.info(f"Memory initialized for VNI: {vni_id} (loaded {len(self.memories)} memories)")
 
+    def record_interaction_pattern(self, vni_ids=None, outputs=None, biological_states=None, **kwargs):
+        """Record an interaction pattern for learning
+        Args:
+            vni_ids: List of VNI IDs that were activated
+            outputs: Dictionary of VNI outputs
+            biological_states: Biological states of the VNIs
+            **kwargs: Any additional parameters"""
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Recording interaction pattern with {len(vni_ids) if vni_ids else 0} VNIs")
+        
+        # Initialize patterns storage if it doesn't exist
+        if not hasattr(self, 'interaction_patterns'):
+            self.interaction_patterns = {}
+        
+        # Create a key from the vni_ids (this is the pattern)
+        if vni_ids and isinstance(vni_ids, list):
+            pattern_key = "->".join(str(p) for p in vni_ids)
+        else:
+            pattern_key = str(vni_ids) if vni_ids else "unknown"
+        
+        # Calculate a success metric from biological states if available
+        success_metric = 0.5  # default
+        if biological_states and isinstance(biological_states, dict):
+            # Average the activation levels as a simple success metric
+            activations = [state.get('current', 0.5) for state in biological_states.values() if isinstance(state, dict)]
+            if activations:
+                success_metric = sum(activations) / len(activations)
+        
+        # Store the pattern with its success metric
+        self.interaction_patterns[pattern_key] = {
+            'success': success_metric,
+            'timestamp': time.time(),
+            'count': self.interaction_patterns.get(pattern_key, {}).get('count', 0) + 1,
+            'vni_count': len(vni_ids) if vni_ids else 0
+        }
+        
+        # Keep only recent patterns (last 1000)
+        if len(self.interaction_patterns) > 1000:
+            oldest_keys = sorted(
+                self.interaction_patterns.keys(),
+                key=lambda k: self.interaction_patterns[k]['timestamp']
+            )[:len(self.interaction_patterns) - 1000]
+            for key in oldest_keys:
+                del self.interaction_patterns[key]
+        
+        return True
+
     def retrieve_relevant_memory(self, query: str, limit: int = 5) -> List[Dict]:
         try:
             if not self.memories or not query.strip():
@@ -842,45 +889,44 @@ class VniMemory:
         logger.info(f"Force saved memory for {self.vni_id} (FAISS rebuilt: {not self.faiss_needs_rebuild})")
     
     def get_memory_stats(self) -> Dict[str, Any]:
-        """Get comprehensive memory statistics"""
-        if not self.memories:
+        """Get memory statistics"""
+        try:
+            # Safely get storage path
+            storage_path = "unknown"
+            if hasattr(self, 'storage'):
+                if hasattr(self.storage, 'base_path'):
+                    storage_path = str(self.storage.base_path)
+                elif hasattr(self.storage, 'path'):
+                    storage_path = str(self.storage.path)
+                elif hasattr(self.storage, 'storage_path'):
+                    storage_path = str(self.storage.storage_path)
+    
+            # Safely get memory categories
+            memory_categories = {}
+            if hasattr(self, 'memory_categories'):
+                memory_categories = dict(self.memory_categories)
+            elif hasattr(self, 'categories'):
+                memory_categories = dict(self.categories)
+
             return {
-                "vni_id": self.vni_id,
-                "memory_count": 0,
-                "hit_rate": 0.0,
-                "hit_count": self.hit_count,
-                "miss_count": self.miss_count,
-                "storage_path": str(self.storage.base_path),
-                "clusters": 0,
-                "has_faiss": self.faiss_index is not None,
-                "recent_memories": []
+                "total_memories": len(self.memories) if hasattr(self, 'memories') else 0,
+                "memory_by_category": memory_categories,
+                "storage_path": storage_path,
+                "memory_limit": getattr(self, 'max_memories', 1000),
+                "memory_usage_percent": (len(self.memories) / self.max_memories * 100) if hasattr(self, 'memories') and hasattr(self, 'max_memories') and self.max_memories > 0 else 0,
+                "avg_retention": self._calculate_avg_retention() if hasattr(self, '_calculate_avg_retention') else 0.0
             }
-        
-        # Calculate success statistics
-        success_scores = [mem.success_score for mem in self.memories]
-        
-        # Calculate recency
-        current_time = time.time()
-        ages = [current_time - mem.timestamp for mem in self.memories]
-        
-        return {
-            "vni_id": self.vni_id,
-            "memory_count": len(self.memories),
-            "hit_rate": self.hit_count / max(1, self.hit_count + self.miss_count),
-            "hit_count": self.hit_count,
-            "miss_count": self.miss_count,
-            "storage_path": str(self.storage.base_path),
-            "has_faiss": self.faiss_index is not None,
-            "clusters": len(self.clusters),
-            "avg_success_score": np.mean(success_scores) if success_scores else 0,
-            "max_success_score": np.max(success_scores) if success_scores else 0,
-            "avg_memory_age_days": np.mean(ages) / 86400 if ages else 0,
-            "top_clusters": [cluster.to_dict() for cluster in self.clusters[:3]],
-            "recent_memories": [
-                entry.to_dict() 
-                for entry in self.memories[-5:]  # Last 5 memories
-            ]
-        }
+        except Exception as e:
+            logger.error(f"Error getting memory stats: {e}")
+            return {
+                "total_memories": len(self.memories) if hasattr(self, 'memories') else 0,
+                "memory_by_category": {},
+                "storage_path": "error",
+                "memory_limit": getattr(self, 'max_memories', 1000),
+                "memory_usage_percent": 0,
+                "avg_retention": 0.0,
+                "error": str(e)
+            }
     
     def clear_memory(self, also_clear_storage: bool = False):
         """Clear all memories (optionally from storage too)"""

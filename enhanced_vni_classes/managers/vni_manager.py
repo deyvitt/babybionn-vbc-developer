@@ -119,10 +119,10 @@ class VNIManager:
             }
             
             # Use the factory to create VNI for ANY topic
-            vni = self.dynamic_factory.create_for_any_topic(
+            vni = self.dynamic_factory.create_for_topic(
                 topic=domain,
                 instance_id=instance_id,
-                base_config=base_config
+                # base_config=base_config
             )
         
         # Register the VNI
