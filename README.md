@@ -1,4 +1,3 @@
-
 # BabyBIONN – Layer 0 Contextual Intelligence
 
 **BabyBIONN is not another LLM.** It is the fundamental reasoning layer that gives LLMs context, memory, understanding, and continuity. Think of it as the **"operating system for intelligence"** – the Layer 0 that makes AI systems feel alive, coherent, and trustworthy.
@@ -159,6 +158,38 @@ Training data – Place pretrain/finetune JSON files in neuron/reinforcement_lea
 
 🤝 Contributing
 Contributions are welcome! Please open an issue or submit a pull request.
+
+#____________________________________________________________________________
+# IMPORTANT NOTE!
+When you're ready to run with DeepSeek (after adding credits), use this command:
+
+bash
+docker run -d -p 8002:8002 \
+  -e MOCK_MODE=false \
+  -e DEEPSEEK_API_KEY=sk-c3d5b5e316f947dcb66907295aa6681b \
+  --name babybionn \
+  deyvitt69/babybionn:latest
+If you already have a container running with a different name:
+bash
+# Stop and remove the old container
+docker stop babybionn
+docker rm babybionn
+
+# Then run the new one with DeepSeek
+docker run -d -p 8002:8002 -e MOCK_MODE=false -e DEEPSEEK_API_KEY=your-key --name babybionn deyvitt69/babybionn:latest
+Using an environment file (optional)
+You can also store your key in a file (e.g., deepseek.env) to avoid typing it each time:
+
+bash
+# deepseek.env
+MOCK_MODE=false
+DEEPSEEK_API_KEY=sk-[your-deepseek-api key] or if you use OPEN AI put in their api key
+Then run with:
+
+bash
+docker run -d -p 8002:8002 --env-file deepseek.env --name babybionn deyvitt69/babybionn:latest
+The .env file from your local development is not used by Docker Hub images – you must pass variables explicitly.
+#_________________________________________________________________________________
 
 📄 License
 This project is licensed under the MIT License – see the LICENSE file for details.
