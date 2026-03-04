@@ -1,17 +1,16 @@
 
-# BabyBIONN
+# BabyBIONN – Layer 0 Contextual Intelligence
 
-**BabyBIONN** is an advanced neural mesh system that combines a network of specialized Virtual Neuron Instances (VNIs) with an optional LLM (like DeepSeek) for natural language articulation. It is designed to handle complex, multi‑domain queries (medical, legal, technical, general) by activating relevant expert VNIs, aggregating their reasoning, and (when available) using a large language model to produce fluent, human‑like answers.
+**BabyBIONN is not another LLM.** It is the fundamental reasoning layer that gives LLMs context, memory, understanding, and continuity. Think of it as the **"operating system for intelligence"** – the Layer 0 that makes AI systems feel alive, coherent, and trustworthy.
 
-**Clarification** This neural mesh system with VNIs is only ONE (1) *VIRTUAL BRAIN CELL* (VBC) although it is capable of contextual reasoning upon sufficient learning from both the user and the LLM that is is connected to. Therefore in an analogy, the LLM is like its 'mouth piece' and Babybionn is the 'brain'. Ultimately we strive to connect each 'Virtual Brain Cell' (VBC) to as many devices that are hosting it, so that it will form a higher level 'synaptic' connections to hopefully form a gigantic *Virtual Brain* comprises of a global network of 'VBCs'. We are working on another related project to build a decentralized network with all the relevant consensus protocols, smart contracts and other mechanisms to implement this *gigantic virtual brain* made out of many VBCs hosted on users' devices.
+Each BabyBIONN instance is a single **Virtual Brain Cell (VBC)**. When connected to an LLM (like DeepSeek), it acts as the **brain** while the LLM serves as the **mouth**. Our ultimate vision is to connect millions of VBCs hosted on devices worldwide into a gigantic, decentralized **Virtual Brain** – a global network of contextual reasoners with memory, secured by blockchain‑inspired consensus protocols. This opens doors for applications far beyond chatbots: self‑driving cars, robotics, agentic systems, and more.
 
-# FUTURE POTENTIAL APPLICATIONS
-Upon successful propagation and distribution of this VBC this "Babybionn" will be a highly contextual reasoner with memory to support any LLMs, and its AI agentic systems, even other applications like self-driving cars, robotic, etc. 
+> **Current focus**: A single‑node neural mesh that dramatically reduces hallucinations and provides true contextual reasoning.
+
 ---
 
-## ✨ Features of each VBC
-
-- **Hybrid reasoning pipeline** – VNIs perform deep reasoning; an LLM (DeepSeek/OpenAI) can be used to articulate the final response.
+## ✨ Features of Each VBC
+- **Hybrid reasoning pipeline** – VNIs perform deep reasoning; an LLM (DeepSeek/OpenAI) articulates the final response.
 - **Multi‑domain VNIs** – Specialized modules for medical, legal, technical, and general queries.
 - **Hebbian learning** – Connections between VNIs strengthen or weaken based on co‑activation and outcome quality.
 - **Conflict detection & consensus** – The aggregator identifies disagreements and computes consensus levels.
@@ -35,7 +34,6 @@ text
 ---
 
 ## 📦 Prerequisites
-
 - [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
 - (Optional) An API key for [DeepSeek](https://platform.deepseek.com/) or [OpenAI](https://platform.openai.com/)
 - Git (to clone the repository)
@@ -48,7 +46,6 @@ text
 ```bash
 git clone https://github.com/deyvitt/bionn-demo.git
 cd bionn-demo
-
 2. Configure environment variables
 Copy the example environment file and edit it:
 
@@ -56,12 +53,14 @@ bash
 cp .env.example .env
 Edit .env with your preferred settings. The most important variables are:
 
-MOCK_MODE – Set to true to use the mock response provider (bypasses VNIs/LLM), or false to run the real pipeline.
-
-LLM_PROVIDER – deepseek or openai (if you want to use an LLM).
-
-DEEPSEEK_API_KEY / OPENAI_API_KEY – Your API key for the chosen provider.
-
+Variable	Description	Default
+MOCK_MODE	Use mock responses (bypass real VNIs/LLM)	false
+LLM_PROVIDER	LLM to use (deepseek or openai)	deepseek
+DEEPSEEK_API_KEY	Your DeepSeek API key	–
+OPENAI_API_KEY	Your OpenAI API key	–
+MOCK_RESPONSE_PROVIDER	Domain for mock responses (general, medical, etc.)	general
+MOCK_CONFIDENCE_START	Starting confidence for mock responses	0.7
+MOCK_CONFIDENCE_INCREMENT	Confidence increase per interaction (simulated learning)	0.01
 3. Build and start the containers
 bash
 docker-compose -f docker-compose.dev.yml up --build
@@ -71,7 +70,9 @@ The main chat interface is at http://localhost:8002/chat (or the root /).
 🎮 Usage
 Chat Interface
 Open your browser and go to http://localhost:8002. Type a message and press Enter.
+
 If MOCK_MODE=true, you will receive a canned response.
+
 If MOCK_MODE=false and an LLM is configured, the system will run the VNIs and then call the LLM to generate the answer. If the LLM call fails, it falls back to a template‑based response.
 
 API Endpoints
@@ -83,16 +84,42 @@ GET /api/config/llm-provider – Get current LLM provider
 
 POST /api/config/llm-provider – Update LLM provider (JSON {"provider": "deepseek"})
 
-⚙️ CConfiguration
-Environment Variable		Description							Default
-MOCK_MODE			Use mock responses (bypass real VNIs/LLM)			false
-LLM_PROVIDER			LLM to use (deepseek or openai)					deepseek			
-DEEPSEEK_API_KEY		Your DeepSeek API key						–
-OPENAI_API_KEY			Your OpenAI API key						–
-MOCK_RESPONSE_PROVIDER		Domain for mock responses (general, medical, etc.)		general
-MOCK_CONFIDENCE_START		Starting confidence for mock responses				0.7
-MOCK_CONFIDENCE_INCREMENT	Confidence increase per interaction (simulated learning)	0.01
+🐳 Running with Docker (Official Image)
+1. Pull the image
+bash
+docker pull deyvitt69/babybionn:latest
+2. Choose your mode
+🎭 Test mode (no API key needed)
+bash
+docker run -d -p 8002:8002 -e MOCK_MODE=true --name babybionn deyvitt69/babybionn:latest
+🧠 Full reasoning mode (with DeepSeek API key)
+bash
+docker run -d -p 8002:8002 \
+  -e MOCK_MODE=false \
+  -e DEEPSEEK_API_KEY=your-actual-key-here \
+  --name babybionn \
+  deyvitt69/babybionn:latest
+3. Access the chat interface
+Open http://localhost:8002 in your browser.
 
+4. Managing the container
+Stop: docker stop babybionn
+
+Remove: docker rm babybionn
+
+Switch modes: stop, remove, then run with new environment variables.
+
+5. (Optional) Persist learned data
+bash
+docker run -d -p 8002:8002 \
+  -e MOCK_MODE=false \
+  -e DEEPSEEK_API_KEY=your-key \
+  -v ./babybionn_data:/app/vni_data \
+  --name babybionn \
+  deyvitt69/babybionn:latest
+6. View logs
+bash
+docker logs babybionn
 📁 Project Structure (High‑Level)
 text
 babybionn-demo/
@@ -121,9 +148,8 @@ babybionn-demo/
 ├── template_engine.py                  # Template fallback when LLM fails
 ├── Babybionn_integration.py            # Integration with the main system
 └── .env.example                        # Example environment variables
-
 🧪 Development
-Mock mode – Set MOCK_MODE=true in .env to test the UI and API without invoking VNIs or an LLM.
+Mock mode – Set MOCK_MODE=true to test the UI and API without invoking VNIs or an LLM.
 
 Real mode – Set MOCK_MODE=false and optionally provide an LLM API key.
 
@@ -139,7 +165,4 @@ This project is licensed under the MIT License – see the LICENSE file for deta
 
 🙏 Acknowledgments
 Inspired by biological neural networks and Hebbian learning principles.
-
 Built with FastAPI, Docker, PyTorch, and the amazing open‑source community.
-
-
