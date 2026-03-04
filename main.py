@@ -6,14 +6,18 @@ import os
 import sys
 import json
 import uuid
+import secrets
 import asyncio
 import logging
 from pathlib import Path
 from datetime import datetime
-from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
 from typing import List, Dict, Optional, Any
 from Babybionn_integration import BabyBIONNSystem
+from fastapi import Request, HTTPException, Cookie, Response
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
+# from llm_Gateway import LLMGateway, LLMConfig, LLMProvider
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("debug_medical")
@@ -21,6 +25,8 @@ logger = logging.getLogger("BabyBIONN.Main")
 
 # Add project root to sys.path
 PROJECT_ROOT = Path(__file__).parent
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "babybionn_admin_2024")  # Change default in production!
+active_sessions = {}  # In‑memory session store (for demo; use Redis in production)
 sys.path.insert(0, str(PROJECT_ROOT))
 
 # Try multiple import strategies like main.py
@@ -45,7 +51,7 @@ except ImportError as e:
         print("📁 Ensure project structure includes enhanced_neural_mesh.py and enhanced_vni_classes.py", file=sys.stderr)
         sys.exit(1)
 
-# ========== NEW LEARNING IMPORTS ==========
+# ========== ADD NEW LEARNING IMPORTS ==========
 try:
     from neuron.synaptic_visualization import SynapticVisualizer
     from neuron.synaptic_learning_engine import integrate_with_babybionn
@@ -60,8 +66,6 @@ except ImportError as e:
 # Import uvicorn after path setup
 try:
     import uvicorn
-    from pydantic import BaseModel
-    from fastapi.responses import HTMLResponse
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi import FastAPI, HTTPException, Request, Depends, UploadFile, File, Form, APIRouter
 
@@ -79,6 +83,7 @@ except Exception as e:
     print(f"🔍 DEBUG: Could not import VNIType: {e}")
 
 # ========== GLOBAL APP MANAGEMENT ==========
+# Add this after imports, before any other code
 _global_app = None
 
 def get_global_app():
@@ -104,6 +109,9 @@ class ChatRequest(BaseModel):
     query: str
     session_id: Optional[str] = "default"
     context: Optional[Dict[str, Any]] = None
+
+class AdminLogin(BaseModel):
+    password: str
 
 class EnhancedChatResponse(BaseModel):
     response: str
@@ -308,6 +316,24 @@ def create_main_app(mesh_core: EnhancedNeuralMeshCore, aggregator: UnifiedAggreg
     base_app = create_app(mesh_core) if HAS_NEW_STRUCTURE else FastAPI()
     # Initialize BabyBIONN state to None (will be set by main())
     base_app.state.babybionn = None     
+    # Initialize BabyBIONN
+#    try:
+#        from Babybionn_integration import BabyBIONNSystem
+#        llm_configs = {
+#            "deepseek": {
+#                "api_key": os.getenv("DEEPSEEK_API_KEY", ""),
+#                "base_url": "https://api.deepseek.com/v1"
+#            },
+#            "openai": {
+#                "api_key": os.getenv("OPENAI_API_KEY", "")
+#            }
+#        }
+#        babybionn = BabyBIONNSystem(llm_configs=llm_configs)
+#        base_app.state.babybionn = babybionn
+#        logger.info(f"✅ BabyBIONN initialized in app state with {len(babybionn.llm_gateway.clients)} providers")
+#    except Exception as e:
+#        logger.error(f"❌ Failed to initialize BabyBIONN: {e}")
+#        base_app.state.babybionn = None
 
     # Add CORS middleware (from main.py)
     base_app.add_middleware(
@@ -817,6 +843,23 @@ def create_main_app(mesh_core: EnhancedNeuralMeshCore, aggregator: UnifiedAggreg
         except Exception as e:
             raise HTTPException(500, f"Image error: {str(e)}")
 
+    @base_app.post("/api/admin/login")
+    async def admin_login(login: AdminLogin, response: Response):
+        """Authenticate admin and set session cookie."""
+        if login.password == ADMIN_PASSWORD:
+            session_token = secrets.token_urlsafe(32)
+            active_sessions[session_token] = True  # In production, add expiry
+            response.set_cookie(
+                key="admin_session",
+                value=session_token,
+                httponly=True,
+                max_age=3600,          # 1 hour
+                secure=False,           # Set to True if using HTTPS
+                samesite="lax"
+            )
+            return {"success": True, "message": "Logged in successfully"}
+        raise HTTPException(status_code=401, detail="Invalid password")
+
     @base_app.post("/api/admin/pretrain")
     async def api_pretrain(
         domain: str = Form(...),
@@ -1185,7 +1228,9 @@ def create_basic_chat_interface():
 
 async def main():
     """Enhanced main entry point with proper error handling"""
+    # ADD THIS DEBUGGING LINE AT THE VERY BEGINNING:
     print(f"🔍 DEBUG: Starting main(), get_global_app() = {get_global_app()}")    
+    # ADD THIS IMMEDIATELY - before any other code:
     print("=" * 60)
     print("🔍 DEBUG: Starting BabyBIONN with HTML file check")
     print(f"Project root: {PROJECT_ROOT}")
@@ -1385,6 +1430,14 @@ async def main():
             vni_manager=vni_manager,
             config=aggregator_config  # ← CRITICAL!
         )
+        # Make aggregator available globally or pass to app creation
+        
+        # Test aggregator
+        #test_aggregated = await aggregator.aggregate_response(
+        #    query="Test aggregator functionality",
+        #    session_id="test_session"
+        #)
+        #logger.info(f"✅ Aggregator test successful. Strategy: {test_aggregated.get('aggregation_strategy', 'unknown')}")
 
         # Create FastAPI app with both mesh_core AND aggregator
         logger.info("🌐 Creating Enhanced FastAPI Application...")
@@ -1398,6 +1451,13 @@ async def main():
         set_global_app(app)
         logger.info("✅ Global app reference updated")
         print(f"🔍 DEBUG: set_global_app() called, get_global_app() = {get_global_app()}")
+
+        # ========== ALSO UPDATE MODULE-LEVEL APP ==========
+        # This ensures Uvicorn serves the real app, not the placeholder
+        # sys.modules[__name__].app = app
+        # logger.info("✅ Module-level app replaced with real app")
+        # print(f"🔍 DEBUG: Module app updated, sys.modules[__name__].app = {sys.modules[__name__].app}") 
+
         config = uvicorn.Config(
             app,  # ← Use the app from create_main_app, NOT the module-level app
             host=Config.HOST,
