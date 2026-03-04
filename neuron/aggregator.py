@@ -17,14 +17,14 @@ import torch.nn.functional as F
 from neuron.vni_memory import VniMemory
 from datetime import datetime, timedelta
 from collections import defaultdict, deque
-from aggregatorAttn import AggregatorAttention
+from .aggregatorAttn import AggregatorAttention
 from dataclasses import dataclass, field, asdict
 from typing import Dict, List, Optional, Any, Tuple, Set
 from llm_Gateway import get_gateway, LLMConfig, LLMProvider
 from neuron.shared.reasoning_output import ReasoningOutput, VNIOpinion
-from demoHybridAttention import DemoHybridAttention, HybridAttentionEngine
-from smart_activation_router import SmartActivationRouter, FunctionRegistry
-from metaCognitive_enhancer import integrate_with_aggregator, get_enhanced_insights
+from .demoHybridAttention import DemoHybridAttention, HybridAttentionEngine
+from .smart_activation_router import SmartActivationRouter, FunctionRegistry
+from .metaCognitive_enhancer import integrate_with_aggregator, get_enhanced_insights
 from neuron.shared.types import (
     ConnectionType, SynapticConnection, LearningMetrics, 
     ClusterPerformance, ConsensusResult, ConflictAnalysis,
@@ -41,24 +41,6 @@ from neuron.shared.constants import (
 
 import re
 import random
-
-#from dataclasses import field
-
-# Store original config class
-#_OriginalAggregatorConfig = AggregatorConfig
-
-# Create new config class with biological routing
-#@dataclass  
-#class PatchedAggregatorConfig(_OriginalAggregatorConfig):
-#    """Extended config with biological routing"""
-#    enable_biological_routing: bool = field(default=True)
-#    attention_routing_weight: float = field(default=0.25)
-#    activation_routing_weight: float = field(default=0.25) 
-#    memory_routing_weight: float = field(default=0.20)
-#    hebbian_routing_weight: float = field(default=0.30)
-
-# Replace AggregatorConfig with our patched version
-#AggregatorConfig = PatchedAggregatorConfig
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("aggregator")
