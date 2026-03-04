@@ -34,7 +34,7 @@
         .chat-container {
             width: 90%;
             max-width: 1000px;
-            height: 85vh;
+            height: 105vh;
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
@@ -234,7 +234,7 @@
         }
 
         .chat-input-container {
-            padding: 20px;
+            padding: 15px 20px;
             background: white;
             border-top: 1px solid #e1e5e9;
         }
@@ -1059,7 +1059,7 @@ No analytics data yet. Upload pretraining data to see analytics.
                 formData.append('message', message);
                 formData.append('image', imageFile);
                 formData.append('session_id', sessionId);
-                formData.append('admin_token', 'babybionn_admin_2024');
+                // ❌formData.append('admin_token', 'babybionn_admin_2024');
 
                 const response = await fetch(`${BACKEND_URL}/api/chat-with-image`, {
                     method: 'POST',
@@ -1150,16 +1150,29 @@ No analytics data yet. Upload pretraining data to see analytics.
 
         // ===== ADMIN PRETRAINING FUNCTIONS =====
 
-        // Admin Authentication
-        function adminLogin() {
-            const password = document.getElementById('adminPassword').value;
-            // In production, use proper oAuth - this is for demo
-            if (password === 'babybionn_admin_2024') {
+        // Admin Authentication - now calls backend
+        async function adminLogin() {
+        const password = document.getElementById('adminPassword').value;
+        
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/admin/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: password }),
+                credentials: 'include'  // Important: send/receive cookies
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
                 document.getElementById('adminLoginSection').style.display = 'none';
                 document.getElementById('pretrainingInterface').style.display = 'block';
-                loadKnowledgeStatus();
-            } else {
-                alert('Invalid admin password');
+                loadKnowledgeStatus();  // this will now use the cookie
+                } else {
+                    alert('Invalid admin password');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Login failed: ' + error.message);
             }
         }
 
@@ -1193,16 +1206,16 @@ No analytics data yet. Upload pretraining data to see analytics.
             initializePretraining(domain, file);
         }
 
-        // Initialize pretraining process - FIXED VERSION
+        // Initialize pretraining process - now uses session cookie
         async function initializePretraining(domain, file) {
             updateProgress('Starting upload process...', 10);
-
+        
             if (!backendAvailable) {
                 updateProgress('Error: Backend not connected. Please start the BabyBIONN server.', 0);
                 alert('❌ Backend not available. Please start the server and reconnect.');
                 return;
             }
-
+        
             try {
                 updateProgress('Preparing file upload...', 20);
         
@@ -1211,7 +1224,7 @@ No analytics data yet. Upload pretraining data to see analytics.
                 formData.append('domain', domain);
                 formData.append('file', file);
                 formData.append('session_id', sessionId);
-                formData.append('admin_token', 'babybionn_admin_2024');
+                // ❌ REMOVED: formData.append('admin_token', 'babybionn_admin_2024');
                 
                 console.log('🔄 Sending to:', `${BACKEND_URL}/api/admin/pretrain`);
         
@@ -1219,9 +1232,10 @@ No analytics data yet. Upload pretraining data to see analytics.
         
                 const response = await fetch(`${BACKEND_URL}/api/admin/pretrain`, {
                     method: 'POST',
-                    body: formData  // No Content-Type header for FormData - let browser set it
+                    body: formData,
+                    credentials: 'include'   // ✅ ADD THIS
                 });
-
+        
                 console.log('📨 Response status:', response.status);
         
                 if (!response.ok) {
@@ -1230,12 +1244,11 @@ No analytics data yet. Upload pretraining data to see analytics.
                         const errorData = await response.json();
                         errorMessage = errorData.error || errorMessage;
                     } catch (e) {
-                        // If response isn't JSON, use status text
                         errorMessage = `${response.status} - ${response.statusText}`;
                     }
                     throw new Error(errorMessage);
                 }
-
+        
                 updateProgress('Processing training data...', 70);
         
                 const result = await response.json();
@@ -1243,26 +1256,21 @@ No analytics data yet. Upload pretraining data to see analytics.
         
                 if (result.success) {
                     updateProgress('Pretraining completed successfully!', 100);
-            
-                    // Show analytics if available
+        
                     if (result.analytics) {
                         showAnalytics(result.analytics);
                     }
-            
-                    // Refresh knowledge status
+        
                     loadKnowledgeStatus();
-            
-                    // Clear the file input
                     document.getElementById('pretrainFile').value = '';
-            
-                    // Show success message
+        
                     setTimeout(() => {
                         alert('✅ Pretraining data uploaded successfully!\n\n' + 
                               `Domain: ${domain}\n` +
                               `File: ${file.name}\n` +
                               `Concepts processed: ${result.analytics?.concepts_processed || 'N/A'}`);
                     }, 1000);
-            
+        
                 } else {
                     throw new Error(result.error || 'Pretraining failed without specific error');
                 }
@@ -1272,7 +1280,6 @@ No analytics data yet. Upload pretraining data to see analytics.
         
                 let userMessage = error.message;
         
-                // Handle specific error types
                 if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
                     userMessage = 'Cannot connect to backend server. Please check:\n\n' +
                                  '1. Is the BabyBIONN server running?\n' +
@@ -1282,20 +1289,24 @@ No analytics data yet. Upload pretraining data to see analytics.
                     userMessage = 'Backend endpoint not found (404). The /admin/pretrain endpoint might not be implemented yet.';
                 } else if (error.message.includes('500')) {
                     userMessage = 'Server error (500). Check the backend server logs for details.';
+                } else if (error.message.includes('401')) {
+                    userMessage = 'Authentication failed. Please log in again.';
                 }
         
                 updateProgress('Error: ' + userMessage, 0);
                 alert('❌ Upload failed:\n\n' + userMessage);
             }
         }
-        // Debug function to check if pretrain endpoint exists
+
+        // Debug function to check if pretrain endpoint exists (now with credentials)
         async function testPretrainEndpoint() {
             console.log('🔍 Testing pretrain endpoint...');
-    
+        
             try {
-                // First test if we can reach the endpoint
+                // OPTIONS preflight – include credentials for consistency
                 const response = await fetch(`${BACKEND_URL}/api/admin/pretrain`, {
-                    method: 'OPTIONS' // Preflight request
+                    method: 'OPTIONS',
+                    credentials: 'include'
                 });
                 console.log('OPTIONS request:', response.status, response.statusText);
         
@@ -1305,15 +1316,18 @@ No analytics data yet. Upload pretraining data to see analytics.
         
                 const postResponse = await fetch(`${BACKEND_URL}/api/admin/pretrain`, {
                     method: 'POST',
-                    body: testFormData
+                    body: testFormData,
+                    credentials: 'include'   // <-- send session cookie
                 });
         
                 console.log('POST request:', postResponse.status, postResponse.statusText);
         
                 if (postResponse.status === 404) {
-            alert('❌ Pretrain endpoint not found (404). The backend might not have this endpoint implemented yet.');
+                    alert('❌ Pretrain endpoint not found (404). The backend might not have this endpoint implemented yet.');
                 } else if (postResponse.status === 405) {
                     alert('❌ Method not allowed (405). The endpoint exists but might expect different data.');
+                } else if (postResponse.status === 401) {
+                    alert('❌ Unauthorized (401). You need to log in as admin first.');
                 } else {
                     alert(`✅ Endpoint responded with: ${postResponse.status} ${postResponse.statusText}\n\nCheck console for details.`);
                 }
@@ -1381,54 +1395,56 @@ No analytics data yet. Upload pretraining data to see analytics.
                     '<div style="color: #f44336;">Backend not connected. Please start the BabyBIONN server.</div>';
                 return;
             }
-
-            // Add admin token to the request
-            fetch(`${BACKEND_URL}/api/admin/knowledge-status?admin_token=babybionn_admin_2024`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    return response.json();
-                })
-                .then(status => {
-                    if (status.success) {
-                        let html = '<ul style="list-style: none; padding: 0;">';
-                        for (const [domain, info] of Object.entries(status.knowledge_bases)) {
-                            // Handle both successful and error responses from VNIs
-                            if (info && info.error) {
-                                html += `
-                                    <li style="padding: 8px; margin: 5px 0; background: #ffebee; border-radius: 5px; border-left: 4px solid #f44336;">
-                                        <strong>${domain.toUpperCase()}</strong><br>
-                                        <small style="color: #d32f2f;">Error: ${info.error}</small>
-                                    </li>`;
-                            } else if (info) {
-                                html += `
-                                    <li style="padding: 8px; margin: 5px 0; background: white; border-radius: 5px; border-left: 4px solid #4facfe;">
-                                        <strong>${domain.toUpperCase()}</strong><br>
-                                        <small>Concepts: ${info.concepts || 'N/A'} | Patterns: ${info.patterns || 'N/A'}</small><br>
-                                        <small style="color: #666;">Last updated: ${info.last_updated ? new Date(info.last_updated * 1000).toLocaleString() : 'Never'}</small>
-                                    </li>`;
-                            } else {
-                                html += `
-                                    <li style="padding: 8px; margin: 5px 0; background: #fff3e0; border-radius: 5px; border-left: 4px solid #ff9800;">
-                                        <strong>${domain.toUpperCase()}</strong><br>
-                                        <small style="color: #e65100;">No information available</small>
-                                    </li>`;
-                            }
+        
+            // No admin_token needed – uses session cookie
+            fetch(`${BACKEND_URL}/api/admin/knowledge-status`, {
+                credentials: 'include'   // ✅ ADD THIS
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(status => {
+                if (status.success) {
+                    let html = '<ul style="list-style: none; padding: 0;">';
+                    for (const [domain, info] of Object.entries(status.knowledge_bases)) {
+                        if (info && info.error) {
+                            html += `
+                                <li style="padding: 8px; margin: 5px 0; background: #ffebee; border-radius: 5px; border-left: 4px solid #f44336;">
+                                    <strong>${domain.toUpperCase()}</strong><br>
+                                    <small style="color: #d32f2f;">Error: ${info.error}</small>
+                                </li>`;
+                        } else if (info) {
+                            html += `
+                                <li style="padding: 8px; margin: 5px 0; background: white; border-radius: 5px; border-left: 4px solid #4facfe;">
+                                    <strong>${domain.toUpperCase()}</strong><br>
+                                    <small>Concepts: ${info.concepts || 'N/A'} | Patterns: ${info.patterns || 'N/A'}</small><br>
+                                    <small style="color: #666;">Last updated: ${info.last_updated ? new Date(info.last_updated * 1000).toLocaleString() : 'Never'}</small>
+                                </li>`;
+                        } else {
+                            html += `
+                                <li style="padding: 8px; margin: 5px 0; background: #fff3e0; border-radius: 5px; border-left: 4px solid #ff9800;">
+                                    <strong>${domain.toUpperCase()}</strong><br>
+                                    <small style="color: #e65100;">No information available</small>
+                                </li>`;
                         }
-                        html += '</ul>';
-                        document.getElementById('kbList').innerHTML = html;
-                    } else {
-                        document.getElementById('kbList').innerHTML = 
-                            `<div style="color: #f44336;">Backend Error: ${status.error || 'Unknown error'}</div>`;
                     }
-                })
-                .catch(error => {
-                    console.error('Knowledge status error:', error);
+                    html += '</ul>';
+                    document.getElementById('kbList').innerHTML = html;
+                } else {
                     document.getElementById('kbList').innerHTML = 
-                        `<div style="color: #f44336;">Request Failed: ${error.message}</div>`;
-                });
+                        `<div style="color: #f44336;">Backend Error: ${status.error || 'Unknown error'}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Knowledge status error:', error);
+                document.getElementById('kbList').innerHTML = 
+                    `<div style="color: #f44336;">Request Failed: ${error.message}</div>`;
+            });
         }
+
         // System action functions
         function clearChatHistory() {
             if (confirm('Are you sure you want to clear all chat history?')) {
@@ -1505,25 +1521,26 @@ No analytics data yet. Upload pretraining data to see analytics.
             alert('Test JSON file created! Use "babybionn_test_data.json" to test the upload functionality.');
         }
 
-        // Check all backend endpoints
+        // Check all backend endpoints (now includes credentials for protected ones)
         async function debugBackendEndpoints() {
             console.log('🔍 Checking all backend endpoints...');
-    
+        
             const endpoints = [
                 '/api/health',
                 '/api/chat',
                 '/api/admin/pretrain',
                 '/api/admin/knowledge-status'
             ];
-    
+        
             let results = [];
-    
+        
             for (const endpoint of endpoints) {
                 try {
                     const response = await fetch(BACKEND_URL + endpoint, {
                         method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            });
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include'   // <-- send session cookie for all
+                    });
                     results.push(`${endpoint}: ${response.status} ${response.statusText}`);
                     console.log(`✅ ${endpoint}: ${response.status}`);
                 } catch (error) {
@@ -1531,7 +1548,7 @@ No analytics data yet. Upload pretraining data to see analytics.
                     console.log(`❌ ${endpoint}: ${error.message}`);
                 }
             }
-    
+        
             alert('Backend Endpoint Check:\n\n' + results.join('\n'));
         }
         
