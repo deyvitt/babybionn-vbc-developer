@@ -24,7 +24,7 @@ User Query → Neural Mesh (activates VNIs) → Aggregator → (optional) LLM �
 
 text
 
-- **VNIs** (Virtual Networked Intelligences) – Domain‑expert modules that return an opinion (text) and a confidence score.
+- **VNIs** (Virtual Neuron Instances) – Domain‑expert modules that return an opinion (text) and a confidence score.
 - **Neural Mesh** – Routes the query to the most relevant VNIs based on keyword matching and learned patterns.
 - **Aggregator** – Collects VNI outputs, detects conflicts, calculates consensus, and optionally calls an LLM.
 - **LLM Gateway** – If enabled and an API key is provided, the aggregator sends a prompt built from the VNIs' reasoning to an LLM (DeepSeek/OpenAI) and returns the generated text.
