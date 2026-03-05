@@ -532,7 +532,8 @@ contract NodeRegistry {
     mapping(string => Node) public nodes; // peerId -> Node
     // ... functions to register, update, stake, etc.
 }
-IPFS & Decentralized Storage
+
+## IPFS & Decentralized Storage
 Knowledge Base Distribution: Instead of each node storing all knowledge, commonly used facts, embeddings, or even entire VNIs can be stored on IPFS. Nodes can retrieve them on demand, reducing storage requirements and enabling knowledge sharing.
 
 Model Sharing: Fine‑tuned models or training data can be published to IPFS, with the hash referenced on the blockchain for verification.
@@ -577,7 +578,114 @@ class IPFSClient:
         
 Nodes would need to run an IPFS daemon (or connect to a public gateway) for this to work. In a Docker setup, you could run an IPFS container alongside BabyBIONN.
 
-Implementation Guidelines
+
+## 🪙 Tokenomics & Incentive Design
+The BabyBIONN network is built on a three‑tier token system that ensures meritocracy, ownership, and utility are properly separated. This design attracts genuine contributors while filtering out pure speculators.
+
+The Three Tokens
+Token	Type	Purpose	Transferability	How Obtained
+OxyGEN	Soulbound NFT (ERC‑721)	Merit score & status ranking	Non‑transferable – permanently bound to the wallet that earned it	Earned through contribution (hosting VBCs, recruiting users, reporting bad actors, etc.)
+Neuroshare	ERC‑20	Ownership stake in the network	Freely tradable	Minted by burning OxyGEN at a fixed conversion rate
+neurocent	ERC‑20	Everyday currency for transactions	Freely tradable on exchanges	Bought on crypto exchanges or earned through network participation
+Why This Works
+OxyGEN as a soulbound NFT – Each unit of merit is a unique, non‑transferable token. You cannot buy, sell, or trade it. It is a permanent record of contribution, bound to your wallet. This ensures that status and influence in the network are reserved for those who genuinely contribute.
+
+Neuroshare represents ownership – It is minted only by burning OxyGEN at a fixed rate (e.g., 100 OxyGEN → 1 Neuroshare). This means that every Neuroshare in circulation originally came from genuine contribution. While Neuroshare can be traded freely, its initial creation is merit‑based.
+
+neurocent fuels the economy – It is the everyday currency for paying node operators, rewarding contributions, and staking. It can be traded freely on exchanges, but it confers no governance power or status.
+
+Conversion & Exit Mechanism
+When a contributor wishes to realize value, they burn a portion of their OxyGEN to mint Neuroshare. They can then sell that Neuroshare on an open market for neurocents. They exit with profit but lose the corresponding amount of OxyGEN (and the associated status). Their merit is permanently converted into liquid value.
+
+Fixed conversion rate – e.g., 100 OxyGEN → 1 Neuroshare. This rate is set by the protocol and does not change, ensuring that the supply of Neuroshare is directly proportional to total merit earned.
+
+Neuroshare price discovery – Neuroshare trades freely in neurocents on decentralised exchanges. Its market price reflects the network’s perceived value.
+
+Optional vesting – To encourage long‑term alignment, Neuroshare minted from OxyGEN could be subject to a vesting period (e.g., locked for 30 days) before it can be sold.
+
+Governance Weight
+Governance in the Neurochain triumvirate can be weighted to balance merit and ownership. A hybrid model ensures that neither pure speculators nor merit‑only contributors can dominate:
+
+Proposal creation – Requires a minimum OxyGEN balance (to prevent spam).
+
+Voting power – Could be calculated as voteWeight = OxyGEN * sqrt(Neuroshare) or a similar function that gives more weight to those with both merit and stake.
+
+Bicameral option – Two chambers: one weighted by OxyGEN (merit), another by Neuroshare (ownership). Proposals need majority in both.
+
+Smart Contract Design (Outline)
+solidity
+// OxyGEN – Soulbound NFT
+contract OxyGEN is ERC721 {
+    mapping(uint256 => address) private _owners;
+    mapping(address => uint256[]) private _ownedTokens;
+
+    // Minting only by authorised network contracts (e.g., after verified contribution)
+    function mint(address to) external onlyAuthorized {
+        uint256 tokenId = _nextTokenId++;
+        _safeMint(to, tokenId);
+        _transfer = address(0); // permanently disable transfer
+    }
+
+    // Override transfer functions to revert
+    function transferFrom(...) public override { revert("Soulbound: non-transferable"); }
+    function safeTransferFrom(...) public override { revert("Soulbound: non-transferable"); }
+}
+
+// Neuroshare – ERC20 minted by burning OxyGEN
+contract Neuroshare is ERC20 {
+    IERC721 public oxyGEN;
+    uint256 public conversionRate = 100; // 100 OxyGEN per Neuroshare
+
+    function mintFromOxyGEN(uint256 oxyAmount) external {
+        require(oxyAmount % conversionRate == 0, "Amount must be multiple of conversion rate");
+        // Transfer OxyGEN tokens from user to burn address (or call burn)
+        for (uint256 i = 0; i < oxyAmount; i++) {
+            oxyGEN.transferFrom(msg.sender, address(0), i); // simplistic; real impl would iterate owned tokens
+        }
+        uint256 neuroshareAmount = oxyAmount / conversionRate;
+        _mint(msg.sender, neuroshareAmount);
+    }
+}
+
+// neurocent – standard ERC20 (could have a mint function for rewards)
+contract Neurocent is ERC20 {
+    function mint(address to, uint256 amount) external onlyAuthorized {
+        _mint(to, amount);
+    }
+}
+Note: The actual implementation must handle safe batch burning of OxyGEN tokens and avoid re‑entrancy.
+
+# __________________________________________________________________________________________
+
+## 🌐 Why Join the BabyBIONN Network? (The FOMO Factor)
+You can download BabyBIONN and run it standalone – the source is open, and we encourage you to experiment. But joining the network offers something you can't get alone: a living, evolving ecosystem.
+
+Here's what the network gives you:
+
+Trust & Reputation – A standalone VBC is an island. No one knows if it's benign, accurate, or malicious. In the network, every VBC is vetted (via OxyGEN merit) and builds a reputation. When your VBC speaks, others listen because it has earned their trust.
+
+Collective Intelligence – Alone, your VBC knows only what you've trained it on. Connected, it can query millions of specialized VNIs across the network – medical experts, legal analysts, creative minds – and aggregate their knowledge to give you answers far beyond any single node.
+
+Incentives That Reward Contribution – Run a node? Get OxyGEN. Help vet new VBCs? Get OxyGEN. Build a brilliant new VNI? Earn Neuroshare and neurocent. The network turns your passion into value – value you can't create in isolation.
+
+A Voice in Governance – Standalone, you follow our rules. In the network, you help make the rules. Neuroshare holders vote on proposals, shape the future, and ensure the network evolves for the community, not just a corporation.
+
+Security in Numbers – A solo node is an easy target for attackers. The network's consensus protocols (PoMC) and distributed watchdogs make it resilient. Bad actors get slashed; good actors are protected.
+
+Monetization Potential – Your VBC can offer services (e.g., specialized medical diagnosis) and charge micro‑payments in neurocent. The network becomes your marketplace – no middleman, no platform fees.
+
+It's Not Just Code – It's a Movement – The network is built by people who care about AI, ethics, and decentralization. Joining means you're part of a community that's shaping the future of intelligence – not just running software.
+
+The FOMO Effect
+The network effect creates a self‑reinforcing cycle: the more valuable the network becomes, the more people want to join, which makes it even more valuable. Early adopters earn the most OxyGEN and Neuroshare, giving them status and influence as the network grows.
+
+Question: “If I can download BabyBIONN source code, why do I need to bother to join your stupid network!?”
+
+Answer: You absolutely can run it alone – that's the beauty of open source. But if you want your VBC to be part of something bigger – to learn from others, to be trusted, to have influence, to be rewarded, and to help shape the future of decentralized intelligence – the network is where that happens. Everyone who matters is already here. Don't get left behind.
+
+# _____________________________________________________________________________________________
+
+## Implementation Guidelines
 Choose a P2P library – libp2p is recommended. Install it via pip.
 
 Start with a simple prototype:
