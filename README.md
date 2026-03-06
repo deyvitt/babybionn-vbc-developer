@@ -1,5 +1,7 @@
 # BabyBIONN – Layer 0 Contextual Intelligence
 
+[![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
+
 **BabyBIONN is not another LLM.** It is the fundamental reasoning layer that gives LLMs context, memory, understanding, and continuity. Think of it as the **"operating system for intelligence"** – the Layer 0 that makes AI systems feel alive, coherent, and trustworthy.
 
 Each BabyBIONN instance is a single **Virtual Brain Cell (VBC)**. When connected to an LLM (like DeepSeek), it acts as the **brain** while the LLM serves as the **mouth**. Our ultimate vision is to connect millions of VBCs hosted on devices worldwide into a gigantic, decentralized **Virtual Brain** – a global network of contextual reasoners with memory, secured by blockchain‑inspired consensus protocols. This opens doors for applications far beyond chatbots: self‑driving cars, robotics, agentic systems, and more.
@@ -22,13 +24,32 @@ Each BabyBIONN instance is a single **Virtual Brain Cell (VBC)**. When connected
 ## 🧠 Architecture Overview
 User Query → Neural Mesh (activates VNIs) → Aggregator → (optional) LLM → Final Response
 
-text
-
 - **VNIs** (Virtual Neuron Instances) – Domain‑expert modules that return an opinion (text) and a confidence score.
 - **Neural Mesh** – Routes the query to the most relevant VNIs based on keyword matching and learned patterns.
 - **Aggregator** – Collects VNI outputs, detects conflicts, calculates consensus, and optionally calls an LLM.
 - **LLM Gateway** – If enabled and an API key is provided, the aggregator sends a prompt built from the VNIs' reasoning to an LLM (DeepSeek/OpenAI) and returns the generated text.
 - **Memory** – Stores past interactions and learned patterns (supports FAISS for fast similarity search).
+
+---
+
+## 🔐 Proprietary Aggregator Binary
+
+The **aggregator** (which contains the Hebbian learning engine, consensus algorithms, conflict detection, and response synthesis) is **proprietary** and distributed as a compiled binary. It is the only component required to participate in the global BabyBIONN network and is responsible for:
+
+- Generating cryptographic identity (key pairs).
+- Signing all network messages (responses, votes).
+- Participating in consensus protocols.
+
+The rest of the codebase (VNIs, managers, P2P stubs, utilities) is open source under the **MPL 2.0** license.
+
+To obtain the aggregator binary:
+
+1. Clone the open‑source repository from GitHub.
+2. Download the signed binary from [https://downloads.babybionn.net](https://downloads.babybionn.net) (free for network participants; registration may be required).
+3. Place the binary in the `neuron/` directory of your cloned repository (e.g., `neuron/aggregator_core.so` or `.pyd`).
+4. Run your VBC as usual – the open‑source code will automatically detect and use the binary.
+
+> **Note**: Without the aggregator binary, your VBC will run in a limited offline mode and cannot join the global network.
 
 ---
 
@@ -161,11 +182,11 @@ babybionn-demo/
 │   │   └── dynamic_vni.py
 │   └── modules/                     # Shared modules (knowledge_base, etc.)
 ├── neuron/                           # Core neural mesh components
-│   ├── aggregator.py                 # Main aggregator with Hebbian learning
+│   ├── aggregator.py                 # Stub that loads the proprietary binary
 │   ├── vni_memory.py                 # Memory system
-│   ├── vni_storage.py                # Storage manager (thumbdrive persistence)
-│   ├── demoHybridAttention.py         # Attention mechanism
-│   ├── smart_activation_router.py     # Routing logic
+│   ├── vni_storage.py                # Storage manager
+│   ├── demoHybridAttention.py         # Attention mechanism (open source)
+│   ├── smart_activation_router.py     # Routing logic (open source)
 │   └── reinforcement_learning/        # Training data and pretraining processor
 ├── new/                               # New API and compatibility layer
 ├── knowledge_base/                    # Source knowledge files (JSON)
@@ -243,11 +264,13 @@ Start prototyping a P2P layer and share your progress.
 Collaborate with others who are interested in distributed AI.
 
 🤝 Contributing
-Contributions are welcome! Please open an issue or submit a pull request.
+Contributions are welcome! By submitting a pull request, you agree that your contributions will be licensed under the MPL 2.0. Please ensure that your changes do not introduce dependencies that are incompatible with this license.
 
 📄 License
-This project is licensed under the MIT License – see the LICENSE file for details.
+The BabyBIONN project is dual‑licensed:
 
-🙏 Acknowledgments
-Inspired by biological neural networks and Hebbian learning principles.
-Built with FastAPI, Docker, PyTorch, and the amazing open‑source community.
+All code except the aggregator core is open source under the Mozilla Public License 2.0 (MPL 2.0). This includes VNIs, managers, utilities, and the P2P networking layer. You are free to use, modify, and distribute these parts under the terms of the MPL 2.0.
+
+The aggregator core (containing the Hebbian learning engine, consensus algorithms, conflict detection, and response synthesis) is proprietary and distributed as a compiled binary. It is not open source and requires a separate download (free for network participants).
+
+For more details, see the LICENSE file.
