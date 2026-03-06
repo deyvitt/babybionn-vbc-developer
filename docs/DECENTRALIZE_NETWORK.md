@@ -1,5 +1,7 @@
 # Building a Decentralized Network for BabyBIONN
 
+[![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
+Copyright (c) 2026, BabyBIONN Contributors
 This document provides a step‑by‑step guide for developers who want to help build the peer‑to‑peer (P2P) network that connects millions of Virtual Brain Cells (VBCs) into a global, collaborative intelligence layer.
 
 **Current status**: The network is not yet implemented. This guide outlines the planned architecture and offers a practical roadmap for contributors.
