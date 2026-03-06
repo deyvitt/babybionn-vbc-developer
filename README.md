@@ -1,6 +1,7 @@
 # BabyBIONN – Layer 0 Contextual Intelligence
 
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
+Copyright (c) 2026, BabyBIONN Contributors
 
 **BabyBIONN is not another LLM.** It is the fundamental reasoning layer that gives LLMs context, memory, understanding, and continuity. Think of it as the **"operating system for intelligence"** – the Layer 0 that makes AI systems feel alive, coherent, and trustworthy.
 
