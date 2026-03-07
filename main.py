@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+# Copyright (c) 2026, BabyBIONN Contributors
 #!/usr/bin/env python3
 """BabyBIONN Autonomous Main Entry Point - Enhanced Hybrid Architecture
 Combines autonomous neural mesh features with clean software engineering patterns.
@@ -316,24 +320,6 @@ def create_main_app(mesh_core: EnhancedNeuralMeshCore, aggregator: UnifiedAggreg
     base_app = create_app(mesh_core) if HAS_NEW_STRUCTURE else FastAPI()
     # Initialize BabyBIONN state to None (will be set by main())
     base_app.state.babybionn = None     
-    # Initialize BabyBIONN
-#    try:
-#        from Babybionn_integration import BabyBIONNSystem
-#        llm_configs = {
-#            "deepseek": {
-#                "api_key": os.getenv("DEEPSEEK_API_KEY", ""),
-#                "base_url": "https://api.deepseek.com/v1"
-#            },
-#            "openai": {
-#                "api_key": os.getenv("OPENAI_API_KEY", "")
-#            }
-#        }
-#        babybionn = BabyBIONNSystem(llm_configs=llm_configs)
-#        base_app.state.babybionn = babybionn
-#        logger.info(f"✅ BabyBIONN initialized in app state with {len(babybionn.llm_gateway.clients)} providers")
-#    except Exception as e:
-#        logger.error(f"❌ Failed to initialize BabyBIONN: {e}")
-#        base_app.state.babybionn = None
 
     # Add CORS middleware (from main.py)
     base_app.add_middleware(
@@ -860,12 +846,18 @@ def create_main_app(mesh_core: EnhancedNeuralMeshCore, aggregator: UnifiedAggreg
             return {"success": True, "message": "Logged in successfully"}
         raise HTTPException(status_code=401, detail="Invalid password")
 
+    async def verify_admin(admin_session: str = Cookie(None)):
+        """Dependency to protect admin routes."""
+        if not admin_session or admin_session not in active_sessions:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        return True
+
     @base_app.post("/api/admin/pretrain")
     async def api_pretrain(
         domain: str = Form(...),
         file: UploadFile = File(...),
         session_id: str = Form(...),
-        admin_token: str = Form(...)
+        authenticated: bool = Depends(verify_admin)   # <-- new dependency
     ):
         # Debug logging
         print(f"\n{'='*60}")
@@ -874,13 +866,8 @@ def create_main_app(mesh_core: EnhancedNeuralMeshCore, aggregator: UnifiedAggreg
         print(f"   filename: {file.filename}")
         print(f"   content_type: {file.content_type}")
         print(f"   session_id: {session_id}")
-        print(f"   admin_token: {'[PROVIDED]' if admin_token else '[MISSING]'}")
         print(f"{'='*60}\n")
         
-        if admin_token != "babybionn_admin_2024":
-            print(f"❌ DEBUG: Invalid admin token: '{admin_token}'")
-            raise HTTPException(403, "Invalid admin token")
-    
         try:
             # Read and parse the uploaded JSON
             print(f"📖 DEBUG: Reading file contents...")
@@ -1099,7 +1086,6 @@ def create_main_app(mesh_core: EnhancedNeuralMeshCore, aggregator: UnifiedAggreg
                     "timestamp": datetime.now().isoformat()
                 }
             }
-            
         except HTTPException:
             raise
         except Exception as e:
@@ -1108,16 +1094,13 @@ def create_main_app(mesh_core: EnhancedNeuralMeshCore, aggregator: UnifiedAggreg
             traceback.print_exc()
             print(f"\n")
             raise HTTPException(400, f"Pretraining failed: {str(e)}")
-        
+                
     @base_app.get("/api/admin/knowledge-status")
-    async def api_knowledge_status(admin_token: str):
-        if admin_token != "babybionn_admin_2024":
-            raise HTTPException(403, "Invalid admin token")
+    async def api_knowledge_status(authenticated: bool = Depends(verify_admin)):
 
         try:
             # Get the VNI manager
             vni_manager = mesh_core.vni_manager
-
             domains = ["medical", "technical", "legal", "general", "core"]
             knowledge_bases = {}
 
@@ -1397,8 +1380,8 @@ async def main():
         print("="*70)
         print("🧪 MEDICAL VNI DEBUG - COMPLETE")
         print("="*70 + "\n")
-        # ==================== MEDICAL VNI DEBUG END ====================
 
+        # ==================== MEDICAL VNI DEBUG END ====================
         mesh_core = EnhancedNeuralMeshCore(vni_manager)
         logger.info("🤝 Initializing Enhanced Aggregator...")
 
@@ -1430,14 +1413,6 @@ async def main():
             vni_manager=vni_manager,
             config=aggregator_config  # ← CRITICAL!
         )
-        # Make aggregator available globally or pass to app creation
-        
-        # Test aggregator
-        #test_aggregated = await aggregator.aggregate_response(
-        #    query="Test aggregator functionality",
-        #    session_id="test_session"
-        #)
-        #logger.info(f"✅ Aggregator test successful. Strategy: {test_aggregated.get('aggregation_strategy', 'unknown')}")
 
         # Create FastAPI app with both mesh_core AND aggregator
         logger.info("🌐 Creating Enhanced FastAPI Application...")
@@ -1451,12 +1426,6 @@ async def main():
         set_global_app(app)
         logger.info("✅ Global app reference updated")
         print(f"🔍 DEBUG: set_global_app() called, get_global_app() = {get_global_app()}")
-
-        # ========== ALSO UPDATE MODULE-LEVEL APP ==========
-        # This ensures Uvicorn serves the real app, not the placeholder
-        # sys.modules[__name__].app = app
-        # logger.info("✅ Module-level app replaced with real app")
-        # print(f"🔍 DEBUG: Module app updated, sys.modules[__name__].app = {sys.modules[__name__].app}") 
 
         config = uvicorn.Config(
             app,  # ← Use the app from create_main_app, NOT the module-level app
