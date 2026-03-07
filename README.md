@@ -167,6 +167,19 @@ Disk	5 GB	10 GB
 Network	Broadband internet	Stable connection for LLM APIs
 These specs assume you run BabyBIONN in mock mode or with a small local knowledge base. If you plan to use large language models (via API), the system itself is lightweight; the API calls depend on your internet connection.
 
+# To start back babybionn in the docker:
+First access and login to your docker desktop
+Then ensure you already run the docker : 
+docker run -d -p 8002:8002 --name babybionn deyvitt69/babybionn:latest
+
+wait for response, if you get 
+"docker: Error response from daemon: Conflict. The container name "/babybionn" is already in use by container "d154bad7b5d868353b4fbd12a4e25d31eb04311d753ebcdbe6e04e03b40dc08e". You have to remove (or rename) that container to be able to reuse that name.
+
+Run 'docker run --help' for more information
+
+access your ubuntu CLI key in: 
+docker start babybionn, then /> enter
+
 📁 Project Structure (High‑Level)
 text
 babybionn-demo/
