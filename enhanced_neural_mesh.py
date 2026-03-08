@@ -2,7 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # Copyright (c) 2026, BabyBIONN Contributors
-
 """enhanced_neural_mesh.py - Ultimate Neural Mesh Orchestrator
 Combines neural mesh sophistication with clean orchestrator design"""
 import os
@@ -395,6 +394,7 @@ class EnhancedNeuralMeshCore:
     """Ultimate neural mesh orchestrator combining both systems"""
     def __init__(self, vni_manager: VNIManager):
         self.vni_manager = vni_manager
+        self.node_id = str(uuid.uuid4())
 
         # ====================== MOCK MODE SETUP ======================
         self.mock_mode_enabled = os.getenv("MOCK_MODE_ENABLED", "false").lower() == "true"
@@ -556,6 +556,20 @@ class EnhancedNeuralMeshCore:
             self.base_vni = None
             logger.warning("⚠️ BaseVNI patterns not available")
     
+    def get_capability_manifest(self) -> List[Dict[str, Any]]:
+        """Return a list of VNIs with their types and domains for P2P advertisement."""
+        manifest = []
+        for vni_id, vni in self.vni_manager.vni_instances.items():
+            # Try to get subdomains; fallback to empty list
+            subdomains = getattr(vni, 'subdomains', [])        
+            manifest.append({
+                'vni_id': vni_id,
+                'type': getattr(vni, 'vni_type', 'unknown'),
+                'domain': getattr(vni, 'domain', 'general'),
+                'subdomains': subdomains,            
+            })
+        return manifest
+
     # ==================== MESH INITIALIZATION (FROM neural_mesh.py) ====================
     def _initialize_mesh_from_existing(self):
         """Initialize mesh from existing VNIs and pathways"""
@@ -689,7 +703,6 @@ class EnhancedNeuralMeshCore:
         """Enhanced processing with task management and neural mesh"""
         # ============ MOCK MODE CHECK - DO THIS FIRST! ============
         # Check if mock mode is enabled (from __init__)
-        logger.debug(f"🔍 MOCK CHECK - enabled={getattr(self, 'mock_mode_enabled', 'NOT SET')}, has_provider={hasattr(self, 'mock_provider')}")
         if hasattr(self, 'mock_mode_enabled') and self.mock_mode_enabled and hasattr(self, 'mock_provider'):
             logger.info(f"🎭 MOCK MODE: Generating mock response for: '{query[:50]}...'")
             mock_response = self.mock_provider.generate_response(query, context or {})
@@ -742,30 +755,6 @@ class EnhancedNeuralMeshCore:
             # 🔥 ADD THIS CHECK 🔥
             if not vni_responses or all('error' in r for r in vni_responses.values()):
                 logger.warning("No successful VNI responses - trying fallbacks")
-                
-                # Check if mock mode is enabled - moved to top this is not needed
-                # mock_enabled = os.getenv("MOCK_MODE_ENABLED", "false").lower() == "true"
-                
-                #if mock_enabled:
-                #    # Use mock provider
-                #    from neuron.mock_response import MockResponseProvider
-                #    if not hasattr(self, 'mock_provider'):
-                #        self.mock_provider = MockResponseProvider()
-                    
-                #    mock_response = self.mock_provider.generate_response(query, context)
-                    
-                #    # Return mock response directly
-                #    return {
-                #        'response': mock_response['response'],
-                #        'confidence': mock_response['confidence'],
-                #        'sources': ['mock_provider'],
-                #        'causal_chain': [
-                #            {'step': 'vni_fallback', 'reason': 'No VNIs could process query'},
-                #            {'step': 'mock_provider', 'reason': 'Used mock mode for learning'}
-                #        ],
-                #        'timestamp': datetime.now().isoformat(),
-                #        'task_id': task_id
-                #    }
                 
                 # Try DeepSeek API as fallback
                 deepseek_response = await self._call_deepseek_fallback(query, context, task_id)

@@ -2,7 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # Copyright (c) 2026, BabyBIONN Contributors
-
 #!/usr/bin/env python3
 """BabyBIONN Autonomous Main Entry Point - Enhanced Hybrid Architecture
 Combines autonomous neural mesh features with clean software engineering patterns.
@@ -314,6 +313,8 @@ async def serve_html_file_anywhere(filename: str):
     logger.warning(f"HTML file not found: {filename}")
     return None
 
+from neuron.p2p import P2PNode
+import neuron.p2p.protocols as p2p_protocols
 # ========== THEN THE create_main_app FUNCTION ==========
 def create_main_app(mesh_core: EnhancedNeuralMeshCore, aggregator: UnifiedAggregator = None) -> FastAPI:
     """Create FastAPI application using EnhancedNeuralMeshCore directly"""
@@ -1381,8 +1382,8 @@ async def main():
         print("="*70)
         print("🧪 MEDICAL VNI DEBUG - COMPLETE")
         print("="*70 + "\n")
-
         # ==================== MEDICAL VNI DEBUG END ====================
+
         mesh_core = EnhancedNeuralMeshCore(vni_manager)
         logger.info("🤝 Initializing Enhanced Aggregator...")
 
@@ -1414,6 +1415,21 @@ async def main():
             vni_manager=vni_manager,
             config=aggregator_config  # ← CRITICAL!
         )
+        # P2P node initialization (if enabled)
+        p2p_enabled = os.getenv('ENABLE_P2P', 'false').lower() == 'true'
+        if p2p_enabled:
+            listen_addr = f"/ip4/0.0.0.0/tcp/{os.getenv('P2P_PORT', '9000')}"
+            p2p_node = P2PNode(listen_addr=listen_addr)
+            asyncio.create_task(p2p_node.start())
+            # Give the aggregator a reference to the P2P node
+            aggregator.p2p_node = p2p_node
+            # Set the global aggregator for protocol handlers
+            p2p_protocols.set_aggregator(aggregator)
+            # Also set the mesh_core reference so identify handler can get capability manifest
+            p2p_protocols.set_mesh_core(mesh_core)
+            logger.info("P2P mode enabled, node starting...")
+        else:
+            aggregator.p2p_node = None
 
         # Create FastAPI app with both mesh_core AND aggregator
         logger.info("🌐 Creating Enhanced FastAPI Application...")

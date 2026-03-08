@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     curl \
     build-essential \
+    libgmp-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. Copy requirements with CPU PyTorch

@@ -4,10 +4,12 @@ Implements true synaptic plasticity for VNI-to-VNI connections
 """
 import sys
 import json
+import uuid
 import torch
 import pickle
 import asyncio
 import hashlib
+import inspect
 import logging
 import numpy as np
 from enum import Enum
@@ -980,6 +982,7 @@ class UnifiedAggregator(nn.Module):
         )
         # To enable "Thinking of 'Thinking' in BabyBIONN"
         self.meta_cognitive = integrate_with_aggregator(self)
+        self.p2p_node = None   # will be set from main.py if P2P enabled
 
         # Orchestration components
         self.vni_manager = vni_manager
@@ -1422,7 +1425,116 @@ class UnifiedAggregator(nn.Module):
             'norepinephrine': norepinephrine,
             'overall_neurochemical_balance': (dopamine + acetylcholine + serotonin + norepinephrine) / 4
         }
-
+    async def handle_remote_query(self, query_msg: Dict[str, Any]) -> Dict[str, Any]:
+        """Process a query received from another VBC."""
+        query = query_msg.get('query_text', '')
+        context = {'remote': True, 'session_id': query_msg.get('session_id', 'remote')}
+        
+        # Use existing method to get local opinions (you may need to adapt)
+        # We assume you have a method like _get_local_opinions – if not, you can call process_query_advanced.
+        # For simplicity, we'll use a placeholder.
+        # In a real implementation, you would invoke the local VNIs.
+        local_opinions = await self._get_local_opinions(query, context)  # You may need to create this helper
+        
+        # Synthesize a simple response (you can reuse the synthesizer)
+        from neuron.shared.reasoning_output import ReasoningOutput  # adjust import as needed
+        consensus = {'consensus_score': 0.8}  # placeholder
+        conflicts = []
+        final_response = self.response_synthesizer.synthesize_response(
+            local_opinions, consensus, conflicts
+        )
+        
+        return {
+            'query_id': query_msg['query_id'],
+            'response': final_response,
+            'confidence': 0.8,
+            'vni_domains': [self._get_domain(vni_id) for vni_id in local_opinions.keys()]
+        }
+    
+    async def _query_remote_vnis(self, query: str, context: Dict, candidates: List[Dict]) -> List[Dict]:
+        """Send queries to remote VBCs and collect responses."""
+        if not self.p2p_node:
+            return []
+        tasks = []
+        for cand in candidates:
+            msg = {
+                'query_id': str(uuid.uuid4()),
+                'query_text': query,
+                'session_id': context.get('session_id', ''),
+                'target_domain': cand.get('domain')
+            }
+            tasks.append(self.p2p_node.send_message(cand['peer_id'], '/babybionn/query/1.0.0', msg))
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        return [r for r in results if isinstance(r, dict) and 'error' not in r]
+    
+    async def _get_local_opinions(self, query: str, context: Dict) -> Dict[str, Dict[str, Any]]:
+        """Query all local VNIs and return their raw outputs.
+        This is used when handling remote queries or for local opinion gathering."""
+        if not self.vni_manager:
+            logger.warning("No VNI manager available for local opinions")
+            return {}
+    
+        opinions = {}
+        tasks = []
+    
+        # Iterate over all VNI instances (or select based on context)
+        for vni_id, vni in self.vni_manager.vni_instances.items():
+            # Optionally, you could filter by domain if context provides one
+            # For now, query all
+            if hasattr(vni, 'process_query'):
+                if inspect.iscoroutinefunction(vni.process_query):
+                    tasks.append(vni.process_query(query=query, context=context))
+                else:
+                    # If it's synchronous, run in thread to avoid blocking
+                    tasks.append(asyncio.to_thread(vni.process_query, query, context))
+            elif hasattr(vni, 'process_async'):
+                tasks.append(vni.process_async(query, context))
+            elif hasattr(vni, 'process'):
+                if inspect.iscoroutinefunction(vni.process):
+                    tasks.append(vni.process(query, context))
+                else:
+                    tasks.append(asyncio.to_thread(vni.process, query, context))
+            else:
+                logger.debug(f"VNI {vni_id} has no suitable process method, skipping")
+    
+        # Run all VNI calls concurrently
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+        # Collect successful results
+        for vni_id, result in zip(self.vni_manager.vni_instances.keys(), results):
+            if isinstance(result, Exception):
+                logger.error(f"VNI {vni_id} failed: {result}")
+                continue
+            # Convert the result to the format expected by the aggregator
+            # This may need adjustment based on what your VNIs return
+            opinions[vni_id] = self._format_vni_output(vni_id, result)
+    
+        logger.info(f"Collected {len(opinions)} local opinions for remote query")
+        return opinions
+    
+    def _format_vni_output(self, vni_id: str, raw_output: Any) -> Dict[str, Any]:
+        """Convert a raw VNI output to the aggregator's expected format."""
+        if isinstance(raw_output, dict):
+            # Already a dict – ensure it has required fields
+            output = {
+                'response': raw_output.get('response', str(raw_output)),
+                'confidence_score': raw_output.get('confidence', 0.5),
+                'vni_metadata': raw_output.get('vni_metadata', {}),
+            }
+            # Ensure vni_metadata has success flag
+            if 'vni_metadata' not in output:
+                output['vni_metadata'] = {}
+            if 'success' not in output['vni_metadata']:
+                output['vni_metadata']['success'] = True  # assume success if we got a dict
+            return output
+        else:
+            # String or other type – wrap it
+            return {
+                'response': str(raw_output),
+                'confidence_score': 0.5,
+                'vni_metadata': {'vni_id': vni_id, 'success': True}
+            }
+            
     def _make_json_serializable(self, obj):
         """Recursively convert numpy types to native Python types."""
         import numpy as np

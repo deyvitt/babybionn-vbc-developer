@@ -19,6 +19,9 @@ requests==2.31.0
 aiohttp==3.9.1
 httpx==0.25.2
 
+# ============= P2P PROTOCOLS ===========================
+libp2p>=0.6.0
+
 # ============= Numerical & Data Processing =============
 torch
 torchvision
