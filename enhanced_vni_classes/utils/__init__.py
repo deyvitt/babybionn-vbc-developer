@@ -1,3 +1,8 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+# Copyright (c) 2026, BabyBIONN Contributors
+
 # enhanced_vni_classes/utils/__init__.py
 """Utility modules for the Enhanced VNI system.
 Provides configuration, logging, dependency management, and other utilities."""

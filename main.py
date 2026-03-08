@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # Copyright (c) 2026, BabyBIONN Contributors
+
 #!/usr/bin/env python3
 """BabyBIONN Autonomous Main Entry Point - Enhanced Hybrid Architecture
 Combines autonomous neural mesh features with clean software engineering patterns.
