@@ -3,7 +3,6 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # Copyright (c) 2026, BabyBIONN Contributors
 
-# neuron/p2p/message.py
 import json
 from typing import List, Optional
 from dataclasses import dataclass, asdict

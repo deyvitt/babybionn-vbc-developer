@@ -10,6 +10,7 @@ import logging
 from typing import List, Optional
 from .peer_registry import PeerRegistry
 from dataclasses import dataclass, asdict
+from .messages import IdentifyMessage, QueryMessage, QueryResponse, to_json, from_json
 
 # These will be set from main.py
 _aggregator = None

@@ -3,20 +3,17 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # Copyright (c) 2026, BabyBIONN Contributors
 
-# neuron/p2p/node.py
-import asyncio
 import os
 import json
+import libp2p
+import asyncio
 import logging
 from pathlib import Path
-
-from libp2p import new_node
+from .peer_registry import PeerRegistry
+from .protocols import register_handlers
+from .discovery import start_mdns, start_dht
 from libp2p.crypto.ed25519 import Ed25519PrivateKey
 from libp2p.peer.peerinfo import info_from_p2p_addr
-
-from .discovery import start_mdns, start_dht
-from .protocols import register_handlers
-from .peer_registry import PeerRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +31,7 @@ class P2PNode:
 
         # Load or create Ed25519 key
         key_pair = self._load_or_create_key()
-        self.host = await new_node(
+        self.host = await libp2p.new_node(
             transport_opt=['/ip4/0.0.0.0/tcp/9000'],
             muxer_opt=['/mplex/6.7.0'],
             sec_opt=['/secio/1.0.0'],

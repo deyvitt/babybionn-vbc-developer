@@ -6,6 +6,14 @@
 # neuron/p2p/__init__.py
 from .node import P2PNode
 from .peer_registry import PeerRegistry
-from . import messages
+from .messages import IdentifyMessage, QueryMessage, QueryResponse, to_json, from_json
 
-__all__ = ['P2PNode', 'PeerRegistry', 'messages'] 
+__all__ = [
+    'P2PNode', 
+    'PeerRegistry',
+    'IdentifyMessage',
+    'QueryMessage', 
+    'QueryResponse',
+    'to_json',
+    'from_json'
+]

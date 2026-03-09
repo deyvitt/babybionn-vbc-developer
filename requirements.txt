@@ -8,7 +8,7 @@ python-multipart==0.0.6
 # OpenAI SDK (for fallback)
 openai==1.3.6
 anthropic==0.21.1
-google-generativeai==0.3.2
+# google-generativeai==0.3.2
 deepseek==1.0.0
 
 # Tenacity for retries
@@ -18,9 +18,6 @@ tenacity==8.2.3
 requests==2.31.0
 aiohttp==3.9.1
 httpx==0.25.2
-
-# ============= P2P PROTOCOLS ===========================
-libp2p>=0.6.0
 
 # ============= Numerical & Data Processing =============
 torch
