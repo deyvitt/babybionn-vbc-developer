@@ -1,0 +1,18 @@
+# ============= BabyBIONN Core Binary Packages =============
+# These packages contain the proprietary core algorithms
+# Install from private GitHub repositories
+
+# Core Aggregator with Hebbian learning
+git+ssh://git@github.com/deyvitt/babybionn-aggregator.git
+
+# Synaptic learning engine, memory, and types
+git+ssh://git@github.com/deyvitt/babybionn-synaptic.git
+
+# TransVNI comparison and segregation
+git+ssh://git@github.com/deyvitt/babybionn-transform.git
+
+# Smart activation routing
+git+ssh://git@github.com/deyvitt/babybionn-activation.git
+
+# Hybrid attention mechanisms
+git+ssh://git@github.com/deyvitt/babybionn-attention.git

@@ -4,6 +4,7 @@
 # Copyright (c) 2026, BabyBIONN Contributors
 
 """Legal domain VNI implementation"""
+import hashlib
 from datetime import datetime
 from .base_knowledge_loader import BaseKnowledgeLoader
 from typing import Dict, Any, Optional, List
@@ -14,10 +15,9 @@ from ..modules.web_search import WebSearch
 from ..modules.learning_system import LearningSystem
 from ..modules.knowledge_base import KnowledgeBase
 from ..utils.logger import get_logger
-import hashlib
-from neuron.vni_memory import VNIMemory
-from neuron.demoHybridAttention import DemoHybridAttention
-from neuron.smart_activation_router import SmartActivationRouter, FunctionRegistry
+from bionn_synaptic import VNIMemory
+from bionn_attention import DemoHybridAttention
+from bionn_activation import SmartActivationRouter, FunctionRegistry
 
 logger = get_logger(__name__)
 

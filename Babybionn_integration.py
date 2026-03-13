@@ -7,7 +7,7 @@ import logging
 from datetime import datetime
 from llm_Gateway import get_gateway, LLMConfig, LLMProvider
 from template_engine import HybridAdaptiveTemplateEngine
-from neuron.aggregator import UnifiedAggregator  # Your existing aggregator
+from bionn_aggregator import UnifiedAggregator
 import asyncio
 from typing import Dict, Optional, Any
 
@@ -27,7 +27,7 @@ class BabyBIONNSystem:
         # The gateway will be created once via get_gateway() inside aggregator
         
         # Create proper config object for aggregator - NO llm_configs here!
-        from neuron.shared.synaptic_config import SynapticConfig
+        from bionn_synaptic import SynapticConfig
         
         # Start with default config
         config = SynapticConfig()

@@ -13,10 +13,11 @@ RUN apt-get update && apt-get install -y \
     libprotobuf-dev \
     protobuf-compiler \
     libssl-dev \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. Copy requirements.txt
-COPY requirements.txt .
+COPY requirements.txt requirements-binaries.txt ./
 
 # 3. First, install a known-good protobuf version
 RUN pip install --no-cache-dir protobuf==3.20.3
@@ -35,6 +36,12 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # 6. Install remaining packages from requirements.txt
 # (protobuf and libp2p lines should be removed from requirements.txt to avoid conflict)
 RUN pip install --no-cache-dir -r requirements.txt
+
+# 6.5 Install BabyBIONN binary packages from private repos
+# Note: Users need to have SSH keys configured for GitHub access
+RUN mkdir -p /root/.ssh && \
+    ssh-keyscan github.com >> /root/.ssh/known_hosts
+RUN --mount=type=ssh pip install --no-cache-dir -r requirements-binaries.txt
 
 # 7. Verify protobuf version
 RUN python -c "import google.protobuf; print('✅ Installed protobuf version:', google.protobuf.__version__)"
@@ -75,6 +82,9 @@ import transformers
 import fastapi
 import spacy
 import libp2p
+# Test binary packages
+from babybionn_aggregator import UnifiedAggregator
+from babybionn_synaptic import ConnectionType
 print("✅ Core dependencies imported successfully")
 print(f"PyTorch {torch.__version__}, Transformers {transformers.__version__}")
 print(f"libp2p {libp2p.__version__ if hasattr(libp2p, '__version__') else 'installed'}")

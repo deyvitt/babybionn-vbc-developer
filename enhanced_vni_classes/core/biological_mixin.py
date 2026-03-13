@@ -59,7 +59,7 @@ class BiologicalSystemsMixin:
     def _initialize_attention_system(self):
         """Initialize attention system with default config"""
         try:
-            from neuron.demoHybridAttention import DemoHybridAttention
+            from bionn_attention import DemoHybridAttention
         
             # Get config from instance or use default
             attention_config = getattr(self, 'attention_config', {})
@@ -108,7 +108,7 @@ class BiologicalSystemsMixin:
     def _initialize_activation_router(self):
         """Initialize activation router"""
         try:
-            from neuron.smart_activation_router import SmartActivationRouter
+            from bionn_activation import SmartActivationRouter
             
             vni_id = getattr(self, 'instance_id', 'unknown')
             domain = getattr(self, 'domain', 'general')
@@ -127,7 +127,7 @@ class BiologicalSystemsMixin:
     def _initialize_memory_system(self):
         """Initialize memory system"""
         try:
-            from neuron.vni_memory import VniMemory
+            from bionn_synaptic import VniMemory
             
             vni_id = getattr(self, 'instance_id', 'unknown')
             memory_config = getattr(self, 'memory_config', {})

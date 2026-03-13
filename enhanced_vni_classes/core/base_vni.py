@@ -28,9 +28,9 @@ from .biological_mixin import BiologicalSystemsMixin
 
 # ============ BIOLOGICAL SYSTEMS (BIONN-ATTN-ACT) ============
 # Biological attention and activation systems
-from neuron.demoHybridAttention import DemoHybridAttention
-from neuron.smart_activation_router import SmartActivationRouter
-from neuron.vni_memory import VniMemory
+from bionn_attention import DemoHybridAttention
+from bionn_activation import SmartActivationRouter
+from bionn_synaptic import VniMemory
 # ===========================================================
 
 logger = get_logger(__name__)

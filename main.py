@@ -40,7 +40,7 @@ try:
     from new.utils.orchestrator_config import Config
     from enhanced_neural_mesh import EnhancedNeuralMeshCore
     from enhanced_vni_classes.managers.vni_manager import VNIManager
-    from neuron.aggregator import UnifiedAggregator, ResponseAggregator
+    from bionn_aggregator import UnifiedAggregator, ResponseAggregator
 
     HAS_NEW_STRUCTURE = True
 except ImportError as e:
@@ -57,8 +57,8 @@ except ImportError as e:
 
 # ========== ADD NEW LEARNING IMPORTS ==========
 try:
-    from neuron.synaptic_visualization import SynapticVisualizer
-    from neuron.synaptic_learning_engine import integrate_with_babybionn
+    from bionn_synaptic import SynapticVisualizer
+    from bionn_synaptic import integrate_with_babybionn
 
     LEARNING_AVAILABLE = True
     logger.info("✅ Learning engine and visualization available")
@@ -1387,7 +1387,7 @@ async def main():
         mesh_core = EnhancedNeuralMeshCore(vni_manager)
         logger.info("🤝 Initializing Enhanced Aggregator...")
 
-        from neuron.shared.synaptic_config import SynapticConfig
+        from bionn_synaptic import SynapticConfig
         # Create config with Hebbian learning ENABLED
         aggregator_config = SynapticConfig(
             aggregator_id="unified_aggregator",

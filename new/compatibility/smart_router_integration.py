@@ -18,7 +18,7 @@ def import_smart_activation_router():
         PROJECT_ROOT = Path(__file__).parent.parent.parent
         sys.path.insert(0, str(PROJECT_ROOT))
         
-        from neuron.smart_activation_router import SmartActivationRouter
+        from bionn_activation import SmartActivationRouter
         logger.info("✅ Imported SmartActivationRouter from original file")
         return SmartActivationRouter
         

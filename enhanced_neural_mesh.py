@@ -26,10 +26,10 @@ from enhanced_vni_classes.core.neural_pathway import NeuralPathway
 from enhanced_vni_classes.core.registry import VNIRegistry
 from neuron.vni_storage import StorageManager
 from neuron.vni_messenger import VNIMessenger
-from neuron.smart_activation_router import SmartActivationRouter
-from neuron.demoHybridAttention import DemoHybridAttention
-from neuron.aggregator import ResponseAggregator
-from neuron.shared.synaptic_config import SynapticConfig as AggregatorConfig
+from bionn_activation import SmartActivationRouter
+from bionn_attention import DemoHybridAtention
+from bionn_aggregator import ResponseAggregator
+from bionn_synaptic import SynapticConfig as AggregatorConfig
 
 logger = logging.getLogger("enhanced_neural_mesh")
 
@@ -412,8 +412,8 @@ class EnhancedNeuralMeshCore:
                 self.mock_mode_enabled = False
         else:
             logger.info("📵 MOCK MODE DISABLED - Using real API calls")
-        # ===========================================================
 
+        # ===========================================================
         # In EnhancedNeuralMeshCore.__init__(), replace the default VNI creation with:
         if len(self.vni_manager.vni_instances) == 0:
             logger.info("🔄 Creating default VNIs...")
@@ -478,6 +478,7 @@ class EnhancedNeuralMeshCore:
         self.router = SmartActivationRouter() if hasattr(self, '_router_available') and self._router_available else None
         self.storage_manager = StorageManager()
         self.messenger = VNIMessenger(storage_manager=self.storage_manager)
+
         # Initialize DemoHybridAttention with required parameters
         if hasattr(self, '_attention_available') and self._attention_available:
             try:
@@ -518,7 +519,7 @@ class EnhancedNeuralMeshCore:
     def _init_routing_modules(self):
         """Initialize routing and attention modules with fallbacks (from vni_orchestrator)"""
         try:
-            from neuron.demoHybridAttention import HybridAttentionEngine
+            from bionn_attention import HybridAttentionEngine
             self.attention_engine = HybridAttentionEngine()
             self._attention_available = True
             logger.info("✅ HybridAttentionEngine loaded")
@@ -528,7 +529,7 @@ class EnhancedNeuralMeshCore:
             logger.warning("⚠️ HybridAttentionEngine not available")
         
         try:
-            from neuron.smart_activation_router import SmartActivationRouter
+            from bionn_activation import SmartActivationRouter
             self.activation_router = SmartActivationRouter()
             self._router_available = True
             logger.info("✅ SmartActivationRouter loaded")
@@ -538,7 +539,7 @@ class EnhancedNeuralMeshCore:
             logger.warning("⚠️ SmartActivationRouter not available")
         
         try:
-            from neuron.transVNI_compare_segregate import TransVNICompareSegregate
+            from bionn_transform import TransVNICompareSegregate
             self.trans_vni_module = TransVNICompareSegregate()
             self._trans_vni_available = True
             logger.info("✅ TransVNICompareSegregate loaded")
@@ -1944,11 +1945,6 @@ class EnhancedNeuralMeshCore:
             vni = self.vni_manager.vni_instances.get(vni_id)
             if vni and hasattr(vni, 'learn_from_interaction'):
             
-                # Each VNI learns both:
-                # 1. Its own contribution
-                # 2. The collective consensus
-                # 3. How it fits into the bigger picture
-                
                 learning_package = {
                     'query': task.query,
                     'my_response': task.vni_responses.get(vni_id, {}),  # What I said

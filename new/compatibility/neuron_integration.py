@@ -19,11 +19,11 @@ def import_neuron_modules():
         sys.path.insert(0, str(PROJECT_ROOT))
         
         # Import demoHybridAttention
-        from neuron.demoHybridAttention import DemoHybridAttention
+        from bionn_attention import DemoHybridAttention
         logger.info("✅ Imported DemoHybridAttention")
         
         # Import aggregator
-        from neuron.aggregator import ResponseAggregator, AggregatorConfig
+        from bionn_aggregator import ResponseAggregator, AggregatorConfig
         logger.info("✅ Imported ResponseAggregator")
         
         # Import RL modules if available

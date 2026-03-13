@@ -13,21 +13,18 @@ import hashlib
 import logging
 from datetime import datetime
 from types import SimpleNamespace
-from typing import Dict, List, Any, Optional, Tuple
-
-from .base_knowledge_loader import BaseKnowledgeLoader
+from bionn_synaptic import VNIMemory
+from ..modules.web_search import WebSearch
 from ..core.base_vni import EnhancedBaseVNI
+from bionn_attention import DemoHybridAttention
+from ..utils.logger import get_logger, VNILogger
+from typing import Dict, List, Any, Optional, Tuple
+from .base_knowledge_loader import BaseKnowledgeLoader
 from ..core.capabilities import VNICapabilities, VNIType
 from ..modules.knowledge_base import KnowledgeBase, KnowledgeEntry
+from bionn_activation import SmartActivationRouter, FunctionRegistry
 from ..modules.learning_system import LearningSystem, LearningExperience
-# from ..modules.generation import EnhancedGenerationModule, GenerationStyle # TextGenerator
-from ..modules.web_search import WebSearch
-# from ..modules.attention import AttentionMechanism, AttentionType, AttentionWeight
 from ..modules.classifier import DomainClassifier, ClassificationResult, Domain
-from ..utils.logger import get_logger, VNILogger
-from neuron.vni_memory import VniMemory as VNIMemory
-from neuron.demoHybridAttention import DemoHybridAttention
-from neuron.smart_activation_router import SmartActivationRouter, FunctionRegistry
 
 logger = logging.getLogger(__name__)
 

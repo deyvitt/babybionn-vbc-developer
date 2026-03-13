@@ -15,9 +15,9 @@ import torch.nn.functional as F
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Any, Tuple
 from specialized_vni_base import SpecializedVNIBase
-from neuron.vni_memory import VNIMemory  # Memory toolkit
-from neuron.demoHybridAttention import DemoHybridAttention
-from neuron.smart_activation_router import SmartActivationRouter, FunctionRegistry
+from bionn_synaptic import VNIMemory
+from bionn_attention import DemoHybridAttention
+from bionn_activation import SmartActivationRouter, FunctionRegistry
 
 logger = logging.getLogger("operAction_technical_enhanced")
 

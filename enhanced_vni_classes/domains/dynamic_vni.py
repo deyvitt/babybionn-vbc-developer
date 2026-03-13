@@ -16,12 +16,12 @@ from dataclasses import dataclass, field, asdict
 from typing import Dict, Any, List, Optional, Set, Tuple, Callable
 
 # Keep ALL original imports
-from neuron.vni_memory import VNIMemory
+from bionn_synaptic import VNIMemory
 from ..modules.knowledge_base import KnowledgeBase
 from ..core.pipeline_steps import PipelineStep
 from .base_knowledge_loader import BaseKnowledgeLoader
-from neuron.demoHybridAttention import DemoHybridAttention
-from neuron.smart_activation_router import SmartActivationRouter
+from bionn_attention import DemoHybridAttention
+from bionn_activation import SmartActivationRouter
 from ..core.base_vni import EnhancedBaseVNI
 from ..core.capabilities import VNICapabilities, VNIType
 from ..modules.classifier import DomainClassifier
