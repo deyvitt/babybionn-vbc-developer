@@ -30,6 +30,13 @@ For a deep dive into the vision, architecture, tokenomics, and technical roadmap
 
 ---
 
+## 👩‍💻 Developer Resources
+
+For detailed guidance on customizing your VBC – including adding multimodal capabilities, GPU support, creating new VNIs, and extending the learning system – check out our **[Developer Notes](DEVELOPERS_NOTES.md)**.
+
+[📘 Read the Developer Notes →](DEVELOPERS_NOTES.md)
+
+
 ## 📦 Repository Structure
 babybionn-vbc-developer/
 ├── enhanced_vni_classes/ # Open‑source VNIs (medical, legal, technical, general)
