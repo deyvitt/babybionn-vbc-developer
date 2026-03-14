@@ -11,6 +11,25 @@ Each BabyBIONN instance is a single **Virtual Brain Cell (VBC)**. When connected
 
 ---
 
+## 📄 BabyBIONN Whitepaper
+
+For a deep dive into the vision, architecture, tokenomics, and technical roadmap of the BabyBIONN decentralized intelligence network, read our official whitepaper:
+
+[![BabyBIONN Whitepaper](https://img.shields.io/badge/Whitepaper-View%20Now-3B82F6?style=for-the-badge)](https://deyvitt.github.io/babybionn-vbc-developer/)
+
+**Topics covered:**
+- The Layer-0 intelligence architecture
+- Virtual Brain Cells (VBCs) and Hebbian learning
+- Decentralized P2P network vision
+- Three-token economy (OxyGEN, Neuroshare, neurocent)
+- ERC-8004 & ERC-8183 integration
+- Technical roadmap and ethical considerations
+
+[📖 Read the Full Whitepaper →](https://deyvitt.github.io/babybionn-vbc-developer/)
+
+
+---
+
 ## 📦 Repository Structure
 babybionn-vbc-developer/
 ├── enhanced_vni_classes/ # Open‑source VNIs (medical, legal, technical, general)
