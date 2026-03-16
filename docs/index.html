@@ -675,18 +675,26 @@ BabyBIONN + LLM = A complete, trustworthy intelligence</code></pre>
                 <p>Here's how BabyBIONN processes a user query: <em>"I have a rash and fever"</em></p>
 
                 <div class="mermaid">
-                    graph LR
-                        A["User Query: 'I have a rash and fever'"] --> B["Neural Mesh"]
-                        B --> C["Symptom Analyzer VNI"]
-                        B --> D["Medical History VNI"]
-                        B --> E["Drug Interaction VNI"]
+                    sequenceDiagram
+                        participant User
+                        participant Mesh as Neural Mesh
+                        participant Sym as Symptom Analyzer
+                        participant Med as Medical History
+                        participant Drug as Drug Interaction
+                        participant Agg as Aggregator
+                        participant LLM
                         
-                        C --> F["Aggregator<br/>Confidence: 0.9"]
-                        D --> F["Aggregator<br/>Confidence: 0.8"]
-                        E --> F["Aggregator<br/>Confidence: 0.95"]
+                        User->>Mesh: "I have a rash and fever"
+                        Mesh->>Sym: Route query
+                        Mesh->>Med: Route query
+                        Mesh->>Drug: Route query
                         
-                        F --> G["Consensus: 'Check for allergies, suggest antihistamines'"]
-                        G --> H["LLM articulates: 'Based on your symptoms and history...'"]
+                        Sym-->>Agg: Opinion (0.9)
+                        Med-->>Agg: Opinion (0.8)
+                        Drug-->>Agg: Opinion (0.95)
+                        
+                        Agg->>LLM: Send consensus
+                        LLM->>User: Final response
                 </div>
 
                 <div class="card-grid">
