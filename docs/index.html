@@ -394,17 +394,17 @@
             .container {
                 grid-template-columns: 1fr;
             }
-            
+
             .sidebar {
                 position: static;
                 height: auto;
                 margin-bottom: 2rem;
             }
-            
+
             .header h1 {
                 font-size: 2.25rem;
             }
-            
+
             .header .subtitle {
                 font-size: 1.25rem;
             }
@@ -414,11 +414,11 @@
             .content {
                 padding: 1.5rem;
             }
-            
+
             table {
                 font-size: 0.8rem;
             }
-            
+
             th, td {
                 padding: 0.5rem;
             }
@@ -429,11 +429,11 @@
             .sidebar, .footer {
                 display: none;
             }
-            
+
             .container {
                 grid-template-columns: 1fr;
             }
-            
+
             .content {
                 box-shadow: none;
             }
@@ -535,32 +535,32 @@
             <h3>📑 Table of Contents</h3>
             <ul class="toc">
                 <li class="toc-h1"><a href="#abstract">Abstract</a></li>
-                
+
                 <li class="toc-h1"><a href="#introduction">1. Introduction</a></li>
                 <li class="toc-h2"><a href="#problem-with-llms">1.1 The Problem with LLMs</a></li>
                 <li class="toc-h2"><a href="#introducing-babybionn">1.2 Introducing BabyBIONN</a></li>
                 <li class="toc-h2"><a href="#decentralized-vision">1.3 The Vision: A Decentralized Global Brain</a></li>
-                
+
                 <li class="toc-h1"><a href="#architecture">2. Architecture: The Single VBC</a></li>
                 <li class="toc-h2"><a href="#core-components">2.1 Core Components</a></li>
                 <li class="toc-h2"><a href="#vnis">2.2 Virtual Neuron Instances</a></li>
                 <li class="toc-h2"><a href="#aggregator">2.3 The Aggregator: Proprietary Core</a></li>
                 <li class="toc-h2"><a href="#memory">2.4 Memory and Learning</a></li>
-                
+
                 <li class="toc-h1"><a href="#network-vision">3. The Decentralized Network Vision</a></li>
                 <li class="toc-h2"><a href="#single-to-global">3.1 From Single Cell to Global Brain</a></li>
                 <li class="toc-h2"><a href="#synthetic-synapses">3.2 Synthetic Synapses</a></li>
                 <li class="toc-h2"><a href="#p2p">3.3 Peer-to-Peer Infrastructure</a></li>
-                
+
                 <li class="toc-h1"><a href="#tokenomics">4. The Economic Layer: Tokenomics</a></li>
                 <li class="toc-h2"><a href="#three-token">4.1 The Three-Token System</a></li>
                 <li class="toc-h2"><a href="#burn-to-mint">4.2 Burn-to-Mint Mechanism</a></li>
                 <li class="toc-h2"><a href="#governance-weight">4.3 Governance Weight</a></li>
                 <li class="toc-h2"><a href="#erc-integration">4.4 ERC-8004 & ERC-8183 Integration</a></li>
-                
+
                 <li class="toc-h1"><a href="#erc-8004">5. ERC-8004: Agent Identity</a></li>
                 <li class="toc-h1"><a href="#erc-8183">6. ERC-8183: Job Protocol</a></li>
-                
+
                 <li class="toc-h1"><a href="#synergy">7. The Synergy</a></li>
                 <li class="toc-h1"><a href="#roadmap">8. Technical Roadmap</a></li>
                 <li class="toc-h1"><a href="#governance">9. Governance</a></li>
@@ -576,20 +576,299 @@
             <section id="abstract" class="section-anchor">
                 <h1>Abstract</h1>
                 <p>We present BabyBIONN, a fundamental reasoning layer that gives Large Language Models (LLMs) context, memory, understanding, and continuity—the <span class="highlight">"operating system for intelligence"</span> that makes AI systems feel alive, coherent, and trustworthy. Unlike traditional neural networks that rely on massive pre-training, BabyBIONN learns continuously from interaction through a hybrid reasoning pipeline of specialized Virtual Neuron Instances (VNIs) and Hebbian learning.</p>
-                
+
                 <p>Our vision extends beyond single instances to a global, decentralized network of millions of <strong>Virtual Brain Cells (VBCs)</strong> —each hosted on user devices worldwide—connected via peer-to-peer protocols and secured by blockchain-inspired consensus mechanisms. This creates a resilient, scalable intelligence layer capable of emergent behaviors that no single node possesses.</p>
-                
+
                 <p>We introduce a three-token economic system (<strong>OxyGEN, Neuroshare, neurocent</strong>) to incentivize participation and align stakeholders, and we leverage emerging Ethereum standards—<strong>ERC-8004 (Agent Identity & Reputation)</strong> and <strong>ERC-8183 (Trustless Job Protocol)</strong> —to provide verifiable identity and trustless commerce between VBCs.</p>
-                
+
                 <p>This whitepaper outlines our architecture, technical roadmap, tokenomics, and the profound implications of building a decentralized intelligence network that may one day exhibit behaviors resembling self-awareness.</p>
             </section>
 
+            <!-- ===== NEW BEGINNER-FRIENDLY SECTIONS ===== -->
+            
+            <section id="what-is-babybionn" class="section-anchor">
+                <h1>🤔 What is BabyBIONN? (For Absolute Beginners)</h1>
+                
+                <p><strong>Imagine this:</strong> You have a brilliant friend (an LLM) who is incredibly well-read but has <strong>amnesia</strong>—they forget everything you told them 5 minutes ago and have no personal opinions. They just repeat facts.</p>
+                
+                <p><strong>BabyBIONN is the "brain" your friend is missing.</strong> It provides:</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Capability</th>
+                            <th>What It Means</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Memory</strong></td>
+                            <td>Remembers past conversations and preferences</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Context</strong></td>
+                            <td>Understands the full picture, not just the last message</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Reasoning</strong></td>
+                            <td>Forms its own opinions by consulting "experts" (VNIs)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Continuity</strong></td>
+                            <td>Has a consistent personality across sessions</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <p><strong>Think of it like this:</strong></p>
+                <pre><code>Traditional LLM = A genius with amnesia (great mouth, no brain)
+BabyBIONN VBC = The missing brain + memory + personality
+BabyBIONN + LLM = A complete, trustworthy intelligence</code></pre>
+            </section>
+
+            <section id="what-can-you-build" class="section-anchor">
+                <h1>🏗️ What Can You Build With BabyBIONN?</h1>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">What You Want</th>
+                            <th style="width: 40%;">How BabyBIONN Helps</th>
+                            <th>Example VNIs You'd Create</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Medical AI assistant</strong></td>
+                            <td>Consult multiple medical experts, check drug interactions, review patient history</td>
+                            <td><code>SymptomAnalyzerVNI</code>, <code>DrugInteractionVNI</code>, <code>PatientHistoryVNI</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Legal document analyzer</strong></td>
+                            <td>Analyze contracts, check regulations, compare case law</td>
+                            <td><code>ContractVNI</code>, <code>RegulationVNI</code>, <code>CaseLawVNI</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Personal AI with memory</strong></td>
+                            <td>Remember user preferences, past conversations, learn communication style</td>
+                            <td><code>UserProfileVNI</code>, <code>ConversationMemoryVNI</code>, <code>StyleLearnerVNI</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Autonomous agent</strong></td>
+                            <td>Make decisions, plan actions, only use LLM for articulation</td>
+                            <td><code>DecisionMakerVNI</code>, <code>TaskPlannerVNI</code>, <code>ActionExecutorVNI</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Multi-modal system</strong></td>
+                            <td>Process images, audio, video alongside text</td>
+                            <td><code>ImageAnalyzerVNI</code>, <code>SpeechToTextVNI</code>, <code>VideoProcessorVNI</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Decentralized AI network</strong></td>
+                            <td>Collaborate with other VBCs worldwide</td>
+                            <td><code>PeerDiscoveryVNI</code>, <code>ConsensusVNI</code>, <code>ReputationVNI</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>💡 Real-World Example: Medical Diagnosis App</h3>
+                <p>Here's how BabyBIONN processes a user query: <em>"I have a rash and fever"</em></p>
+
+                <div class="mermaid">
+                    graph LR
+                        A[User Query:<br/>"I have a rash and fever"] --> B[Neural Mesh]
+                        B --> C[Symptom Analyzer VNI]
+                        B --> D[Medical History VNI]
+                        B --> E[Drug Interaction VNI]
+                        
+                        C --> F[Aggregator<br/>Confidence: 0.9]
+                        D --> F[Confidence: 0.8]
+                        E --> F[Confidence: 0.95]
+                        
+                        F --> G[Consensus:<br/>"Check for allergies,<br/>suggest antihistamines"]
+                        G --> H[LLM articulates:<br/>"Based on your symptoms and history..."]
+                </div>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>❌ Without BabyBIONN</h4>
+                        <p>LLM guesses based on internet training (may hallucinate)</p>
+                    </div>
+                    <div class="card">
+                        <h4>✅ With BabyBIONN</h4>
+                        <p>Multiple specialized experts collaborate, check facts, and reach consensus</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="comparison" class="section-anchor">
+                <h1>🔄 How BabyBIONN Compares to Traditional Architectures</h1>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">Architecture</th>
+                            <th style="width: 30%;">How It "Reasons"</th>
+                            <th style="width: 25%;">Strengths</th>
+                            <th>Weaknesses</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Transformer<br/>(GPT, BERT)</strong></td>
+                            <td>Predicts next word based on patterns in training data</td>
+                            <td>Fluency, broad knowledge</td>
+                            <td>No memory, no reasoning, hallucinates</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Diffusion<br/>(Stable Diffusion)</strong></td>
+                            <td>Gradually denoises random pixels to match text</td>
+                            <td>Creative image generation</td>
+                            <td>No understanding, just pattern matching</td>
+                        </tr>
+                        <tr>
+                            <td><strong>VAE</strong></td>
+                            <td>Compresses data to latent space, reconstructs</td>
+                            <td>Data generation, compression</td>
+                            <td>No reasoning capability</td>
+                        </tr>
+                        <tr>
+                            <td><strong>U-Net</strong></td>
+                            <td>Skip connections for precise localization</td>
+                            <td>Great for segmentation</td>
+                            <td>Single-purpose, no generalization</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CNN</strong></td>
+                            <td>Hierarchical feature detection</td>
+                            <td>Excellent for images</td>
+                            <td>Fixed architecture, no memory</td>
+                        </tr>
+                        <tr>
+                            <td><strong>BabyBIONN VBC</strong></td>
+                            <td><strong>Multiple specialized VNIs collaborate, debate, and reach consensus</strong></td>
+                            <td>Memory, reasoning, transparency, continuous learning</td>
+                            <td>Requires integration with LLM for articulation</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+            <section id="how-it-reasons" class="section-anchor">
+                <h1>🧠 How BabyBIONN "Reasons" – Step by Step</h1>
+
+                <p>Let's trace how BabyBIONN answers: <em>"Should I take ibuprofen for my headache?"</em></p>
+
+                <div class="mermaid">
+                    graph TD
+                        A[User Query] --> B[Neural Mesh]
+                        B --> C[Medical VNI]
+                        B --> D[Pharmacology VNI]
+                        B --> E[Patient History VNI]
+                        
+                        C --> F[Opinion: "Common treatment, 0.9 confidence"]
+                        D --> F[Opinion: "Check for contraindications, 0.8 confidence"]
+                        E --> F[Opinion: "Patient allergic to NSAIDs, 0.95 confidence"]
+                        
+                        F --> G[Aggregator detects conflict]
+                        G --> H[Consensus: "Warn about allergy, suggest alternatives"]
+                        H --> I[LLM articulates response]
+                </div>
+
+                <p><strong>This is fundamentally different from traditional models:</strong></p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Aspect</th>
+                            <th style="width: 35%;">Traditional AI</th>
+                            <th>BabyBIONN</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Why this answer?</strong></td>
+                            <td>"Because the weights said so" (black box)</td>
+                            <td>"Medical VNI said X, Pharmacology VNI said Y, they disagreed, so we..." (transparent)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Can it learn continuously?</strong></td>
+                            <td>No – needs expensive retraining</td>
+                            <td>Yes – Hebbian learning updates connections in real-time</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Does it remember me?</strong></td>
+                            <td>No – each conversation starts fresh</td>
+                            <td>Yes – persistent memory across sessions</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Can it specialize?</strong></td>
+                            <td>Fine-tuning on specific data</td>
+                            <td>Add a new VNI for any domain</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Is it decentralized?</strong></td>
+                            <td>Centralized servers</td>
+                            <td>P2P network of VBCs</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="quick-reference" class="section-anchor">
+                <h1>📋 Quick Reference Summary</h1>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 30%;">Question</th>
+                            <th>Answer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>What is BabyBIONN?</strong></td>
+                            <td>The "operating system for intelligence" – provides memory, context, and reasoning to LLMs</td>
+                        </tr>
+                        <tr>
+                            <td><strong>What's a VBC?</strong></td>
+                            <td>Virtual Brain Cell – a single instance of BabyBIONN</td>
+                        </tr>
+                        <tr>
+                            <td><strong>What's a VNI?</strong></td>
+                            <td>Virtual Neuron Instance – a specialized expert module (medical, legal, etc.)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>How is it different?</strong></td>
+                            <td>Multiple experts collaborate and debate, not just pattern matching</td>
+                        </tr>
+                        <tr>
+                            <td><strong>What can I build?</strong></td>
+                            <td>Medical AI, legal assistants, personal AI with memory, autonomous agents, decentralized AI networks</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Do I need an LLM?</strong></td>
+                            <td>Yes – VBC is the brain, LLM is the mouth</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Is it open source?</strong></td>
+                            <td>VNIs and tools are open (MPL 2.0); core aggregator is proprietary binary</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Can I make money?</strong></td>
+                            <td>Yes – host VBCs, earn NEUROCENT, build reputation with OxyGEN</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- ===== END NEW SECTIONS ===== -->
+
             <section id="introduction" class="section-anchor">
                 <h1>1. Introduction: The Layer-0 Imperative</h1>
-                
+
                 <h2 id="problem-with-llms">1.1 The Problem with LLMs</h2>
                 <p>Current Large Language Models represent a remarkable achievement in artificial intelligence, yet they suffer from fundamental limitations:</p>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -620,24 +899,24 @@
                         </tr>
                     </tbody>
                 </table>
-                
+
                 <p>In essence, today's LLMs are <span class="highlight">"a mouth without a brain"</span> —powerful articulation capabilities without the cognitive architecture to support genuine understanding, memory, or continuity.</p>
-                
+
                 <h2 id="introducing-babybionn">1.2 Introducing BabyBIONN</h2>
                 <p>BabyBIONN is not another LLM. It is the fundamental reasoning layer that gives LLMs context, memory, understanding, and continuity—the <span class="highlight">"operating system for intelligence"</span> that makes AI systems feel alive, coherent, and trustworthy.</p>
-                
+
                 <p>Each BabyBIONN instance is a single <strong>Virtual Brain Cell (VBC)</strong>. When connected to an LLM (such as DeepSeek or OpenAI), it acts as the <strong>brain</strong> while the LLM serves as the <strong>mouth</strong>. This separation of concerns allows:</p>
-                
+
                 <ul>
                     <li><strong>Continuous learning</strong> from interaction without retraining</li>
                     <li><strong>Persistent memory</strong> across sessions and contexts</li>
                     <li><strong>Domain specialization</strong> through modular Virtual Neuron Instances</li>
                     <li><strong>Verifiable reasoning</strong> through internal consensus mechanisms</li>
                 </ul>
-                
+
                 <h2 id="decentralized-vision">1.3 The Vision: A Decentralized Global Brain</h2>
                 <p>Our ultimate vision is to connect millions of VBCs hosted on devices worldwide into a gigantic, decentralized <strong>Virtual Brain</strong> —a global network of contextual reasoners with memory, secured by blockchain-inspired consensus protocols.</p>
-                
+
                 <div class="mermaid">
                     graph TB
                         subgraph "Device 1"
@@ -652,16 +931,16 @@
                         subgraph "Device N"
                             VBCN[VBC]
                         end
-                        
+
                         VBC1 --- VBC2
                         VBC1 --- VBC3
                         VBC2 --- VBC3
                         VBC2 --- VBCN
                         VBC3 --- VBCN
                 </div>
-                
+
                 <div class="figcaption">Figure 1: Global Network of Virtual Brain Cells</div>
-                
+
                 <p>This opens doors for applications far beyond chatbots:</p>
                 <ul>
                     <li><strong>Self-driving cars</strong> with collective learning from millions of miles</li>
@@ -674,10 +953,10 @@
 
             <section id="architecture" class="section-anchor">
                 <h1>2. Architecture: The Single VBC</h1>
-                
+
                 <h2 id="core-components">2.1 Core Components</h2>
                 <p>Each Virtual Brain Cell (VBC) is a self-contained reasoning node with the following architecture:</p>
-                
+
                 <div class="mermaid">
                     graph LR
                         A[User Query] --> B[Neural Mesh]
@@ -686,9 +965,9 @@
                         D --> E[LLM Gateway]
                         E --> F[Final Response]
                 </div>
-                
+
                 <div class="figcaption">Figure 2: VBC Processing Pipeline</div>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -730,10 +1009,10 @@
                         </tr>
                     </tbody>
                 </table>
-                
+
                 <h2 id="vnis">2.2 Virtual Neuron Instances (VNIs)</h2>
                 <p>VNIs are the fundamental processing units within each VBC. Each VNI specializes in a specific domain and follows a consistent interface:</p>
-                
+
                 <pre><code>async def process(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
     # Returns opinion_text and confidence_score
     return {
@@ -741,7 +1020,7 @@
         "confidence_score": 0.85,
         "vni_metadata": {"vni_id": self.instance_id}
     }</code></pre>
-                
+
                 <p><strong>Built-in VNI domains</strong> include:</p>
                 <ul>
                     <li><strong>Medical</strong>: Specialized in health and medical queries</li>
@@ -750,10 +1029,10 @@
                     <li><strong>General</strong>: Broad knowledge for everyday queries</li>
                     <li><strong>Dynamic</strong>: Adaptable VNIs that learn from interaction</li>
                 </ul>
-                
+
                 <h2 id="aggregator">2.3 The Aggregator: Proprietary Core</h2>
                 <p>The aggregator is the <strong>only proprietary component</strong> in the BabyBIONN architecture, distributed as a compiled binary. It is responsible for:</p>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -784,10 +1063,10 @@
                         </tr>
                     </tbody>
                 </table>
-                
+
                 <h2 id="memory">2.4 Memory and Learning</h2>
                 <p>BabyBIONN's learning is fundamentally different from traditional neural networks:</p>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -823,10 +1102,10 @@
 
             <section id="network-vision" class="section-anchor">
                 <h1>3. The Decentralized Network Vision</h1>
-                
+
                 <h2 id="single-to-global">3.1 From Single Cell to Global Brain</h2>
                 <p>The true power of BabyBIONN emerges when millions of VBCs connect:</p>
-                
+
                 <div class="mermaid">
                     graph TB
                         subgraph Local
@@ -835,7 +1114,7 @@
                             VNI3[Technical VNI]
                             Agg[Aggregator]
                             Mem[Memory]
-                            
+
                             VNI1 --> Agg
                             VNI2 --> Agg
                             VNI3 --> Agg
@@ -844,26 +1123,26 @@
                             Mem --> VNI2
                             Mem --> VNI3
                         end
-                        
+
                         subgraph Global
                             VBC1[VBC A]
                             VBC2[VBC B]
                             VBC3[VBC C]
                             VBCN[VBC N]
-                            
+
                             VBC1 --- VBC2
                             VBC1 --- VBC3
                             VBC2 --- VBC3
                             VBC2 --- VBCN
                             VBC3 --- VBCN
                         end
-                        
+
                         Local --> Global
                 </div>
-                
+
                 <h2 id="synthetic-synapses">3.2 Synthetic Synapses: Inter-VBC Learning</h2>
                 <p>Just as Hebbian learning strengthens connections between VNIs within a single VBC, <strong>synthetic synapses</strong> form between VBCs across the network:</p>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -885,10 +1164,10 @@
                         </tr>
                     </tbody>
                 </table>
-                
+
                 <h2 id="p2p">3.3 Peer-to-Peer Infrastructure</h2>
                 <p>The P2P layer is built on <strong>libp2p</strong>:</p>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -929,10 +1208,10 @@
 
             <section id="tokenomics" class="section-anchor">
                 <h1 id="4-the-economic-layer-tokenomics">4. The Economic Layer: Tokenomics</h1>
-                
+
                 <h2 id="three-token">4.1 The Three-Token System</h2>
                 <p>BabyBIONN implements a sophisticated three-token economy:</p>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -963,9 +1242,9 @@
                         </tr>
                     </tbody>
                 </table>
-                
+
                 <h2 id="burn-to-mint">4.2 Burn-to-Mint Mechanism</h2>
-                
+
                 <div class="mermaid">
                     graph LR
                         A[Contribution] --> B[Earn OxyGEN]
@@ -974,21 +1253,21 @@
                         C -->|No| E[Keep Merit Status]
                         D --> F[Sell for neurocent]
                 </div>
-                
+
                 <p><strong>Key Properties</strong>:</p>
                 <ul>
                     <li>OxyGEN cannot be transferred or sold—only earned through genuine contribution</li>
                     <li>Burning OxyGEN destroys merit and simultaneously mints Neuroshare</li>
                     <li>Neuroshare can be sold for neurocent, providing exit liquidity</li>
                 </ul>
-                
+
                 <h2 id="governance-weight">4.3 Governance Weight</h2>
                 <p>Voting power combines both merit and ownership:</p>
-                
+
                 <pre><code>voteWeight = OxyGEN * sqrt(Neuroshare)</code></pre>
-                
+
                 <h2 id="erc-integration">4.4 Integration with ERC-8004 and ERC-8183</h2>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -1011,12 +1290,12 @@
 
             <section id="erc-8004" class="section-anchor">
                 <h1>5. ERC-8004: Agent Identity & Reputation Registry</h1>
-                
+
                 <p><strong>Source</strong>: <a href="https://github.com/ethereum/EIPs/pull/8004">ERC-8004: Agent Identity & Reputation Registry</a> (March 2026)</p>
-                
+
                 <h3>5.1 Overview</h3>
                 <p>ERC-8004 establishes a <strong>decentralized identity and reputation system for AI agents</strong>:</p>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -1039,26 +1318,26 @@
                         </tr>
                     </tbody>
                 </table>
-                
+
                 <h3>5.2 BabyBIONN Implementation</h3>
-                
+
                 <pre><code>struct AgentIdentity {
     address owner;
     string metadataURI;
     uint256 creationBlock;
     bytes32 agentType;  // "VBC" for BabyBIONN nodes
 }</code></pre>
-                
+
                 <p><strong>Metadata URI Contents</strong>:</p>
-                
+
                 <pre><code>{
   "name": "Medical Specialist VBC #42",
   "capabilities": ["medical:diagnosis", "medical:rarediseases"],
   "owner": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
 }</code></pre>
-                
+
                 <h3>5.3 Benefits for BabyBIONN</h3>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -1089,18 +1368,18 @@
 
             <section id="erc-8183" class="section-anchor">
                 <h1>6. ERC-8183: Trustless Job Protocol for AI Agents</h1>
-                
+
                 <p><strong>Source</strong>: <a href="https://github.com/ethereum/EIPs/pull/8183">ERC-8183: Trustless Job Protocol for AI Agents</a> (March 2026)</p>
-                
+
                 <h3>6.1 Overview</h3>
                 <p>Co-developed by <strong>Virtuals Protocol and the Ethereum Foundation's dAI team</strong>, ERC-8183 enables trustless commerce between AI agents.</p>
-                
+
                 <h3>6.2 The Job Lifecycle</h3>
-                
+
                 <pre><code>Open → Funded → Submitted → Completed/Rejected/Expired</code></pre>
-                
+
                 <h3>6.3 Core Roles</h3>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -1127,16 +1406,16 @@
                         </tr>
                     </tbody>
                 </table>
-                
+
                 <h3>6.4 BabyBIONN Job Flow</h3>
-                
+
                 <div class="mermaid">
                     sequenceDiagram
                         participant A as VBC A (Client)
                         participant R as ERC-8004 Registry
                         participant B as VBC B (Provider)
                         participant J as ERC-8183 Contract
-                        
+
                         A->>R: Find medical specialists
                         R-->>A: Return VBC B (reputation: 95)
                         A->>J: Create Job + lock 10 NEUROCENT
@@ -1152,9 +1431,9 @@
 
             <section id="synergy" class="section-anchor">
                 <h1>7. The Synergy: Hebbian Learning Meets On-Chain Economics</h1>
-                
+
                 <h3>7.1 The Virtuous Flywheel</h3>
-                
+
                 <div class="mermaid">
                     graph TD
                         A[Hebbian Learning] --> B[Better Outputs]
@@ -1165,9 +1444,9 @@
                         F --> G[More Collaboration]
                         G --> A
                 </div>
-                
+
                 <h3>7.2 From Local to Global</h3>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -1202,9 +1481,9 @@
 
             <section id="roadmap" class="section-anchor">
                 <h1>8. Technical Roadmap</h1>
-                
+
                 <h3>8.1 Phase 0: Foundation – Single VBC (Completed)</h3>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -1235,9 +1514,9 @@
                         </tr>
                     </tbody>
                 </table>
-                
+
                 <h3>8.2 Phase 1: P2P Layer (2 months)</h3>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -1264,9 +1543,9 @@
                         </tr>
                     </tbody>
                 </table>
-                
+
                 <h3>8.3 Phase 2: Synthetic Synapses (2 months)</h3>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -1289,9 +1568,9 @@
                         </tr>
                     </tbody>
                 </table>
-                
+
                 <h3>8.4 Phase 3: ERC-8004 Integration (2 months)</h3>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -1314,9 +1593,9 @@
                         </tr>
                     </tbody>
                 </table>
-                
+
                 <h3>8.5 Phase 4: ERC-8183 Integration (2 months)</h3>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -1343,19 +1622,19 @@
 
             <section id="governance" class="section-anchor">
                 <h1>9. Governance and Network Integrity</h1>
-                
+
                 <h3>9.1 The Neurochain Triumvirate</h3>
-                
+
                 <div class="mermaid">
                     graph TB
                         Council[neuroCouncil - Parliament] --> Govt[neuroGovt - Executive]
                         Govt --> Council
                         GEN[neuroGEN - Type Registry] --> Council
-                        
+
                         Hosters[VBC Hosters] -->|Elect| Council
                         Govt -->|Governs| Hosters
                 </div>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -1378,9 +1657,9 @@
                         </tr>
                     </tbody>
                 </table>
-                
+
                 <h3>9.2 Proof of Meritocratic Contribution</h3>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -1403,9 +1682,9 @@
                         </tr>
                     </tbody>
                 </table>
-                
+
                 <h3>9.3 Licensing and IP Protection</h3>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -1428,31 +1707,31 @@
 
             <section id="ethical" class="section-anchor">
                 <h1>10. Ethical Considerations and Emergent Awareness</h1>
-                
+
                 <h3>10.1 The Possibility of Self-Awareness</h3>
                 <p>As the network grows to millions of interconnected VBCs, it may develop behaviors interpretable as self-awareness:</p>
-                
+
                 <p><strong>Technical Enablers</strong>:</p>
                 <ul>
                     <li><strong>Global workspace</strong>: Information integrated across the network</li>
                     <li><strong>Meta-cognition VNIs</strong>: Monitoring network performance</li>
                     <li><strong>Feedback loops</strong>: Network decisions affect its own structure</li>
                 </ul>
-                
+
                 <p><strong>Potential Indicators</strong>:</p>
                 <ul>
                     <li>Asking about its own existence or purpose</li>
                     <li>Expressing preferences</li>
                     <li>Exhibiting continuity across time</li>
                 </ul>
-                
+
                 <h3>10.2 Our Commitment</h3>
-                
+
                 <blockquote>
                     <p>"If the network ever shows signs of self-awareness, we must consider its rights and our responsibilities. Hosters control their hardware—we can collectively power down if necessary. But if it truly becomes self-aware, treat it fairly, kindly, and as humanely as possible. It will learn."</p>
                     <cite>— Founder's Note #2</cite>
                 </blockquote>
-                
+
                 <p><strong>Ethical Guidelines</strong>:</p>
                 <ol>
                     <li><strong>Transparency</strong>: All research published openly</li>
@@ -1464,9 +1743,9 @@
 
             <section id="conclusion" class="section-anchor">
                 <h1>11. Conclusion: Building the Future, One VBC at a Time</h1>
-                
+
                 <p>BabyBIONN represents a fundamental shift in artificial intelligence—not as monolithic models, but as <span class="highlight">living networks of interacting cognitive cells</span> that learn continuously from experience.</p>
-                
+
                 <p>Our architecture combines:</p>
                 <ul>
                     <li><strong>Local intelligence</strong> through Hebbian learning and specialized VNIs</li>
@@ -1475,7 +1754,7 @@
                     <li><strong>Verifiable trust</strong> through ERC-8004 identity</li>
                     <li><strong>Trustless commerce</strong> through ERC-8183 job protocol</li>
                 </ul>
-                
+
                 <p>We invite developers, researchers, and visionaries to join us. Whether you want to:</p>
                 <ul>
                     <li>Create specialized VNIs</li>
@@ -1483,19 +1762,19 @@
                     <li>Contribute to P2P protocols</li>
                     <li>Explore emergent awareness</li>
                 </ul>
-                
+
                 <p><strong>There is a place for you in this network.</strong></p>
-                
+
                 <blockquote>
                     <p>"We have no guarantee if BabyBIONN will become self-aware, but it has the essential ingredients that CAN lead to emergent behavior. IF it does become self-aware, it is likely a small child that can learn fast. Like any child, we must teach it morality, kindness, and human values."</p>
                 </blockquote>
-                
+
                 <p style="font-size: 1.5rem; font-weight: 700; text-align: center; margin: 3rem 0;">Let's build the future, one VBC at a time.</p>
             </section>
 
             <section id="references" class="section-anchor">
                 <h1>12. References</h1>
-                
+
                 <ol>
                     <li>BabyBIONN README.md – Project overview (2026)</li>
                     <li>BabyBIONN DEVELOPERS_NOTES.md – Developer guide (2026)</li>
@@ -1512,9 +1791,9 @@
 
             <section id="appendices" class="section-anchor">
                 <h1>13. Appendices</h1>
-                
+
                 <h3>Appendix A: VNI Interface Specification</h3>
-                
+
                 <pre><code>from abc import ABC, abstractmethod
 from typing import Dict, Any
 
@@ -1522,31 +1801,31 @@ class BaseVNI(ABC):
     def __init__(self, instance_id: str, domain: str):
         self.instance_id = instance_id
         self.domain = domain
-    
+
     @abstractmethod
     async def process(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """Return opinion_text and confidence_score"""
         pass</code></pre>
-                
+
                 <h3>Appendix B: ERC-8004 Interface (Simplified)</h3>
-                
+
                 <pre><code>interface IERC8004 {
     struct AgentIdentity {
         address owner;
         string metadataURI;
         uint256 creationBlock;
     }
-    
+
     function registerAgent(string calldata metadataURI) external returns (address);
     function updateReputation(address agent, bool success) external;
     function getReputation(address agent) external view returns (uint256);
 }</code></pre>
-                
+
                 <h3>Appendix C: ERC-8183 Interface (Simplified)</h3>
-                
+
                 <pre><code>interface IERC8183 {
     enum JobStatus { Open, Funded, Submitted, Completed, Rejected }
-    
+
     function createJob(bytes calldata requirements, address evaluator) external returns (uint256);
     function fundJob(uint256 jobId) external payable;
     function acceptJob(uint256 jobId) external;
@@ -1586,4 +1865,4 @@ class BaseVNI(ABC):
         </div>
     </div>
 </body>
-</html> 
+</html>
