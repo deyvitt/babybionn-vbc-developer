@@ -48,17 +48,17 @@ Here's how BabyBIONN processes a user query: *"I have a rash and fever"*
 
 ```mermaid
 graph LR
-    A[User Query:<br/>"I have a rash and fever"] --> B[Neural Mesh]
+    A[User Query: I have a rash and fever] --> B[Neural Mesh]
     B --> C[Symptom Analyzer VNI]
     B --> D[Medical History VNI]
     B --> E[Drug Interaction VNI]
     
-    C --> F[Aggregator<br/>Confidence: 0.9]
-    D --> F[Confidence: 0.8]
-    E --> F[Confidence: 0.95]
+    C --> F[Aggregator - 0.9]
+    D --> F[Aggregator - 0.8]
+    E --> F[Aggregator - 0.95]
     
-    F --> G[Consensus:<br/>"Check for allergies,<br/>suggest antihistamines"]
-    G --> H[LLM articulates:<br/>"Based on your symptoms and history..."]
+    F --> G[Consensus: Check for allergies]
+    G --> H[LLM articulates final response]
     
     style A fill:#f9f,stroke:#333
     style F fill:#FFB6C1,stroke:#333
@@ -94,13 +94,13 @@ graph TD
     B --> D[Pharmacology VNI]
     B --> E[Patient History VNI]
     
-    C --> F[Opinion: "Common treatment, 0.9 confidence"]
-    D --> F[Opinion: "Check for contraindications, 0.8 confidence"]
-    E --> F[Opinion: "Patient allergic to NSAIDs, 0.95 confidence"]
+    C --> F[Opinion 0.9]
+    D --> F[Opinion 0.8]
+    E --> F[Opinion 0.95]
     
-    F --> G[Aggregator detects conflict]
-    G --> H[Consensus: "Warn about allergy, suggest alternatives"]
-    H --> I[LLM articulates response]
+    F --> G[Conflict Detected]
+    G --> H[Consensus Reached]
+    H --> I[LLM Response]
     
     style F fill:#FFB6C1,stroke:#333
     style G fill:#FFA07A,stroke:#333
