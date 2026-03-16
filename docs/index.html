@@ -807,25 +807,112 @@ BabyBIONN + LLM = A complete, trustworthy intelligence</code></pre>
                 </table>
             </section>
             <section id="how-it-reasons" class="section-anchor">
+
+            <section id="how-it-reasons" class="section-anchor">
                 <h1>🧠 How BabyBIONN "Reasons" – Step by Step</h1>
 
                 <p>Let's trace how BabyBIONN answers: <em>"Should I take ibuprofen for my headache?"</em></p>
 
-                <div class="mermaid">
-                    graph TD
-                        A[User Query] --> B[Neural Mesh]
-                        B --> C[Medical VNI]
-                        B --> D[Pharmacology VNI]
-                        B --> E[Patient History VNI]
+                <div style="background: #1C3A5C; color: white; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; border-left: 4px solid #3B82F6;">
+                    <div style="display: flex; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #3B82F6;">
+                        <span style="background: #3B82F6; color: white; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; margin-right: 1rem;">1</span>
+                        <strong style="color: #90D4FF; font-size: 1.1rem;">User Query:</strong>
+                        <span style="margin-left: 1rem; color: #FFD700;">"Should I take ibuprofen for my headache?"</span>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; margin-bottom: 1rem; margin-left: 2rem;">
+                        <span style="background: #3B82F6; color: white; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; margin-right: 1rem;">2</span>
+                        <strong style="color: #90D4FF;">Neural Mesh</strong>
+                        <span style="margin-left: 1rem; color: white;">routes query to relevant experts:</span>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin: 1.5rem 0 1.5rem 4rem;">
+                        <div style="background: #0B1E33; padding: 1rem; border-radius: 8px; border-left: 4px solid #90EE90;">
+                            <div style="color: #90EE90; font-weight: bold;">Medical VNI</div>
+                            <div style="color: white; margin-top: 0.5rem;">"Common treatment for headaches"</div>
+                            <div style="color: #FFD700; margin-top: 0.25rem;">Confidence: 0.9</div>
+                        </div>
                         
-                        C --> F[Opinion: "Common treatment, 0.9 confidence"]
-                        D --> F[Opinion: "Check for contraindications, 0.8 confidence"]
-                        E --> F[Opinion: "Patient allergic to NSAIDs, 0.95 confidence"]
+                        <div style="background: #0B1E33; padding: 1rem; border-radius: 8px; border-left: 4px solid #FFD700;">
+                            <div style="color: #FFD700; font-weight: bold;">Pharmacology VNI</div>
+                            <div style="color: white; margin-top: 0.5rem;">"Check for contraindications"</div>
+                            <div style="color: #FFD700; margin-top: 0.25rem;">Confidence: 0.8</div>
+                        </div>
                         
-                        F --> G[Aggregator detects conflict]
-                        G --> H[Consensus: "Warn about allergy, suggest alternatives"]
-                        H --> I[LLM articulates response]
+                        <div style="background: #0B1E33; padding: 1rem; border-radius: 8px; border-left: 4px solid #FF6B6B;">
+                            <div style="color: #FF6B6B; font-weight: bold;">Patient History VNI</div>
+                            <div style="color: white; margin-top: 0.5rem;">"Patient allergic to NSAIDs!"</div>
+                            <div style="color: #FFD700; margin-top: 0.25rem;">Confidence: 0.95</div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; margin-bottom: 1rem; margin-left: 2rem;">
+                        <span style="background: #3B82F6; color: white; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; margin-right: 1rem;">3</span>
+                        <strong style="color: #90D4FF;">Aggregator</strong>
+                        <span style="margin-left: 1rem; color: #FFA07A;">detects conflict between opinions</span>
+                    </div>
+                    
+                    <div style="background: #0B1E33; padding: 1rem; border-radius: 8px; margin: 1rem 0 1rem 4rem; border-left: 4px solid #FFA07A;">
+                        <div style="color: #FFA07A; font-weight: bold;">Consensus Reached:</div>
+                        <div style="color: white; margin-top: 0.5rem;">"Warn about allergy, suggest alternatives to ibuprofen"</div>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; margin-bottom: 1rem; margin-left: 2rem;">
+                        <span style="background: #3B82F6; color: white; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; margin-right: 1rem;">4</span>
+                        <strong style="color: #90D4FF;">LLM</strong>
+                        <span style="margin-left: 1rem; color: #90EE90;">articulates final response</span>
+                    </div>
+                    
+                    <div style="background: #0B1E33; padding: 1rem; border-radius: 8px; margin: 1rem 0 0 4rem; border-left: 4px solid #90EE90;">
+                        <div style="color: #90EE90; font-weight: bold;">Final Response:</div>
+                        <div style="color: #FFD700; margin-top: 0.5rem;">"Based on your medical history, you appear to be allergic to NSAIDs like ibuprofen. I recommend acetaminophen instead for your headache. Please consult your doctor."</div>
+                    </div>
                 </div>
+
+                <p><strong>This is fundamentally different from traditional models:</strong></p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 25%; background: #0B1E33;">Aspect</th>
+                            <th style="width: 35%; background: #0B1E33;">Traditional AI</th>
+                            <th style="background: #0B1E33;">BabyBIONN</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Why this answer?</strong></td>
+                            <td>"Because the weights said so" <span style="color: #6B7280; font-style: italic;">(black box)</span></td>
+                            <td>"Medical VNI said X, Pharmacology VNI said Y, they disagreed, so we reached consensus to warn about allergy" <span style="color: #10B981; font-style: italic;">(transparent)</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Can it learn continuously?</strong></td>
+                            <td>❌ No – needs expensive retraining</td>
+                            <td>✅ Yes – Hebbian learning updates connections in real-time</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Does it remember me?</strong></td>
+                            <td>❌ No – each conversation starts fresh</td>
+                            <td>✅ Yes – persistent memory across sessions</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Can it specialize?</strong></td>
+                            <td>Fine-tuning on specific data (takes weeks)</td>
+                            <td>Add a new VNI for any domain in minutes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Is it decentralized?</strong></td>
+                            <td>Centralized servers (single point of failure)</td>
+                            <td>P2P network of VBCs (resilient and distributed)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hallucination risk?</strong></td>
+                            <td>High – no fact-checking mechanism</td>
+                            <td>Low – multiple VNIs validate each other</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
 
                 <p><strong>This is fundamentally different from traditional models:</strong></p>
 
