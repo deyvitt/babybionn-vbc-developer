@@ -674,7 +674,7 @@ BabyBIONN + LLM = A complete, trustworthy intelligence</code></pre>
                 <h3>💡 Real-World Example: Medical Diagnosis App</h3>
                 <p>Here's how BabyBIONN processes a user query: <em>"I have a rash and fever"</em></p>
 
-                <table style="background: #1C3A5C; color: white; border-radius: 8px; overflow: hidden;">
+                <table style="background: #1C3A5C; color: white; border-radius: 8px; overflow: hidden; margin: 1.5rem 0;">
                     <thead>
                         <tr style="background: #0B1E33;">
                             <th style="color: white; border-color: #2D4A6E;">Step</th>
@@ -731,27 +731,6 @@ BabyBIONN + LLM = A complete, trustworthy intelligence</code></pre>
                         <p style="color: #E5E7EB;">Multiple experts collaborate, detect the allergy, and provide safe advice.</p>
                     </div>
                 </div>
-                <div class="card-grid">
-                    <div class="card">
-                        <h4>❌ Without BabyBIONN</h4>
-                        <p>LLM: "Ibuprofen is commonly used for headaches and fever." (misses the allergy entirely - dangerous!)</p>
-                    </div>
-                    <div class="card">
-                        <h4>✅ With BabyBIONN</h4>
-                        <p>Multiple experts collaborate, detect the allergy, and provide safe advice.</p>
-                    </div>
-                </div>
-
-                <div class="card-grid">
-                    <div class="card">
-                        <h4>❌ Without BabyBIONN</h4>
-                        <p>LLM guesses based on internet training (may hallucinate)</p>
-                    </div>
-                    <div class="card">
-                        <h4>✅ With BabyBIONN</h4>
-                        <p>Multiple specialized experts collaborate, check facts, and reach consensus</p>
-                    </div>
-                </div>
             </section>
 
             <section id="comparison" class="section-anchor">
@@ -806,7 +785,6 @@ BabyBIONN + LLM = A complete, trustworthy intelligence</code></pre>
                     </tbody>
                 </table>
             </section>
-            <section id="how-it-reasons" class="section-anchor">
 
             <section id="how-it-reasons" class="section-anchor">
                 <h1>🧠 How BabyBIONN "Reasons" – Step by Step</h1>
@@ -909,46 +887,6 @@ BabyBIONN + LLM = A complete, trustworthy intelligence</code></pre>
                             <td><strong>Hallucination risk?</strong></td>
                             <td>High – no fact-checking mechanism</td>
                             <td>Low – multiple VNIs validate each other</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
-
-                <p><strong>This is fundamentally different from traditional models:</strong></p>
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width: 25%;">Aspect</th>
-                            <th style="width: 35%;">Traditional AI</th>
-                            <th>BabyBIONN</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Why this answer?</strong></td>
-                            <td>"Because the weights said so" (black box)</td>
-                            <td>"Medical VNI said X, Pharmacology VNI said Y, they disagreed, so we..." (transparent)</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Can it learn continuously?</strong></td>
-                            <td>No – needs expensive retraining</td>
-                            <td>Yes – Hebbian learning updates connections in real-time</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Does it remember me?</strong></td>
-                            <td>No – each conversation starts fresh</td>
-                            <td>Yes – persistent memory across sessions</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Can it specialize?</strong></td>
-                            <td>Fine-tuning on specific data</td>
-                            <td>Add a new VNI for any domain</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Is it decentralized?</strong></td>
-                            <td>Centralized servers</td>
-                            <td>P2P network of VBCs</td>
                         </tr>
                     </tbody>
                 </table>
