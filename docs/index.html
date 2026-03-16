@@ -674,56 +674,63 @@ BabyBIONN + LLM = A complete, trustworthy intelligence</code></pre>
                 <h3>💡 Real-World Example: Medical Diagnosis App</h3>
                 <p>Here's how BabyBIONN processes a user query: <em>"I have a rash and fever"</em></p>
 
-                <h3>💡 Real-World Example: Medical Diagnosis App</h3>
-                <p>Here's how BabyBIONN processes a user query: <em>"I have a rash and fever"</em></p>
-
-                <table>
+                <table style="background: #1C3A5C; color: white; border-radius: 8px; overflow: hidden;">
                     <thead>
-                        <tr>
-                            <th>Step</th>
-                            <th>Component</th>
-                            <th>Action</th>
+                        <tr style="background: #0B1E33;">
+                            <th style="color: white; border-color: #2D4A6E;">Step</th>
+                            <th style="color: white; border-color: #2D4A6E;">Component</th>
+                            <th style="color: white; border-color: #2D4A6E;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>User</td>
-                            <td><code>"I have a rash and fever"</code></td>
+                        <tr style="background: #1C3A5C;">
+                            <td style="color: #FFD700; border-color: #2D4A6E;">1</td>
+                            <td style="color: white; border-color: #2D4A6E;">User</td>
+                            <td style="color: #90EE90; border-color: #2D4A6E;"><code style="background: #0B1E33; color: #FFD700;">"I have a rash and fever"</code></td>
                         </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>Neural Mesh</td>
-                            <td>Routes query to relevant VNIs</td>
+                        <tr style="background: #234568;">
+                            <td style="color: #FFD700; border-color: #2D4A6E;">2</td>
+                            <td style="color: white; border-color: #2D4A6E;">Neural Mesh</td>
+                            <td style="color: white; border-color: #2D4A6E;">Routes query to relevant VNIs</td>
                         </tr>
-                        <tr>
-                            <td>3</td>
-                            <td>Symptom Analyzer VNI</td>
-                            <td>Returns: "Common symptom pattern" (confidence: 0.9)</td>
+                        <tr style="background: #1C3A5C;">
+                            <td style="color: #FFD700; border-color: #2D4A6E;">3</td>
+                            <td style="color: white; border-color: #2D4A6E;">Symptom Analyzer VNI</td>
+                            <td style="color: #90EE90; border-color: #2D4A6E;">"Common symptom pattern" <span style="color: #FFD700;">(0.9)</span></td>
                         </tr>
-                        <tr>
-                            <td>3</td>
-                            <td>Medical History VNI</td>
-                            <td>Returns: "Patient has history of allergies" (confidence: 0.8)</td>
+                        <tr style="background: #234568;">
+                            <td style="color: #FFD700; border-color: #2D4A6E;">3</td>
+                            <td style="color: white; border-color: #2D4A6E;">Medical History VNI</td>
+                            <td style="color: #90EE90; border-color: #2D4A6E;">"Patient has history of allergies" <span style="color: #FFD700;">(0.8)</span></td>
                         </tr>
-                        <tr>
-                            <td>3</td>
-                            <td>Drug Interaction VNI</td>
-                            <td>Returns: "Patient allergic to NSAIDs!" (confidence: 0.95)</td>
+                        <tr style="background: #1C3A5C;">
+                            <td style="color: #FFD700; border-color: #2D4A6E;">3</td>
+                            <td style="color: white; border-color: #2D4A6E;">Drug Interaction VNI</td>
+                            <td style="color: #FF6B6B; border-color: #2D4A6E;">"Patient allergic to NSAIDs!" <span style="color: #FFD700;">(0.95)</span></td>
                         </tr>
-                        <tr>
-                            <td>4</td>
-                            <td>Aggregator</td>
-                            <td>Detects conflict → Reaches consensus: "Warn about allergy"</td>
+                        <tr style="background: #234568;">
+                            <td style="color: #FFD700; border-color: #2D4A6E;">4</td>
+                            <td style="color: white; border-color: #2D4A6E;">Aggregator</td>
+                            <td style="color: #FFA07A; border-color: #2D4A6E;">Detects conflict → "Warn about allergy"</td>
                         </tr>
-                        <tr>
-                            <td>5</td>
-                            <td>LLM</td>
-                            <td>Articulates: "Based on your symptoms and history, avoid ibuprofen. Try acetaminophen."</td>
+                        <tr style="background: #1C3A5C;">
+                            <td style="color: #FFD700; border-color: #2D4A6E;">5</td>
+                            <td style="color: white; border-color: #2D4A6E;">LLM</td>
+                            <td style="color: #90EE90; border-color: #2D4A6E;">"Based on your symptoms and history, avoid ibuprofen. Try acetaminophen."</td>
                         </tr>
                     </tbody>
                 </table>
 
+                <div class="card-grid">
+                    <div class="card" style="background: #2D3748; border-left: 4px solid #DC2626;">
+                        <h4 style="color: #FF6B6B;">❌ Without BabyBIONN</h4>
+                        <p style="color: #E5E7EB;">LLM: "Ibuprofen is commonly used for headaches and fever." <span style="color: #FF6B6B;">(misses the allergy entirely - dangerous!)</span></p>
+                    </div>
+                    <div class="card" style="background: #1C3A5C; border-left: 4px solid #10B981;">
+                        <h4 style="color: #90EE90;">✅ With BabyBIONN</h4>
+                        <p style="color: #E5E7EB;">Multiple experts collaborate, detect the allergy, and provide safe advice.</p>
+                    </div>
+                </div>
                 <div class="card-grid">
                     <div class="card">
                         <h4>❌ Without BabyBIONN</h4>
