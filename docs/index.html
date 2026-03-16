@@ -676,17 +676,17 @@ BabyBIONN + LLM = A complete, trustworthy intelligence</code></pre>
 
                 <div class="mermaid">
                     graph LR
-                        A[User Query:<br/>"I have a rash and fever"] --> B[Neural Mesh]
-                        B --> C[Symptom Analyzer VNI]
-                        B --> D[Medical History VNI]
-                        B --> E[Drug Interaction VNI]
+                        A["User Query: 'I have a rash and fever'"] --> B["Neural Mesh"]
+                        B --> C["Symptom Analyzer VNI"]
+                        B --> D["Medical History VNI"]
+                        B --> E["Drug Interaction VNI"]
                         
-                        C --> F[Aggregator<br/>Confidence: 0.9]
-                        D --> F[Confidence: 0.8]
-                        E --> F[Confidence: 0.95]
+                        C --> F["Aggregator<br/>Confidence: 0.9"]
+                        D --> F["Aggregator<br/>Confidence: 0.8"]
+                        E --> F["Aggregator<br/>Confidence: 0.95"]
                         
-                        F --> G[Consensus:<br/>"Check for allergies,<br/>suggest antihistamines"]
-                        G --> H[LLM articulates:<br/>"Based on your symptoms and history..."]
+                        F --> G["Consensus: 'Check for allergies, suggest antihistamines'"]
+                        G --> H["LLM articulates: 'Based on your symptoms and history...'"]
                 </div>
 
                 <div class="card-grid">
