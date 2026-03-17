@@ -316,7 +316,7 @@ graph LR
 |----------|--------|
 | **What is BabyBIONN?** | The "operating system for intelligence" – provides memory, context, and reasoning to LLMs |
 | **What's a VBC?** | Virtual Brain Cell – a single instance of BabyBIONN |
-| **What's a VNI?** | Virtual Neuron Instance – a specialized expert module (medical, legal, etc.) |
+| **What's a VNI?** | Virtual Neuron Instance – a specialized expert module (medical, legal, etc.), which is a 'sub-instance' within a VBC |
 | **How is it different?** | Multiple experts collaborate and debate, not just pattern matching |
 | **What can I build?** | Medical AI, legal assistants, personal AI with memory, autonomous agents, decentralized AI networks, video/audio generators, robotic brains |
 | **Do I need an LLM?** | Yes – VBC is the brain, LLM is the mouth |
