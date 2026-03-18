@@ -2,18 +2,18 @@ markdown
 # 🚀 Building an Autonomous Conversation Starter Using BabyBIONN Virtual Brain Cell (VBC) Architecture
 
 ## 📋 Table of Contents
-1.  [Introduction](#introduction)
-2.  [What are Virtual Brain Cells (VBCs)?](#what-are-virtual-brain-cells)
-3.  [Architecture Overview](#architecture-overview)
-4.  [The Ponder/Thinking System](#the-ponderthinking-system)
-5.  [Core Components](#core-components)
-6.  [Implementation Guide](#implementation-guide)
-7.  [Integration with BabyBIONN VBCs](#integration-with-babybionn-vbcs)
-8.  [Deployment Examples](#deployment-examples)
-9.  [Best Practices](#best-practices)
-10. [Troubleshooting](#troubleshooting)
-11. [Contributing](#contributing)
-12. [License](#license)
+1.  [Introduction](#introduction) <a id="Introduction"></a>
+2.  [What are Virtual Brain Cells (VBCs)?](#what-are-virtual-brain-cells) <a id="What are Virtual Brain Cells (VBCs)?"></a>
+3.  [Architecture Overview](#architecture-overview) <a id="Architecture Overview"></a>
+4.  [The Ponder/Thinking System](#the-ponderthinking-system) <a id="The Ponder/Thinking System"></a>
+5.  [Core Components](#core-components) <a id="Core Components"></a>
+6.  [Implementation Guide](#implementation-guide) <a id="Implementation Guide"></a>
+7.  [Integration with BabyBIONN VBCs](#integration-with-babybionn-vbcs) <a id="Integration with BabyBIONN VBCs"></a>
+8.  [Deployment Examples](#deployment-examples) <a id="Deployment Examples"></a>
+9.  [Best Practices](#best-practices) <a id="Best Practices for VBC Design"></a>
+10. [Resources](#resources) <a id="Resources"></a>
+11. [License](#license) <a id="License"></a>
+12. [Contributing](#contributing) <a id="Contributing Under MPL 2.0"></a>
 
 ---
 
