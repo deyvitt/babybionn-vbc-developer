@@ -666,6 +666,7 @@ class AdaptiveThinkingDepth:
 🧩 Core Components
 
 1. VBC-Based Trigger Engine
+```mermaid
 classDiagram
     class TriggerVBC {
         +float activation_threshold
@@ -696,6 +697,7 @@ classDiagram
     TriggerVBC <|-- TimeVBC
     TriggerVBC <|-- EventVBC
     TriggerVBC <|-- StateVBC
+```
 
 2. VBC Decision Network
 ```python
