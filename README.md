@@ -252,6 +252,10 @@ harmony = await harmony_vni.harmonize(melody)
 ```
 
 ### 🤖 Robotic Brain
+
+| Guide | Description |
+|-------|-------------|
+| [Build Proactive VBC Chatbot](Build_Proactive_VBC_Chatbot.md) | Complete guide to building autonomous conversation starters with thinking/pondering capabilities |
 ```python
 from babybionn_robotics_extension import SensorFusionVNI, MotionPlannerVNI
 
