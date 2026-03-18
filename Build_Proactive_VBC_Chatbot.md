@@ -1177,5 +1177,9 @@ Contribution Guidelines:
 Ready to build your VBC-powered autonomous thinking conversation starter?
 Get Started with VBCs 🧠⚡
 
+## 🔙 Navigation
+<div align="center">
+**[← Back to Robotic Brain](README.md#robotic-brain)** | **[🏠 Home](README.md)** | **[⬆️ Back to Top](#)**
+
 Last Updated: March 2024 | Version: 3.0.0 (VBC Thinking Architecture)
 License: Mozilla Public License 2.0
