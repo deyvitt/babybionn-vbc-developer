@@ -63,7 +63,7 @@ graph TB
 ```
 
 VBC Structure in BabyBIONN
-python
+```python
 # From smartActivation.py - How VBCs work
 class VirtualBrainCell(nn.Module):
     """
@@ -89,6 +89,7 @@ class VirtualBrainCell(nn.Module):
         self.synapse.update(output, context)
         
         return output
+```
 
 🏗️ Architecture Overview
 ```mermaid
@@ -221,7 +222,7 @@ graph LR
 ```
 
 1. Multi-Stage Processing VBC
-python
+```python
 class PonderingVBC(VirtualBrainCell):
     """
     VBC that doesn't just react - it processes, recalls, integrates, THEN responds
@@ -259,6 +260,7 @@ class PonderingVBC(VirtualBrainCell):
         
         # PHASE 8: Response (800ms+)
         return final_response
+```
 
 2. The Pondering Circuit
 ```mermaid
@@ -301,7 +303,7 @@ sequenceDiagram
 ```
 
 3. Unconscious Processing Layer
-python
+```python
 class UnconsciousProcessingVBC(VirtualBrainCell):
     """
     Simulates subconscious processing - always running in background
@@ -357,9 +359,10 @@ class UnconsciousProcessingVBC(VirtualBrainCell):
                     'strength': latest['strength']
                 }
         return None
+```
 
 4. Complete Thinking Orchestrator
-python
+```python
 class ThinkingOrchestrator:
     """
     Orchestrates the entire thinking process across all VBCs
@@ -534,6 +537,7 @@ class ThinkingOrchestrator:
             best.get('critique', {}).get('suggestions', [])
         )
         return refined
+```
 
 5. The "Pondering" vs "Reacting" Comparison
 ```mermaid
@@ -573,7 +577,7 @@ graph TB
 ```
 
 6. Real-World Thinking Example
-python
+```python
 # Example of how the thinking system processes a simple trigger
 
 trigger = "User hasn't taken medication for 2 hours"
@@ -603,9 +607,10 @@ Would you like me to:
 
 What would be most helpful?
 """
+```
 
 7. Thinking Depth Control
-python
+```python
 class AdaptiveThinkingDepth:
     """
     Adjusts thinking depth based on importance
@@ -656,6 +661,7 @@ class AdaptiveThinkingDepth:
             return 'medium'
         else:
             return 'shallow'
+```
 
 🧩 Core Components
 
@@ -692,7 +698,7 @@ classDiagram
     TriggerVBC <|-- StateVBC
 
 2. VBC Decision Network
-python
+```python
 class DecisionVBC(VirtualBrainCell):
     """
     Specialized VBC for deciding when to reach out
@@ -735,6 +741,7 @@ class DecisionVBC(VirtualBrainCell):
     def should_fire(self, potential):
         """Decide whether to 'fire' (reach out to user)"""
         return potential > self.confidence_threshold
+```
 
 3. Confidence Questioner VBC Cluster
 ```mermaid
@@ -773,7 +780,7 @@ graph TB
 ```
 
 4. Message Generation VBC Network
-python
+```python
 class MessageGenerationVBCs:
     """
     Network of specialized VBCs for message generation
@@ -813,6 +820,7 @@ class MessageGenerationVBCs:
         # All VBCs update their connections (learning)
         await self.update_vbc_connections(user_id, final_message)
         return final_message
+```
 
 🛠️ Implementation Guide
 Step 1: Initialize VBC Network with Thinking System
@@ -846,7 +854,7 @@ proactive_layer = ProactiveVBCLayer(
     output_vbcs=['message_vbc', 'channel_vbc']
 )
 Step 2: Train VBCs for Proactive Behavior
-python
+```python
 class VBCProactiveTrainer:
     """
     Train VBCs to know when to reach out
@@ -874,9 +882,10 @@ class VBCProactiveTrainer:
             
             # Apply Hebbian learning: "Cells that fire together, wire together"
             self.hebbian_update(interaction['active_vbcs'])
+```
 
 Step 3: Implement VBC-Based Triggers
-python
+```python
 class TimeAwareVBC(VirtualBrainCell):
     """
     VBC that develops circadian rhythm awareness
@@ -920,10 +929,11 @@ class TimeAwareVBC(VirtualBrainCell):
         
         # Increase synaptic strength for this time
         self.user_patterns[user_id][time_key] += 0.1 * activity_importance
+```
 
 🔌 Integration with BabyBIONN VBCs
 Complete Integration with Thinking System
-python
+```python
 # autonomous_babybionn_vbc.py
 from babybionn.vbc import VBCSystem
 from babybionn.neurons import BabyBIONNCore
@@ -1001,10 +1011,11 @@ class AutonomousVBCBabyBIONN:
                     channel,
                     thinking_metadata=thinking_result['thinking_metadata']
                 )
+```
 
 🏠 Deployment Examples
 Elderly Care Robot with Thinking System
-yaml
+```yaml
 # elderly_care_vbc.yaml
 vbc_network:
   size: 5000
@@ -1049,10 +1060,11 @@ proactive_vbcs:
       channel: "speech"
     - type: "alert_vbc"
       channel: "emergency"
+```
 
 ✅ Best Practices for VBC Design
 1. Biological Plausibility
-python
+```python
 class BiologicallyPlausibleVBC:
     """
     VBCs should mimic real neurons:
@@ -1070,8 +1082,10 @@ class BiologicallyPlausibleVBC:
         self.synaptic_weights = {}
         self.inhibition_strength = 0.1
         self.consciousness_level = 0.0  # 0 = unconscious, 1 = fully conscious
+```
 
 2. VBC Network Topology
+```mermaid
 graph TB
     subgraph "Optimal VBC Connectivity"
         direction LR
@@ -1092,9 +1106,10 @@ graph TB
         style H fill:#f99
         style I fill:#f99
     end
+```
 
 3. VBC Health Monitoring
-python
+```python
 class VBCHealthMonitor:
     """
     Monitor VBC health and performance
@@ -1118,42 +1133,31 @@ class VBCHealthMonitor:
             if hasattr(vbc, 'consciousness_level'):
                 if vbc.consciousness_level < 0.1:
                     self.stimulate_consciousness(vbc)
-                    
+```
+
 📚 Resources
 BabyBIONN VBC Core Documentation
 
 VBC Network Design Patterns
-
-Thinking System Architecture
-
-Proactive VBC Implementation Guide
-
-Biological Plausibility in VBCs
-
-Video: How VBCs Think (coming soon)
+•  Thinking System Architecture
+•  Proactive VBC Implementation Guide
+•  Biological Plausibility in VBCs
+•  Video: How VBCs Think (coming soon)
 
 📄 License
 Mozilla Public License 2.0
-
 Copyright (c) 2024 BabyBIONN Contributors
 
 This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 MPL 2.0 Summary:
 ✅ You can use this code in proprietary projects
-
 ✅ You can modify the code
-
 ✅ You can distribute the code
-
 ⚠️ Modified files must be documented
-
 ⚠️ You must include the original copyright notice
-
 ⚠️ You must disclose your modifications
-
 ❌ You cannot remove the license
-
 ❌ You cannot use the contributors' names for endorsement
 
 For full license text, see LICENSE file.
@@ -1162,15 +1166,11 @@ For full license text, see LICENSE file.
 We welcome contributions! By contributing, you agree that your contributions will be licensed under the MPL 2.0.
 
 Contribution Guidelines:
-Fork the repository
-
-Create a feature branch
-
-Make your changes
-
-Document any modifications to files
-
-Submit a pull request
+•  Fork the repository
+•  Create a feature branch
+•  Make your changes
+•  Document any modifications to files
+•  Submit a pull request
 
 Ready to build your VBC-powered autonomous thinking conversation starter?
 Get Started with VBCs 🧠⚡
