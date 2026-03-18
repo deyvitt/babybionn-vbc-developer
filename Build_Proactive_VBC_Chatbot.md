@@ -10,14 +10,14 @@ markdown
 6.  [Implementation Guide](#implementation-guide)
 7.  [Integration with BabyBIONN VBCs](#integration-with-babybionn-vbcs)
 8.  [Deployment Examples](#deployment-examples)
-9.  [Best Practices for VBC Design](#best-practices)
+9.  [Best Practices for VBC Design](#best-practices-for-vbc-design)
 10. [Resources](#resources)
 11. [License](#license)
-12. [Contributing Under MPL 2.0](#contributing)
+12. [Contributing Under MPL 2.0](#contributing-under-mpl-20)
 
 ---
 
-## 🎯 Introduction <a id="Introduction"></a>
+## 🎯 Introduction <a id="introduction"></a>
 
 The BabyBIONN **Virtual Brain Cell (VBC)** architecture provides a unique foundation for building **truly autonomous conversational agents**. Unlike traditional LLM-based chatbots that simply respond to prompts, BabyBIONN's VBCs emulate biological neurons with:
 
@@ -36,7 +36,7 @@ The BabyBIONN **Virtual Brain Cell (VBC)** architecture provides a unique founda
 
 ---
 
-## 🧠 What are Virtual Brain Cells (VBCs)? <a id="what-are-virtual-brain-cells (VBCs)?"></a>
+## 🧠 What are Virtual Brain Cells (VBCs)? <a id="what-are-virtual-brain-cells?"></a>
 
 ```mermaid
 graph TB
