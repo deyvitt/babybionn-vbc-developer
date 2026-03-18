@@ -60,6 +60,8 @@ graph TB
     
     style B1 fill:#f9f,stroke:#333
     style V1 fill:#bbf,stroke:#333,stroke-width:2px
+```
+
 VBC Structure in BabyBIONN
 python
 # From smartActivation.py - How VBCs work
@@ -87,7 +89,9 @@ class VirtualBrainCell(nn.Module):
         self.synapse.update(output, context)
         
         return output
+
 🏗️ Architecture Overview
+```mermaid
 graph TB
     subgraph "VBC Neural Network Layer 1 - Sensory"
         VBC1[VBC - Text Processing]
@@ -157,7 +161,10 @@ graph TB
     style CS fill:#f96,stroke:#333,stroke-width:3px
     style US fill:#f96,stroke:#333,stroke-width:3px
     style IT fill:#ff6,stroke:#333,stroke-width:3px
+```
+
 VBC Activation and Communication
+```mermaid
 sequenceDiagram
     participant VBC1 as Sensory VBC
     participant VBC2 as Association VBC
@@ -182,10 +189,13 @@ sequenceDiagram
     else
         VBC3->>VBC1: Request more input
     end
+```
+
 🧠 The Ponder/Thinking System
 The key innovation that transforms BabyBIONN from a reactive trigger-response system to a genuine thinking system that ponders, processes, and reflects before responding.
 
 The Thinking Spectrum
+```mermaid
 graph LR
     subgraph "Reactive (Simple)"
         A[Trigger] --> B[Immediate Response]
@@ -208,6 +218,8 @@ graph LR
         N --> O[Value Judgment]
         O --> P[Response]
     end
+```
+
 1. Multi-Stage Processing VBC
 python
 class PonderingVBC(VirtualBrainCell):
@@ -247,7 +259,9 @@ class PonderingVBC(VirtualBrainCell):
         
         # PHASE 8: Response (800ms+)
         return final_response
+
 2. The Pondering Circuit
+```mermaid
 sequenceDiagram
     participant Input as Sensory VBCs
     participant Assoc as Association VBCs
@@ -284,6 +298,8 @@ sequenceDiagram
     
     Note over Output: PHASE 7: Delivery
     Output->>User: Deliver thoughtful response
+```
+
 3. Unconscious Processing Layer
 python
 class UnconsciousProcessingVBC(VirtualBrainCell):
@@ -341,6 +357,7 @@ class UnconsciousProcessingVBC(VirtualBrainCell):
                     'strength': latest['strength']
                 }
         return None
+
 4. Complete Thinking Orchestrator
 python
 class ThinkingOrchestrator:
@@ -516,9 +533,10 @@ class ThinkingOrchestrator:
             best['improved'],
             best.get('critique', {}).get('suggestions', [])
         )
-        
         return refined
+
 5. The "Pondering" vs "Reacting" Comparison
+```mermaid
 graph TB
     subgraph "Reactive System"
         R1[Trigger] --> R2[Response]
@@ -552,6 +570,8 @@ graph TB
         style T10 fill:#9f9
         style T11 fill:#9f9
     end
+```
+
 6. Real-World Thinking Example
 python
 # Example of how the thinking system processes a simple trigger
@@ -580,8 +600,10 @@ Would you like me to:
 1. Remind you about the benefits of taking it on time
 2. Connect you with your doctor to discuss concerns
 3. Just provide a gentle reminder every 15 minutes until you take it
+
 What would be most helpful?
 """
+
 7. Thinking Depth Control
 python
 class AdaptiveThinkingDepth:
@@ -634,7 +656,9 @@ class AdaptiveThinkingDepth:
             return 'medium'
         else:
             return 'shallow'
+
 🧩 Core Components
+
 1. VBC-Based Trigger Engine
 classDiagram
     class TriggerVBC {
@@ -666,6 +690,7 @@ classDiagram
     TriggerVBC <|-- TimeVBC
     TriggerVBC <|-- EventVBC
     TriggerVBC <|-- StateVBC
+
 2. VBC Decision Network
 python
 class DecisionVBC(VirtualBrainCell):
@@ -710,7 +735,9 @@ class DecisionVBC(VirtualBrainCell):
     def should_fire(self, potential):
         """Decide whether to 'fire' (reach out to user)"""
         return potential > self.confidence_threshold
+
 3. Confidence Questioner VBC Cluster
+```mermaid
 graph TB
     subgraph "Confidence Assessment VBCs"
         C1[Knowledge Gap Detector]
@@ -743,6 +770,8 @@ graph TB
     style C1 fill:#f9f,stroke:#333
     style Q1 fill:#bbf,stroke:#333
     style O1 fill:#bfb,stroke:#333
+```
+
 4. Message Generation VBC Network
 python
 class MessageGenerationVBCs:
@@ -783,8 +812,8 @@ class MessageGenerationVBCs:
         
         # All VBCs update their connections (learning)
         await self.update_vbc_connections(user_id, final_message)
-        
         return final_message
+
 🛠️ Implementation Guide
 Step 1: Initialize VBC Network with Thinking System
 python
@@ -845,6 +874,7 @@ class VBCProactiveTrainer:
             
             # Apply Hebbian learning: "Cells that fire together, wire together"
             self.hebbian_update(interaction['active_vbcs'])
+
 Step 3: Implement VBC-Based Triggers
 python
 class TimeAwareVBC(VirtualBrainCell):
@@ -890,6 +920,7 @@ class TimeAwareVBC(VirtualBrainCell):
         
         # Increase synaptic strength for this time
         self.user_patterns[user_id][time_key] += 0.1 * activity_importance
+
 🔌 Integration with BabyBIONN VBCs
 Complete Integration with Thinking System
 python
@@ -970,6 +1001,7 @@ class AutonomousVBCBabyBIONN:
                     channel,
                     thinking_metadata=thinking_result['thinking_metadata']
                 )
+
 🏠 Deployment Examples
 Elderly Care Robot with Thinking System
 yaml
@@ -1017,6 +1049,7 @@ proactive_vbcs:
       channel: "speech"
     - type: "alert_vbc"
       channel: "emergency"
+
 ✅ Best Practices for VBC Design
 1. Biological Plausibility
 python
@@ -1037,6 +1070,7 @@ class BiologicallyPlausibleVBC:
         self.synaptic_weights = {}
         self.inhibition_strength = 0.1
         self.consciousness_level = 0.0  # 0 = unconscious, 1 = fully conscious
+
 2. VBC Network Topology
 graph TB
     subgraph "Optimal VBC Connectivity"
@@ -1058,6 +1092,7 @@ graph TB
         style H fill:#f99
         style I fill:#f99
     end
+
 3. VBC Health Monitoring
 python
 class VBCHealthMonitor:
@@ -1083,6 +1118,7 @@ class VBCHealthMonitor:
             if hasattr(vbc, 'consciousness_level'):
                 if vbc.consciousness_level < 0.1:
                     self.stimulate_consciousness(vbc)
+                    
 📚 Resources
 BabyBIONN VBC Core Documentation
 
