@@ -3,7 +3,11 @@ markdown
 # 🧠 BabyBIONN VBC Developer Edition – Virtual Brain Cell Core
 
 <div align="center">
-[![Can Machine Be Conscious?](https://img.shields.io/badge/🤔-Can%20Machine%20Be%20Conscious%3F-9b6b9b?style=for-the-badge)](https://deyvitt.github.io/machine_consciousness/)
+
+<a href="https://deyvitt.github.io/machine_consciousness/">
+  <img src="https://img.shields.io/badge/🤔-Can%20Machine%20Be%20Conscious%3F-9b6b9b?style=for-the-badge" alt="Can Machine Be Conscious?">
+</a>
+
 </div>
 
 
