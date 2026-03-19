@@ -1,20 +1,23 @@
 
 markdown
-# 🧠 BabyBIONN VBC Developer Edition – Virtual Brain Cell Core
+# 🧠 BabyBIONN VBC Developer Edition
+<br>
+<h3> Virtual Brain Cell Core</h3>
 
 <div align="center">
-
 <a href="https://deyvitt.github.io/machine_consciousness/">
   <img src="https://img.shields.io/badge/🤔-Can%20Machine%20Be%20Conscious%3F-9b6b9b?style=for-the-badge" alt="Can Machine Be Conscious?">
 </a>
-
 </div>
-
-
+<div align="justify">
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 [![Docs: GitHub Pages](https://img.shields.io/badge/Docs-GitHub%20Pages-blue)](https://deyvitt.github.io/babybionn-vbc-developer/)
 [![Whitepaper](https://img.shields.io/badge/Whitepaper-View%20Now-3B82F6)](https://deyvitt.github.io/babybionn-vbc-developer/)
+</div>
+<br>
+<div align="center">
 Copyright (c) 2026, BabyBIONN Contributors
+</div>
 
 ---
 
